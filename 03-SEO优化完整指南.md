@@ -390,6 +390,96 @@ Product Hunt:
 请求添加你的工具到列表
 ```
 
+**5. 高权重平台SEO策略（哥飞技巧）**
+
+**GitHub SEO策略**:
+```
+GitHub项目SEO优化:
+- 创建新GitHub账号，用户名包含目标关键词
+- 项目名称直接使用关键词（如：pdf-converter-tool）
+- 项目描述包含关键词和核心功能
+- README.md详细说明，包含关键词变体
+- 添加相关标签（topics）提升发现性
+- 定期更新项目，保持活跃度
+- 在项目中使用你的网站链接
+
+示例:
+账号名: pdf-converter-expert
+项目名: pdf-converter-tool
+描述: "Free online PDF converter tool - Convert PDF to Word, Excel, PowerPoint"
+标签: pdf, converter, online-tool, free, document
+```
+
+**OpenAI GPTs SEO策略**:
+```
+GPTs平台优化:
+- 创建包含关键词的GPTs名称
+- 描述中包含目标关键词和功能说明
+- 在指令中提及你的网站和工具
+- 设置相关的标签和分类
+- 定期更新GPTs内容
+- 在对话中自然提及你的网站
+
+示例:
+GPTs名称: PDF Converter Expert
+描述: "Professional PDF converter tool - Convert PDF to Word, Excel, PowerPoint online"
+指令: "I help users convert PDF files using the best online PDF converter tools..."
+```
+
+**浏览器插件SEO策略**:
+```
+插件平台优化:
+- Chrome Web Store
+- Firefox Add-ons
+- Edge Add-ons
+- 插件名称包含关键词
+- 描述中包含功能说明和网站链接
+- 定期更新插件版本
+- 获得用户评价和评分
+
+示例:
+插件名: PDF Converter Tool
+描述: "Convert PDF files online with our free PDF converter tool"
+```
+
+**大平台博客SEO策略**:
+```
+高权重博客平台:
+- Medium.com (高权重，易收录)
+- Dev.to (技术社区，权重高)
+- Hashnode (开发者社区)
+- LinkedIn Articles (专业网络)
+- Reddit (社区讨论)
+- Quora (问答平台)
+- 知乎 (中文SEO)
+
+策略要点:
+- 文章标题包含目标关键词
+- 内容质量高，有实用价值
+- 自然提及和链接到你的网站
+- 定期发布，保持活跃度
+- 与读者互动，增加参与度
+```
+
+**6. 技术社区参与**
+```
+GitHub:
+- 参与相关开源项目
+- 提交有价值的PR
+- 在项目Issues中提供帮助
+- 创建有用的工具和库
+
+Stack Overflow:
+- 回答技术问题
+- 提供代码解决方案
+- 自然提及你的工具
+
+Dev.to / Medium:
+- 发布技术文章
+- 分享开发经验
+- 介绍你的项目
+```
+
 ### 避免的陷阱
 ```
 ❌ 购买链接（会被惩罚）

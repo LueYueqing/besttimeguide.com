@@ -160,22 +160,143 @@
 ### 基石三：技术可访问性（占比10%）
 
 #### 1. 抓取优化
-- ✅ robots.txt正确配置
+- ✅ robots.txt正确配置（**必做！**详见下方规定）
 - ✅ sitemap.xml自动生成（**必做！**详见下方规定）
+- ✅ HTTPS强制启用（**必做！**生产环境必须）
 - ✅ 清晰的网站导航
 - ✅ 有效的内部链接
 - ✅ 避免孤立页面
+- ✅ URL结构规范（**必做！**详见下方规定）
 
 #### 2. 索引优化
-- ✅ Google Search Console验证
-- ✅ 规范URL标签（canonical）
-- ✅ 正确使用meta标签
-- ✅ 结构化数据（Schema.org）
+- ✅ Google Search Console验证（**必做！**）
+- ✅ 规范URL标签（canonical）（**必做！**详见下方规定）
+- ✅ 正确使用meta标签（**必做！**详见下方规定）
+- ✅ 结构化数据（Schema.org）（**必做！**详见下方规定）
+- ✅ Open Graph和Twitter Cards（**必做！**详见下方规定）
+- ✅ 语言标签（lang）设置（**必做！**）
 
 #### 3. 渲染优化
 - ✅ SSR或SSG（Next.js优势）
 - ✅ 避免JavaScript阻塞
 - ✅ 确保Google能渲染内容
+- ✅ 页面加载速度优化（LCP < 2.5秒）
+- ✅ 移动端友好性（**必做！**）
+
+## 📝 页面元数据（Metadata）规范（必做）
+
+### Next.js 15 Metadata API 标准
+
+**所有页面必须使用 Next.js 15 的 Metadata API**，这是官方推荐的标准方式。
+
+### 根布局（app/layout.tsx）元数据配置
+
+```typescript
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  // 1. 标题配置（必做）
+  title: {
+    default: 'Your App Name',           // 默认标题
+    template: '%s | Your App Name',     // 标题模板（%s会被页面标题替换）
+  },
+  
+  // 2. 描述（必做）
+  description: 'Your app description - built with Next.js 15 and modern web technologies.',
+  
+  // 3. 关键词（可选，但推荐）
+  keywords: ['keyword1', 'keyword2', 'keyword3'],
+  
+  // 4. 作者信息（必做）
+  authors: [{ name: 'Your Team' }],
+  creator: 'Your App Name',
+  publisher: 'Your App Name',
+  
+  // 5. 基础URL（必做）
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  
+  // 6. Open Graph配置（必做）
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',  // 或 'en_US'
+    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    siteName: 'Your App Name',
+    title: 'Your App Name',
+    description: 'Your app description',
+    images: [
+      {
+        url: '/og-image.png',  // 必须存在，尺寸：1200x630
+        width: 1200,
+        height: 630,
+        alt: 'Your App Name',
+      },
+    ],
+  },
+  
+  // 7. Twitter Cards配置（必做）
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Your App Name',
+    description: 'Your app description',
+    images: ['/og-image.png'],
+    creator: '@yourhandle',  // 可选
+  },
+  
+  // 8. Robots配置（必做）
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  
+  // 9. Google验证（可选，但推荐）
+  verification: {
+    google: 'google-site-verification-code',
+  },
+}
+```
+
+### 页面级元数据配置
+
+```typescript
+// app/page.tsx 或 app/about/page.tsx
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'About Us',  // 会显示为 "About Us | Your App Name"
+  description: 'Learn more about our company and mission.',
+  keywords: ['about', 'company', 'team'],
+  
+  // Open Graph（覆盖根布局的默认值）
+  openGraph: {
+    title: 'About Us',
+    description: 'Learn more about our company and mission.',
+    url: `${process.env.NEXT_PUBLIC_APP_URL}/about`,
+    images: ['/og-about.png'],  // 页面特定的OG图片
+  },
+  
+  // Canonical URL（必做）
+  alternates: {
+    canonical: '/about',  // 相对路径即可，会自动拼接baseUrl
+  },
+}
+```
+
+### 元数据配置检查清单
+
+- [ ] 根布局配置了完整的 metadata
+- [ ] 所有页面都配置了 title 和 description
+- [ ] 所有页面都配置了 canonical URL
+- [ ] Open Graph 图片存在且尺寸正确（1200x630）
+- [ ] Twitter Cards 配置正确
+- [ ] 使用环境变量 `NEXT_PUBLIC_APP_URL` 作为baseUrl
+- [ ] Robots 配置正确（index: true, follow: true）
 
 ## 📝 页面优化实战
 
@@ -304,7 +425,335 @@ Top 10 [关键词] Compared (2025 Guide)
 ✅ how-to-convert-pdf-step-1.webp
 ```
 
-### 6. 结构化数据（Schema.org）
+### 6. Canonical URL 规范（必做）
+
+**所有页面必须设置 Canonical URL**，避免重复内容问题。
+
+**Next.js 15 实现标准**：
+
+```typescript
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  // ... 其他metadata
+  
+  // Canonical URL（必做）
+  alternates: {
+    canonical: '/about',  // 相对路径，会自动拼接metadataBase
+  },
+}
+```
+
+**规范要求**：
+- ✅ 所有页面必须配置 `alternates.canonical`
+- ✅ 使用相对路径（Next.js会自动拼接baseUrl）
+- ✅ 首页使用 `canonical: '/'`
+- ✅ 避免重复内容（如带参数和不带参数的URL）
+- ✅ 确保canonical指向正确的页面版本
+
+**常见错误**：
+- ❌ 忘记配置canonical URL
+- ❌ 使用绝对URL（应该用相对路径）
+- ❌ canonical指向错误的URL
+
+### 7. Open Graph 和 Twitter Cards 规范（必做）
+
+**Open Graph 图片要求**：
+- **尺寸**：1200x630 像素（必须）
+- **格式**：PNG 或 JPG
+- **文件位置**：`public/og-image.png`
+- **文件大小**：< 1MB（推荐 < 500KB）
+
+**标准配置**：
+
+```typescript
+export const metadata: Metadata = {
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',  // 或 'en_US'
+    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    siteName: 'Your App Name',
+    title: 'Your App Name',
+    description: 'Your app description',
+    images: [
+      {
+        url: '/og-image.png',  // 必须存在
+        width: 1200,
+        height: 630,
+        alt: 'Your App Name',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',  // 必须使用large_image
+    title: 'Your App Name',
+    description: 'Your app description',
+    images: ['/og-image.png'],
+    creator: '@yourhandle',  // 可选
+  },
+}
+```
+
+**检查清单**：
+- [ ] `/public/og-image.png` 文件存在
+- [ ] 图片尺寸为 1200x630
+- [ ] 所有重要页面有特定的OG图片
+- [ ] Twitter Cards 配置正确
+- [ ] 使用环境变量作为URL
+
+### 8. 结构化数据（Schema.org）规范（必做）
+
+**所有项目必须实现结构化数据**，帮助搜索引擎理解内容。
+
+**FAQ Schema（FAQ页面必做）**：
+
+```typescript
+// app/help/faq/page.tsx
+export default function FAQPage() {
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I use this tool?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To use this tool, simply upload your file and click the convert button."
+        }
+      },
+      // ... 更多问题
+    ]
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      {/* 页面内容 */}
+    </>
+  )
+}
+```
+
+**Organization Schema（网站必做）**：
+
+```typescript
+// app/layout.tsx 或 app/about/page.tsx
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Your App Name",
+  "url": process.env.NEXT_PUBLIC_APP_URL,
+  "logo": `${process.env.NEXT_PUBLIC_APP_URL}/logo.png`,
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer service",
+    "email": "support@yourdomain.com"
+  }
+}
+```
+
+**HowTo Schema（工具页面推荐）**：
+
+```typescript
+const howToSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use This Tool",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Step 1: Upload",
+      "text": "Upload your file"
+    },
+    // ... 更多步骤
+  ]
+}
+```
+
+**结构化数据检查清单**：
+- [ ] FAQ页面使用 FAQPage Schema
+- [ ] 网站使用 Organization Schema
+- [ ] 工具页面使用 HowTo Schema
+- [ ] 文章页面使用 Article Schema（如有）
+- [ ] 使用 JSON-LD 格式
+- [ ] 通过 Google Rich Results Test 验证
+
+### 9. HTTPS 强制要求（必做）
+
+**生产环境必须使用 HTTPS**，这是Google SEO的基本要求。
+
+**配置要求**：
+- ✅ 生产环境必须启用HTTPS
+- ✅ SSL证书正确配置
+- ✅ 所有HTTP请求自动重定向到HTTPS
+- ✅ 解决混合内容（Mixed Content）问题
+- ✅ 使用HSTS（HTTP Strict Transport Security）
+
+**Next.js 配置**：
+
+```typescript
+// next.config.ts
+const nextConfig = {
+  // ... 其他配置
+  
+  // 生产环境强制HTTPS
+  async redirects() {
+    if (process.env.NODE_ENV === 'production') {
+      return [
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'x-forwarded-proto',
+              value: 'http',
+            },
+          ],
+          destination: 'https://yourdomain.com/:path*',
+          permanent: true,
+        },
+      ]
+    }
+    return []
+  },
+}
+```
+
+### 10. URL 结构规范（必做）
+
+**URL结构要求**：
+- ✅ 使用小写字母
+- ✅ 使用连字符（-）分隔单词，不使用下划线
+- ✅ 保持简短和描述性
+- ✅ 避免参数和查询字符串（如可能）
+- ✅ 统一使用尾随斜杠（/）或统一不使用
+
+**示例**：
+```
+✅ 正确：
+/about/
+/features/
+/pricing/
+/blog/how-to-use-tool/
+
+❌ 错误：
+/About
+/Features/
+/pricing_page
+/blog/how_to_use_tool
+```
+
+**Next.js 路由规范**：
+- 使用文件夹结构定义路由
+- 动态路由使用 `[param]` 格式
+- 路由组使用 `(group)` 格式（不影响URL）
+
+### 11. 语言标签（lang）规范（必做）
+
+**所有页面必须设置正确的语言标签**。
+
+**Next.js 实现**：
+
+```typescript
+// app/layout.tsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="zh-CN">  {/* 或 "en" */}
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+**规范要求**：
+- ✅ 根布局必须设置 `lang` 属性
+- ✅ 中文网站使用 `lang="zh-CN"`
+- ✅ 英文网站使用 `lang="en"`
+- ✅ 多语言网站使用 `lang="zh-CN"` 作为默认，其他语言页面单独设置
+
+### 12. Favicon 和 PWA 图标规范（必做）
+
+**必须包含的图标文件**：
+
+```
+public/
+├── favicon.ico          # 16x16, 32x32, 48x48
+├── favicon-16x16.png
+├── favicon-32x32.png
+├── favicon-48x48.png
+├── apple-touch-icon.png # 180x180
+├── android-chrome-192x192.png
+├── android-chrome-512x512.png
+└── site.webmanifest     # PWA manifest
+```
+
+**在 layout.tsx 中引用**：
+
+```typescript
+// app/layout.tsx
+<head>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+</head>
+```
+
+**检查清单**：
+- [ ] 所有必需的图标文件存在
+- [ ] 图标尺寸正确
+- [ ] 在 layout.tsx 中正确引用
+- [ ] site.webmanifest 配置正确
+
+### 13. 404 页面 SEO 规范（必做）
+
+**404页面必须包含SEO优化**，帮助用户和搜索引擎。
+
+**标准实现**：
+
+```typescript
+// app/not-found.tsx
+import type { Metadata } from 'next'
+import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: '404 - Page Not Found',
+  description: 'Sorry, the page you are looking for could not be found.',
+  robots: {
+    index: false,  // 404页面不应该被索引
+    follow: true,
+  },
+}
+
+export default function NotFound() {
+  return (
+    <div>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you are looking for does not exist.</p>
+      <Link href="/">Return to Homepage</Link>
+      <Link href="/help/contact">Contact Us</Link>
+    </div>
+  )
+}
+```
+
+**规范要求**：
+- ✅ 设置 `robots.index: false`（404页面不应被索引）
+- ✅ 提供清晰的错误信息
+- ✅ 提供返回首页的链接
+- ✅ 提供帮助/联系页面的链接
+- ✅ 友好的用户体验
+
+### 14. 结构化数据（Schema.org）
 
 **FAQ Schema**
 ```json

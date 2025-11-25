@@ -175,6 +175,7 @@
 - ✅ 结构化数据（Schema.org）（**必做！**详见下方规定）
 - ✅ Open Graph和Twitter Cards（**必做！**详见下方规定）
 - ✅ 语言标签（lang）设置（**必做！**）
+- ✅ IndexNow协议支持（**必做！**详见下方规定）
 
 #### 3. 渲染优化
 - ✅ SSR或SSG（Next.js优势）
@@ -753,7 +754,208 @@ export default function NotFound() {
 - ✅ 提供帮助/联系页面的链接
 - ✅ 友好的用户体验
 
-### 14. 结构化数据（Schema.org）
+### 14. IndexNow 协议支持（必做）
+
+**什么是 IndexNow？**
+
+IndexNow 是由微软 Bing 等搜索引擎推动的实时索引协议，允许网站主动向搜索引擎推送内容更新，显著加速新内容的索引速度。相比传统的被动爬取，IndexNow 可以将索引时间从几天缩短到几小时。
+
+**为什么必须实施？**
+
+- ✅ **Bing Webmaster Tools 要求**：未采用 IndexNow 会在 SEO 报告中显示警告
+- ✅ **加速索引**：新内容或更新内容能被更快发现和索引
+- ✅ **提升可见性**：减少对传统爬虫的依赖，主动控制索引节奏
+- ✅ **简单易用**：实施成本低，维护简单
+
+**实施步骤**
+
+**Step 1: 生成密钥文件**
+
+在 `public/` 目录下创建 `indexnow.txt` 文件，内容为一个唯一的密钥字符串（32位十六进制字符）：
+
+```bash
+# 生成密钥（32位十六进制）
+# 可以使用在线工具或命令行生成
+openssl rand -hex 16
+# 或使用 Node.js
+node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
+```
+
+示例 `public/indexnow.txt`：
+```
+f8d29c88f2c24a64bca7980c2fa03834
+```
+
+**Step 2: 创建提交脚本**
+
+创建 `tools/indexnow/submit-indexnow.js` 脚本：
+
+```javascript
+#!/usr/bin/env node
+/**
+ * IndexNow submission helper
+ * 
+ * Usage:
+ *   npm run indexnow -- --urls /page1,/page2
+ *   npm run indexnow -- --file changed-urls.txt
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const DEFAULT_DOMAIN = process.env.INDEXNOW_DOMAIN || 'yourdomain.com';
+const DEFAULT_ENDPOINT = process.env.INDEXNOW_ENDPOINT || 'https://www.bing.com/indexnow';
+const DEFAULT_KEY_FILE = path.join(process.cwd(), 'public', 'indexnow.txt');
+
+function loadKey() {
+  if (!fs.existsSync(DEFAULT_KEY_FILE)) {
+    throw new Error(`IndexNow key file missing: ${DEFAULT_KEY_FILE}`);
+  }
+  return fs.readFileSync(DEFAULT_KEY_FILE, 'utf8').trim();
+}
+
+async function submitIndexNow(urls, options = {}) {
+  const key = loadKey();
+  const domain = options.domain || DEFAULT_DOMAIN;
+  const endpoint = options.endpoint || DEFAULT_ENDPOINT;
+  
+  // 确保URL是绝对URL
+  const absoluteUrls = urls.map(url => {
+    if (url.startsWith('http')) return url;
+    return `https://${domain}${url.startsWith('/') ? url : '/' + url}`;
+  });
+  
+  const payload = {
+    host: domain,
+    key,
+    keyLocation: `https://${domain}/indexnow.txt`,
+    urlList: absoluteUrls,
+  };
+  
+  if (options.dryRun) {
+    console.log('Dry run - Payload:', JSON.stringify(payload, null, 2));
+    return;
+  }
+  
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`IndexNow submission failed: ${response.status}`);
+  }
+  
+  console.log(`✅ Submitted ${absoluteUrls.length} URL(s) to IndexNow`);
+}
+
+// 解析命令行参数
+const args = process.argv.slice(2);
+const urls = [];
+let dryRun = false;
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--urls') {
+    urls.push(...args[++i].split(','));
+  } else if (args[i] === '--file') {
+    const fileUrls = fs.readFileSync(args[++i], 'utf8')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+    urls.push(...fileUrls);
+  } else if (args[i] === '--dry-run') {
+    dryRun = true;
+  }
+}
+
+if (urls.length === 0) {
+  console.error('Error: No URLs provided. Use --urls or --file');
+  process.exit(1);
+}
+
+submitIndexNow(urls, { dryRun }).catch(err => {
+  console.error('Error:', err.message);
+  process.exit(1);
+});
+```
+
+**Step 3: 添加 npm 脚本**
+
+在 `package.json` 中添加：
+
+```json
+{
+  "scripts": {
+    "indexnow": "node tools/indexnow/submit-indexnow.js"
+  }
+}
+```
+
+**Step 4: 验证密钥文件可访问**
+
+部署后，确保 `https://yourdomain.com/indexnow.txt` 可以公开访问：
+
+```bash
+curl https://yourdomain.com/indexnow.txt
+# 应该返回密钥内容
+```
+
+**Step 5: 测试提交**
+
+```bash
+# 测试提交（不实际发送）
+npm run indexnow -- --urls / --dry-run
+
+# 实际提交首页
+npm run indexnow -- --urls /
+
+# 提交多个页面
+npm run indexnow -- --urls /,/about,/features
+
+# 从文件批量提交
+npm run indexnow -- --file changed-urls.txt
+```
+
+**使用场景**
+
+1. **内容更新后**：发布新页面或更新重要内容后立即提交
+2. **部署后**：在 CI/CD 流程中自动提交更新的 URL
+3. **修复后**：修复 SEO 问题或内容错误后重新提交
+
+**最佳实践**
+
+- ✅ **优先提交**：首页、新页面、热门页面
+- ✅ **批量提交**：一次提交多个 URL（最多 10,000 个）
+- ✅ **定期提交**：每次内容更新后立即提交
+- ❌ **避免频繁提交**：不要重复提交相同的 URL
+- ❌ **不要提交**：404 页面、测试页面、临时页面
+
+**验证和监控**
+
+1. **Bing Webmaster Tools**
+   - 登录：https://www.bing.com/webmasters/
+   - 检查 SEO 报告中的 IndexNow 状态
+   - 通常 24-48 小时后状态会更新
+
+2. **提交响应**
+   - `200` / `202`：提交成功
+   - `4xx`：请求参数错误（检查密钥、URL格式）
+   - `5xx`：搜索引擎端异常（稍后重试）
+
+**检查清单**：
+- [ ] `public/indexnow.txt` 文件存在且包含密钥
+- [ ] 密钥文件可通过 `https://yourdomain.com/indexnow.txt` 访问
+- [ ] 提交脚本已创建并测试
+- [ ] npm 脚本已配置
+- [ ] 测试提交成功（返回 200/202）
+- [ ] 在 Bing Webmaster Tools 中验证状态
+
+**参考资源**：
+- [IndexNow 官方文档](https://www.indexnow.org/)
+- [Bing Webmaster Tools](https://www.bing.com/webmasters/)
+
+### 15. 结构化数据（Schema.org）
 
 **FAQ Schema**
 ```json
@@ -1314,6 +1516,7 @@ flowchart TD
    - HTTPS启用
    - sitemap.xml（**必做！**必须使用Next.js 15 App Router的sitemap.ts）
    - robots.txt（**必做！**必须使用Next.js 15 App Router的robots.ts）
+   - IndexNow配置（**必做！**详见下方规定）
    - Core Web Vitals
 
 4. **Google工具配置**（1小时）

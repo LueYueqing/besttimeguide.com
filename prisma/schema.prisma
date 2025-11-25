@@ -1,0 +1,208 @@
+// Prisma Schema for Next.js Project Template
+// 支持 NextAuth、Google OAuth、Stripe 支付、邀请系统、API 密钥管理
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// NextAuth 必需的表
+// ============================================
+
+// 用户表
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?   // 头像 URL
+  
+  // 用户信息
+  avatar        String?   // 兼容字段，与 image 相同
+  plan          Plan      @default(FREE)
+  isAdmin       Boolean   @default(false)
+  
+  // 邀请系统
+  referredBy    Int?      // 邀请人 ID
+  referrer      User?     @relation("UserReferrals", fields: [referredBy], references: [id])
+  referrals     User[]    @relation("UserReferrals")
+  proTrialExpiresAt DateTime? // Pro 试用到期时间
+  
+  // 登录统计
+  lastLoginAt   DateTime?
+  loginCount    Int       @default(0)
+  
+  // 时间戳
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // NextAuth 关联
+  accounts      Account[]
+  sessions      Session[]
+  
+  // 业务关联
+  subscriptions UserSubscription[]
+  referralRecords Referral[] @relation("ReferrerReferrals") // 邀请记录（作为邀请人）
+  referredRecords Referral[] @relation("ReferredReferrals") // 被邀请记录（作为被邀请人）
+  apiKeys       ApiKey[]     // API 密钥
+  
+  @@map("users")
+  @@index([referredBy])
+}
+
+// OAuth 账户表（NextAuth 需要）
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String  // oauth, email, credentials
+  provider          String  // google, github, etc.
+  providerAccountId String  // 第三方平台的用户 ID
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// 会话表（NextAuth 需要）
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// 验证令牌表（NextAuth 需要，用于邮箱验证等）
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// 业务表
+// ============================================
+
+// 用户服务周期表（订阅表）
+model UserSubscription {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 订阅信息
+  plan              Plan     @default(FREE)
+  status            SubscriptionStatus @default(ACTIVE)
+  
+  // 服务周期
+  startDate         DateTime @default(now())
+  endDate           DateTime?
+  expiresAt         DateTime? // 过期时间
+  
+  // 支付信息
+  stripeCustomerId  String?  @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId     String?
+  
+  // 金额信息
+  amount            Decimal? @db.Decimal(10, 2)
+  currency          String?  @default("USD")
+  
+  // 取消信息
+  canceledAt        DateTime?
+  cancelAtPeriodEnd Boolean  @default(false)
+  
+  // 时间戳
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("user_subscriptions")
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// 邀请记录表
+model Referral {
+  id            Int      @id @default(autoincrement())
+  referrerId    Int      // 邀请人 ID
+  referrer      User     @relation("ReferrerReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUserId Int     // 被邀请人 ID
+  referredUser  User     @relation("ReferredReferrals", fields: [referredUserId], references: [id], onDelete: Cascade)
+  
+  // 奖励状态
+  rewardGranted Boolean  @default(false) // 奖励是否已发放
+  rewardGrantedAt DateTime? // 奖励发放时间
+  
+  // 时间戳
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("referrals")
+  @@unique([referredUserId]) // 每个被邀请人只能被记录一次
+  @@index([referrerId])
+  @@index([referredUserId])
+  @@index([rewardGranted])
+}
+
+// API 密钥表
+model ApiKey {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 密钥信息
+  name        String   // 密钥名称（用户自定义）
+  keyHash     String   @unique // 密钥的哈希值（用于验证）
+  keyPrefix   String   // 密钥前缀（用于显示，如 cqr_sk_live_xxxx）
+  lastUsedAt  DateTime? // 最后使用时间
+  expiresAt   DateTime? // 过期时间（可选）
+  
+  // 状态
+  isActive    Boolean  @default(true) // 是否激活
+  
+  // 时间戳
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("api_keys")
+  @@index([userId])
+  @@index([keyHash])
+}
+
+// ============================================
+// 枚举类型
+// ============================================
+
+// 用户计划枚举
+enum Plan {
+  FREE        // 免费版
+  PRO         // 专业版
+  ENTERPRISE  // 企业版
+}
+
+// 订阅状态枚举
+enum SubscriptionStatus {
+  ACTIVE      // 活跃
+  CANCELED    // 已取消
+  EXPIRED     // 已过期
+  PAST_DUE    // 逾期
+  TRIALING    // 试用中
+}

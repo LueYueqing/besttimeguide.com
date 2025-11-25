@@ -1,0 +1,683 @@
+[
+  {
+    "id": "envelope-style",
+    "name": "Envelope Style",
+    "category": "business",
+    "description": "Classic envelope design with QR code in the center",
+    "svgFile": "envelope-style.svg",
+    "preview": "envelope-style-preview.png",
+    "placeholder": {
+      "x": 150,
+      "y": 90,
+      "width": 700,
+      "height": 700
+    },
+    "qrSize": 600,
+    "qrScale": 0.95,
+    "tags": [
+      "envelope",
+      "business",
+      "classic"
+    ]
+  },
+  {
+    "id": "border-frame",
+    "name": "Border Frame",
+    "category": "minimal",
+    "description": "Simple border frame with scan me text at bottom",
+    "svgFile": "border-frame.svg",
+    "preview": "border-frame-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 1000,
+    "qrScale": 1,
+    "tags": [
+      "border",
+      "minimal",
+      "simple"
+    ]
+  },
+  {
+    "id": "phone-card",
+    "name": "Phone Card",
+    "category": "creative",
+    "description": "Phone/card style design with decorative elements",
+    "svgFile": "phone-card.svg",
+    "preview": "phone-card-preview.png",
+    "placeholder": {
+      "x": 180,
+      "y": 200,
+      "width": 640,
+      "height": 640
+    },
+    "tags": [
+      "phone",
+      "card",
+      "creative"
+    ]
+  },
+  {
+    "id": "template-1",
+    "name": "Template 1",
+    "category": "creative",
+    "description": "Custom frame template 1",
+    "svgFile": "template-1.svg",
+    "preview": "template-1-preview.png",
+    "placeholder": {
+      "x": 180,
+      "y": 120,
+      "width": 640,
+      "height": 640
+    },
+    "qrSize": 840,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-1"
+    ]
+  },
+  {
+    "id": "template-2",
+    "name": "Template 2",
+    "category": "creative",
+    "description": "Custom frame template 2",
+    "svgFile": "template-2.svg",
+    "preview": "template-2-preview.png",
+    "placeholder": {
+      "x": 60,
+      "y": 80,
+      "width": 880,
+      "height": 880
+    },
+    "qrSize": 800,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-2"
+    ]
+  },
+  {
+    "id": "template-3",
+    "name": "Template 3",
+    "category": "creative",
+    "description": "Custom frame template 3",
+    "svgFile": "template-3.svg",
+    "preview": "template-3-preview.png",
+    "placeholder": {
+      "x": 195,
+      "y": 210,
+      "width": 620,
+      "height": 620
+    },
+    "qrSize": 780,
+    "qrScale": 0.98,
+    "tags": [
+      "custom",
+      "template-3"
+    ]
+  },
+  {
+    "id": "template-4",
+    "name": "Template 4",
+    "category": "creative",
+    "description": "Custom frame template 4",
+    "svgFile": "template-4.svg",
+    "preview": "template-4-preview.png",
+    "placeholder": {
+      "x": 150,
+      "y": 180,
+      "width": 700,
+      "height": 700
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-4"
+    ]
+  },
+  {
+    "id": "template-5",
+    "name": "Template 5",
+    "category": "creative",
+    "description": "Custom frame template 5",
+    "svgFile": "template-5.svg",
+    "preview": "template-5-preview.png",
+    "placeholder": {
+      "x": 200,
+      "y": 400,
+      "width": 600,
+      "height": 600
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-5"
+    ]
+  },
+  {
+    "id": "template-6",
+    "name": "Template 6",
+    "category": "creative",
+    "description": "Custom frame template 6",
+    "svgFile": "template-6.svg",
+    "preview": "template-6-preview.png",
+    "placeholder": {
+      "x": 30,
+      "y": 30,
+      "width": 480,
+      "height": 480
+    },
+    "qrSize": 360,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-6"
+    ]
+  },
+  {
+    "id": "template-7",
+    "name": "Template 7",
+    "category": "creative",
+    "description": "Custom frame template 7",
+    "svgFile": "template-7.svg",
+    "preview": "template-7-preview.png",
+    "placeholder": {
+      "x": 200,
+      "y": 320,
+      "width": 600,
+      "height": 600
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-7"
+    ]
+  },
+  {
+    "id": "template-8",
+    "name": "Template 8",
+    "category": "creative",
+    "description": "Custom frame template 8",
+    "svgFile": "template-8.svg",
+    "preview": "template-8-preview.png",
+    "placeholder": {
+      "x": 175,
+      "y": 490,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-8"
+    ]
+  },
+  {
+    "id": "template-9",
+    "name": "Template 9",
+    "category": "creative",
+    "description": "Custom frame template 9",
+    "svgFile": "template-9.svg",
+    "preview": "template-9-preview.png",
+    "placeholder": {
+      "x": 170,
+      "y": 210,
+      "width": 680,
+      "height": 680
+    },
+    "qrSize": 720,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-9"
+    ]
+  },
+  {
+    "id": "template-10",
+    "name": "Template 10",
+    "category": "creative",
+    "description": "Custom frame template 10",
+    "svgFile": "template-10.svg",
+    "preview": "template-10-preview.png",
+    "placeholder": {
+      "x": 175,
+      "y": 260,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-10"
+    ]
+  },
+  {
+    "id": "template-11",
+    "name": "Template 11",
+    "category": "creative",
+    "description": "Custom frame template 11",
+    "svgFile": "template-11.svg",
+    "preview": "template-11-preview.png",
+    "placeholder": {
+      "x": 40,
+      "y": 40,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 720,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-11"
+    ]
+  },
+  {
+    "id": "template-12",
+    "name": "Template 12",
+    "category": "creative",
+    "description": "Custom frame template 12",
+    "svgFile": "template-12.svg",
+    "preview": "template-12-preview.png",
+    "placeholder": {
+      "x": 80,
+      "y": 80,
+      "width": 850,
+      "height": 850
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-12"
+    ]
+  },
+  {
+    "id": "template-13",
+    "name": "Template 13",
+    "category": "creative",
+    "description": "Custom frame template 13",
+    "svgFile": "template-13.svg",
+    "preview": "template-13-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-13"
+    ]
+  },
+  {
+    "id": "template-14",
+    "name": "Template 14",
+    "category": "creative",
+    "description": "Custom frame template 14",
+    "svgFile": "template-14.svg",
+    "preview": "template-14-preview.png",
+    "placeholder": {
+      "x": 80,
+      "y": 80,
+      "width": 850,
+      "height": 850
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-14"
+    ]
+  },
+  {
+    "id": "template-15",
+    "name": "Template 15",
+    "category": "creative",
+    "description": "Custom frame template 15",
+    "svgFile": "template-15.svg",
+    "preview": "template-15-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 300,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-15"
+    ]
+  },
+  {
+    "id": "template-16",
+    "name": "Template 16",
+    "category": "creative",
+    "description": "Custom frame template 16",
+    "svgFile": "template-16.svg",
+    "preview": "template-16-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900  ,
+      "height": 900
+    },
+    "qrSize": 720,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-16"
+    ]
+  },
+  {
+    "id": "template-17",
+    "name": "Template 17",
+    "category": "creative",
+    "description": "Custom frame template 17",
+    "svgFile": "template-17.svg",
+    "preview": "template-17-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 703.1999999999999,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-17"
+    ]
+  },
+  {
+    "id": "template-18",
+    "name": "Template 18",
+    "category": "creative",
+    "description": "Custom frame template 18",
+    "svgFile": "template-18.svg",
+    "preview": "template-18-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 195,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-18"
+    ]
+  },
+  {
+    "id": "template-19",
+    "name": "Template 19",
+    "category": "creative",
+    "description": "Custom frame template 19",
+    "svgFile": "template-19.svg",
+    "preview": "template-19-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-19"
+    ]
+  },
+  {
+    "id": "template-20",
+    "name": "Template 20",
+    "category": "creative",
+    "description": "Custom frame template 20",
+    "svgFile": "template-20.svg",
+    "preview": "template-20-preview.png",
+    "placeholder": {
+      "x": 150,
+      "y": 200,
+      "width": 800,
+      "height": 800
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-20"
+    ]
+  },
+  {
+    "id": "template-21",
+    "name": "Template 21",
+    "category": "creative",
+    "description": "Custom frame template 21",
+    "svgFile": "template-21.svg",
+    "preview": "template-21-preview.png",
+    "placeholder": {
+      "x": 150,
+      "y": 195,
+      "width": 800,
+      "height": 800
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-21"
+    ]
+  },
+  {
+    "id": "template-22",
+    "name": "Template 22",
+    "category": "creative",
+    "description": "Custom frame template 22",
+    "svgFile": "template-22.svg",
+    "preview": "template-22-preview.png",
+    "placeholder": {
+      "x": 175,
+      "y": 340,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-22"
+    ]
+  },
+  {
+    "id": "template-23",
+    "name": "Template 23",
+    "category": "creative",
+    "description": "Custom frame template 23",
+    "svgFile": "template-23.svg",
+    "preview": "template-23-preview.png",
+    "placeholder": {
+      "x": 50,
+      "y": 50,
+      "width": 900,
+      "height": 900
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-23"
+    ]
+  },
+  {
+    "id": "template-24",
+    "name": "Template 24",
+    "category": "creative",
+    "description": "Custom frame template 24",
+    "svgFile": "template-24.svg",
+    "preview": "template-24-preview.png",
+    "placeholder": {
+      "x": 100,
+      "y": 300,
+      "width": 800,
+      "height": 800
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-24"
+    ]
+  },
+  {
+    "id": "template-25",
+    "name": "Template 25",
+    "category": "creative",
+    "description": "Custom frame template 25",
+    "svgFile": "template-25.svg",
+    "preview": "template-25-preview.png",
+    "placeholder": {
+      "x": 175,
+      "y": 195,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-25"
+    ]
+  },
+  {
+    "id": "template-26",
+    "name": "Template 26",
+    "category": "creative",
+    "description": "Custom frame template 26",
+    "svgFile": "template-26.svg",
+    "preview": "template-26-preview.png",
+    "placeholder": {
+      "x": 100,
+      "y": 400,
+      "width": 800,
+      "height": 800
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-26"
+    ]
+  },
+  {
+    "id": "template-27",
+    "name": "Template 27",
+    "category": "creative",
+    "description": "Custom frame template 27",
+    "svgFile": "template-27.svg",
+    "preview": "template-27-preview.png",
+    "placeholder": {
+      "x": 100,
+      "y": 100,
+      "width": 780,
+      "height": 780
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-27"
+    ]
+  },
+  {
+    "id": "template-28",
+    "name": "Template 28",
+    "category": "creative",
+    "description": "Custom frame template 28",
+    "svgFile": "template-28.svg",
+    "preview": "template-28-preview.png",
+    "placeholder": {
+      "x": 130,
+      "y": 400,
+      "width": 750,
+      "height": 750
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-28"
+    ]
+  },
+  {
+    "id": "template-29",
+    "name": "Template 29",
+    "category": "creative",
+    "description": "Custom frame template 29",
+    "svgFile": "template-29.svg",
+    "preview": "template-29-preview.png",
+    "placeholder": {
+      "x": 200,
+      "y": 100,
+      "width": 600  ,
+      "height": 600
+    },
+    "qrSize": 654,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-29"
+    ]
+  },
+  {
+    "id": "template-30",
+    "name": "Template 30",
+    "category": "creative",
+    "description": "Custom frame template 30",
+    "svgFile": "template-30.svg",
+    "preview": "template-30-preview.png",
+    "placeholder": {
+      "x": 300,
+      "y": 180,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 594,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-30"
+    ]
+  },
+  {
+    "id": "template-31",
+    "name": "Template 31",
+    "category": "creative",
+    "description": "Custom frame template 31",
+    "svgFile": "template-31.svg",
+    "preview": "template-31-preview.png",
+    "placeholder": {
+      "x": 175,
+      "y": 300,
+      "width": 650,
+      "height": 650
+    },
+    "qrSize": 780,
+    "qrScale": 0.95,
+    "tags": [
+      "custom",
+      "template-31"
+    ]
+  }
+]

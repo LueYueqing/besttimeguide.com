@@ -1,0 +1,20 @@
+import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { auth } from '@/lib/auth'
+import DashboardClient from './dashboard-client'
+
+export const metadata: Metadata = {
+  title: 'Dashboard | CustomQR.pro',
+  description: 'Manage your QR codes, view analytics, and track performance.',
+}
+
+export default async function DashboardPage() {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect('/auth/signin?callbackUrl=/dashboard')
+  }
+
+  return <DashboardClient />
+}
+

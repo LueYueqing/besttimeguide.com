@@ -48,20 +48,20 @@ export default function HelpPage() {
       title: 'API & Integration',
       icon: '💻',
       articles: [
-        { title: 'Getting your API key', href: '/api-docs' },
-        { title: 'Generating QR codes via API', href: '/api-docs#generate' },
-        { title: 'Batch generation', href: '/api-docs#batch' },
-        { title: 'API rate limits', href: '/api-docs#rate-limits' },
+        { title: 'Getting your API key', href: '/docs/api' },
+        { title: 'Generating QR codes via API', href: '/docs/api#generate' },
+        { title: 'Batch generation', href: '/docs/api#batch' },
+        { title: 'API rate limits', href: '/docs/api#rate-limits' },
       ]
     },
     {
       title: 'Troubleshooting',
       icon: '🔧',
       articles: [
-        { title: 'QR code not scanning', href: '/faq' },
-        { title: 'Download issues', href: '/faq' },
-        { title: 'API errors', href: '/api-docs' },
-        { title: 'Account access problems', href: '/contact' },
+        { title: 'QR code not scanning', href: '/help/faq' },
+        { title: 'Download issues', href: '/help/faq' },
+        { title: 'API errors', href: '/docs/api' },
+        { title: 'Account access problems', href: '/help/contact' },
       ]
     },
     {
@@ -69,9 +69,9 @@ export default function HelpPage() {
       icon: '💳',
       articles: [
         { title: 'Upgrading to Professional', href: '/pricing' },
-        { title: 'Canceling subscription', href: '/faq' },
-        { title: 'Payment issues', href: '/contact' },
-        { title: 'Account settings', href: '/contact' },
+        { title: 'Canceling subscription', href: '/help/faq' },
+        { title: 'Payment issues', href: '/help/contact' },
+        { title: 'Account settings', href: '/help/contact' },
       ]
     }
   ]
@@ -95,7 +95,7 @@ export default function HelpPage() {
     {
       question: 'Is there an API available?',
       answer: 'Yes! Professional and Enterprise plans include full RESTful API access. Generate QR codes programmatically, access analytics, and automate workflows. See our API documentation for details.',
-      href: '/api-docs'
+      href: '/docs/api'
     },
     {
       question: 'How much does it cost?',
@@ -211,7 +211,7 @@ export default function HelpPage() {
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-6">
-              <Link href="/faq" className="card p-6 text-center hover:shadow-lg transition-shadow">
+              <Link href="/help/faq" className="card p-6 text-center hover:shadow-lg transition-shadow">
                 <div className="text-4xl mb-4">❓</div>
                 <h3 className="text-lg font-bold text-neutral-900 mb-2">FAQ</h3>
                 <p className="text-neutral-700 text-sm">
@@ -227,7 +227,7 @@ export default function HelpPage() {
                 </p>
               </Link>
 
-              <Link href="/contact" className="card p-6 text-center hover:shadow-lg transition-shadow">
+              <Link href="/help/contact" className="card p-6 text-center hover:shadow-lg transition-shadow">
                 <div className="text-4xl mb-4">💬</div>
                 <h3 className="text-lg font-bold text-neutral-900 mb-2">Contact Support</h3>
                 <p className="text-neutral-700 text-sm">
@@ -251,11 +251,11 @@ export default function HelpPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="/contact" className="btn bg-white text-primary-600 hover:bg-neutral-50 btn-lg font-bold">
+              <a href="/help/contact" className="btn bg-white text-primary-600 hover:bg-neutral-50 btn-lg font-bold">
                 <span>📞</span>
                 Contact Support
               </a>
-              <a href="/faq" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
+              <a href="/help/faq" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
                 <span>❓</span>
                 View FAQ
               </a>

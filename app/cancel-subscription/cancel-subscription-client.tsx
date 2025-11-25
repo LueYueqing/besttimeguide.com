@@ -98,7 +98,7 @@ export default function CancelSubscriptionClient() {
 
                   <p className="text-sm text-neutral-500 mb-6">
                     Note: If you don&apos;t remember the email you used, please{' '}
-                    <a href="/contact" className="font-semibold text-primary-600 hover:text-primary-700">
+                    <a href="/help/contact" className="font-semibold text-primary-600 hover:text-primary-700">
                       contact us
                     </a>
                     .
@@ -160,7 +160,7 @@ export default function CancelSubscriptionClient() {
               <p className="text-neutral-600 mb-4">
                 You can also contact us in the live support 24/7 available.
               </p>
-              <a className="btn btn-primary btn-sm" href="/contact">
+              <a className="btn btn-primary btn-sm" href="/help/contact">
                 Support Center
                 <span className="ml-2">→</span>
               </a>

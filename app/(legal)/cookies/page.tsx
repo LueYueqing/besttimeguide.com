@@ -3,11 +3,11 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Cookies Policy | CustomQR.pro',
-  description: 'Learn about how CustomQR.pro uses cookies and similar technologies to enhance your experience and protect your privacy.',
-  keywords: 'cookies policy, cookies, tracking, privacy, CustomQR.pro',
+  title: 'Cookies Policy',
+  description: 'Learn about how we use cookies and similar technologies to enhance your experience and protect your privacy.',
+  keywords: 'cookies policy, cookies, tracking, privacy',
   alternates: {
-    canonical: 'https://customqr.pro/cookies',
+    canonical: '/cookies',
   },
 }
 
@@ -51,7 +51,7 @@ export default function CookiesPage() {
                   They are widely used to make websites work more efficiently and provide a better user experience.
                 </p>
                 <p>
-                  At CustomQR.pro, we use cookies and similar technologies to enhance your experience, analyze usage patterns, 
+                  We use cookies and similar technologies to enhance your experience, analyze usage patterns, 
                   and improve our services while respecting your privacy choices.
                 </p>
               </div>
@@ -297,7 +297,7 @@ export default function CookiesPage() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                  <a href="/contact" className="btn btn-primary">
+                  <a href="/help/contact" className="btn btn-primary">
                     <span>📧</span>
                     Contact Us
                   </a>

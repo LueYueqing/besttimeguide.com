@@ -458,7 +458,7 @@ export default function PricingPage() {
       <section className="section bg-gradient-primary">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Why Choose CustomQR.pro?</h2>
+            <h2 className="section-title">Why Choose Us?</h2>
             <p className="section-subtitle">
               The smart choice for professional QR code generation
             </p>
@@ -609,7 +609,7 @@ export default function PricingPage() {
             <div className="card p-6">
               <h3 className="font-bold text-lg mb-3">Do you offer refunds?</h3>
               <p className="text-neutral-600">
-                We offer a 30-day money-back guarantee. If you're not satisfied with CustomQR.pro 
+                We offer a 30-day money-back guarantee. If you're not satisfied with our service 
                 within the first 30 days, we'll refund your payment in full.
               </p>
             </div>
@@ -648,7 +648,7 @@ export default function PricingPage() {
               Ready to Get Started?
             </h2>
             <p className="text-xl lg:text-2xl text-primary-100 mb-8">
-              Join 2,500+ professionals who trust CustomQR.pro. 
+              Join thousands of professionals who trust our platform. 
               Start your subscription today!
             </p>
             

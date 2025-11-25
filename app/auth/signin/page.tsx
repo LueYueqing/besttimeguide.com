@@ -10,7 +10,7 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isDevLoading, setIsDevLoading] = useState(false)
   const [error, setError] = useState('')
-  const [devEmail, setDevEmail] = useState('dev@customqr.pro')
+  const [devEmail, setDevEmail] = useState('dev@example.com')
   const [devPassword, setDevPassword] = useState('dev123')
   const router = useRouter()
 
@@ -58,7 +58,7 @@ export default function SignInPage() {
       console.log('[Dev Login] Sign in result:', result)
 
       if (result?.error) {
-        setError(`Login failed: ${result.error}. Use dev@customqr.pro / dev123`)
+        setError(`Login failed: ${result.error}. Use dev@example.com / dev123`)
         setIsDevLoading(false)
       } else if (result?.ok) {
         // Wait a bit for session to be established
@@ -87,7 +87,7 @@ export default function SignInPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-neutral-900">
-            Sign in to CustomQR.pro
+            Sign in to Your App
           </h2>
           <p className="mt-2 text-sm text-neutral-600">
             Sign in with your Google account
@@ -116,7 +116,7 @@ export default function SignInPage() {
                     value={devEmail}
                     onChange={(e) => setDevEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    placeholder="dev@customqr.pro"
+                    placeholder="dev@example.com"
                     required
                   />
                 </div>

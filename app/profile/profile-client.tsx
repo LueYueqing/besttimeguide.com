@@ -118,7 +118,7 @@ export default function ProfileClient() {
           <div className="flex flex-col gap-3 md:items-end">
             <p className="max-w-sm text-sm text-white/80">
               {planDescriptions[planKey] ??
-                'Welcome to CustomQR.pro — manage your QR codes and subscription here.'}
+                'Welcome to Your App — manage your account and subscription here.'}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link

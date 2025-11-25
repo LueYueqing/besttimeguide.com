@@ -339,7 +339,7 @@ export default function PrivacyPage() {
                   <p><strong>Mailing Address:</strong> CustomQR.pro Privacy Team, P.O. Box 1234, San Francisco, CA 94102, United States</p>
                 </div>
                 <div className="mt-6">
-                  <a href="/contact" className="btn btn-primary">
+                  <a href="/help/contact" className="btn btn-primary">
                     <span>📧</span>
                     Contact Privacy Team
                   </a>

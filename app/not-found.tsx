@@ -4,8 +4,8 @@ import Navigation from '../components/Navigation'
 import Footer from '../components/Footer'
 
 export const metadata: Metadata = {
-  title: '404 - Page Not Found | CustomQR.pro',
-  description: 'Sorry, the page you are looking for could not be found. Return to CustomQR.pro homepage or explore our QR code generator.',
+  title: '404 - Page Not Found',
+  description: 'Sorry, the page you are looking for could not be found. Return to homepage or explore our help center.',
 }
 
 export default function NotFound() {
@@ -79,10 +79,10 @@ export default function NotFound() {
                 <Link href="/pricing" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
                   💎 Pricing Plans
                 </Link>
-                <Link href="/faq" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
+                <Link href="/help/faq" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
                   ❓ FAQ
                 </Link>
-                <Link href="/contact" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
+                <Link href="/help/contact" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
                   📞 Contact Us
                 </Link>
                 <Link href="/about" className="p-4 rounded-xl bg-neutral-50 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 font-medium">
@@ -130,11 +130,11 @@ export default function NotFound() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/contact" className="btn btn-primary btn-lg">
+              <Link href="/help/contact" className="btn btn-primary btn-lg">
                 <span>💬</span>
                 Contact Support
               </Link>
-              <Link href="/faq" className="btn btn-secondary btn-lg">
+              <Link href="/help/faq" className="btn btn-secondary btn-lg">
                 <span>📚</span>
                 Browse FAQ
               </Link>

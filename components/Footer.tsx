@@ -38,7 +38,7 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
               <div className="space-y-3 text-neutral-400">
                 <Link href="/features" className="block hover:text-primary-400 transition-colors">Features</Link>
                 <Link href="/pricing" className="block hover:text-primary-400 transition-colors">Pricing</Link>
-                <Link href="/api-docs" className="block hover:text-primary-400 transition-colors">API Docs</Link>
+                <Link href="/docs/api" className="block hover:text-primary-400 transition-colors">API Docs</Link>
                 <Link href="/help" className="block hover:text-primary-400 transition-colors">Help Center</Link>
               </div>
             </div>
@@ -47,8 +47,8 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
             <div>
               <h4 className="font-bold mb-4">Support</h4>
               <div className="space-y-3 text-neutral-400">
-                <Link href="/faq" className="block hover:text-primary-400 transition-colors">FAQ</Link>
-                <Link href="/contact" className="block hover:text-primary-400 transition-colors">Contact Us</Link>
+                <Link href="/help/faq" className="block hover:text-primary-400 transition-colors">FAQ</Link>
+                <Link href="/help/contact" className="block hover:text-primary-400 transition-colors">Contact Us</Link>
                 <Link href="/tutorials" className="block hover:text-primary-400 transition-colors">Tutorials</Link>
                 <Link href="/cancel-subscription" className="block hover:text-primary-400 transition-colors">Cancel Subscription</Link>
               </div>
@@ -105,8 +105,8 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
           <div className="flex flex-wrap items-center justify-center gap-8 mb-8 text-neutral-300">
             <Link href="/" className="hover:text-primary-400 transition-colors">Home</Link>
             <Link href="/pricing" className="hover:text-primary-400 transition-colors">Pricing</Link>
-            <Link href="/faq" className="hover:text-primary-400 transition-colors">FAQ</Link>
-            <Link href="/contact" className="hover:text-primary-400 transition-colors">Contact</Link>
+            <Link href="/help/faq" className="hover:text-primary-400 transition-colors">FAQ</Link>
+            <Link href="/help/contact" className="hover:text-primary-400 transition-colors">Contact</Link>
             <Link href="/about" className="hover:text-primary-400 transition-colors">About</Link>
             <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms</Link>

@@ -3,35 +3,38 @@ import './globals.css'
 import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
-  title: 'CustomQR.pro - Professional Custom QR Code Generator',
-  description: 'Create professional custom QR codes with advanced design options. Generate branded QR codes with logos, colors, and analytics. Free QR generator with enterprise features.',
-  keywords: 'custom qr code generator, qr code with logo, professional qr codes, free qr generator, dynamic qr codes, qr code analytics, branded qr codes',
-  authors: [{ name: 'CustomQR.pro Team' }],
-  creator: 'CustomQR.pro',
-  publisher: 'CustomQR.pro',
-  metadataBase: new URL('https://customqr.pro'),
+  title: {
+    default: 'Your App Name',
+    template: '%s | Your App Name',
+  },
+  description: 'Your app description - built with Next.js 15 and modern web technologies.',
+  keywords: ['keyword1', 'keyword2', 'keyword3'],
+  authors: [{ name: 'Your Team' }],
+  creator: 'Your App Name',
+  publisher: 'Your App Name',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   openGraph: {
     type: 'website',
-    locale: 'en_US',
-    url: 'https://customqr.pro',
-    siteName: 'CustomQR.pro',
-    title: 'CustomQR.pro - Professional Custom QR Code Generator',
-    description: 'Create professional custom QR codes with advanced design options. Generate branded QR codes with logos, colors, and analytics.',
+    locale: 'zh_CN',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    siteName: 'Your App Name',
+    title: 'Your App Name',
+    description: 'Your app description',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'CustomQR.pro - Professional QR Code Generator',
+        alt: 'Your App Name',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CustomQR.pro - Professional Custom QR Code Generator',
+    title: 'Your App Name',
     description: 'Create professional custom QR codes with advanced design options.',
     images: ['/og-image.png'],
-    creator: '@customqrpro',
+    creator: 'Your App Name',
   },
   robots: {
     index: true,
@@ -79,9 +82,9 @@ export default function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="CustomQR.pro" />
+        <meta name="apple-mobile-web-app-title" content="Your App" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="application-name" content="CustomQR.pro" />
+        <meta name="application-name" content="Your App" />
       </head>
       <body className="font-sans antialiased bg-neutral-50 text-neutral-700">
         <Providers>

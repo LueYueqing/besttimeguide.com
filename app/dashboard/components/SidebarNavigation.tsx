@@ -52,7 +52,7 @@ export default function SidebarNavigation({
   const isFree = plan === 'free'
   
   // 开发测试用户不受限制（仅在开发环境）
-  const isDevUser = typeof window !== 'undefined' && user.email === 'dev@customqr.pro'
+  const isDevUser = typeof window !== 'undefined' && user.email === 'dev@example.com'
 
   // 检查 Pro 试用权限
   const proTrialExpiresAt = user.proTrialExpiresAt
@@ -299,9 +299,9 @@ export default function SidebarNavigation({
               <span>Account</span>
             </Link>
             <Link
-              href="/contact"
+              href="/help/contact"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname === '/contact'
+                pathname === '/help/contact'
                   ? 'bg-neutral-100 text-neutral-900'
                   : 'text-neutral-600 hover:bg-neutral-50'
               }`}

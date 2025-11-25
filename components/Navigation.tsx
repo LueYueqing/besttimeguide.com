@@ -24,7 +24,7 @@ export default function Navigation({ variant }: NavigationProps) {
     { href: '/features', label: 'Features' },
     { href: '/blog', label: 'Blog' },
     { href: '/pricing', label: 'Pricing' },
-    { href: '/faq', label: 'FAQ' },
+    { href: '/help/faq', label: 'FAQ' },
   ]
 
   const cta = {

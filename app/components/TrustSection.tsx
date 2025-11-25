@@ -7,9 +7,9 @@ export default function TrustSection() {
       <section id="features" className="section bg-gradient-primary">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Why Choose CustomQR.pro?</h2>
+            <h2 className="section-title">Why Choose Us?</h2>
             <p className="section-subtitle">
-              Professional-grade QR code generation with enterprise-level features
+              Professional-grade platform with enterprise-level features
             </p>
           </div>
 
@@ -62,7 +62,7 @@ export default function TrustSection() {
           <div className="section-header">
             <h2 className="section-title">Trusted by Professionals Worldwide</h2>
             <p className="section-subtitle">
-              Join thousands of businesses and professionals who choose CustomQR.pro
+              Join thousands of businesses and professionals who trust our platform
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export default function TrustSection() {
                 <span className="text-warning-500">⭐</span>
               </div>
               <blockquote className="text-neutral-700 mb-4">
-                "CustomQR.pro saved us hours of work. The bulk generation feature is incredible, 
+                "This platform saved us hours of work. The features are incredible, 
                 and the analytics help us track our marketing campaigns effectively."
               </blockquote>
               <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function TrustSection() {
               Ready to Create Professional QR Codes?
             </h2>
             <p className="text-xl lg:text-2xl text-primary-100 mb-8">
-              Join 2,500+ professionals who trust CustomQR.pro for their QR code needs. 
+              Join thousands of professionals who trust our platform. 
               Start your subscription today!
             </p>
             
@@ -212,7 +212,7 @@ export default function TrustSection() {
                 <span>🎯</span>
                 Get Started Now
               </a>
-              <a href="/contact" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
+              <a href="/help/contact" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
                 <span>📞</span>
                 Talk to Sales
               </a>

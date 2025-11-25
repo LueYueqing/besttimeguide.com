@@ -227,16 +227,16 @@ export async function sendContactAutoReply(userEmail: string, userName: string):
             <p>Thank you for reaching out to CustomQR.pro. We've received your message and our team will get back to you within 24 hours during business days.</p>
             <p>In the meantime, you might find these resources helpful:</p>
             <ul>
-              <li><a href="https://customqr.pro/faq">Frequently Asked Questions</a></li>
-              <li><a href="https://customqr.pro/blog">Blog & Guides</a></li>
-              <li><a href="https://customqr.pro/api-docs">API Documentation</a></li>
+              <li><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/help/faq">Frequently Asked Questions</a></li>
+              <li><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/blog">Blog & Guides</a></li>
+              <li><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/docs/api">API Documentation</a></li>
             </ul>
             <p>If you have any urgent questions, feel free to reply to this email.</p>
-            <p>Best regards,<br>The CustomQR.pro Team</p>
+            <p>Best regards,<br>${process.env.NEXT_PUBLIC_APP_NAME || 'Your App'} Team</p>
           </div>
           <div class="footer">
-            <p>CustomQR.pro - Professional QR Code Generator</p>
-            <p><a href="https://customqr.pro">Visit our website</a> | <a href="https://customqr.pro/contact">Contact us</a></p>
+            <p>${process.env.NEXT_PUBLIC_APP_NAME || 'Your App'}</p>
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}">Visit our website</a> | <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/help/contact">Contact us</a></p>
           </div>
         </div>
       </body>

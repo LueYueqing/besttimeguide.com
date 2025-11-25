@@ -298,7 +298,7 @@ export default function AboutPage() {
                 <span>🚀</span>
                 Get Started
               </a>
-              <a href="/contact" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
+              <a href="/help/contact" className="btn btn-ghost text-white border-white/30 hover:bg-white/10 btn-lg">
                 <span>📞</span>
                 Contact Us
               </a>

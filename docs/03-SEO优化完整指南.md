@@ -161,7 +161,7 @@
 
 #### 1. 抓取优化
 - ✅ robots.txt正确配置
-- ✅ sitemap.xml自动生成
+- ✅ sitemap.xml自动生成（**必做！**详见下方规定）
 - ✅ 清晰的网站导航
 - ✅ 有效的内部链接
 - ✅ 避免孤立页面
@@ -863,8 +863,8 @@ flowchart TD
 
 3. **技术检查**（2小时）
    - HTTPS启用
-   - sitemap.xml
-   - robots.txt
+   - sitemap.xml（**必做！**必须使用Next.js 15 App Router的sitemap.ts）
+   - robots.txt（**必做！**必须使用Next.js 15 App Router的robots.ts）
    - Core Web Vitals
 
 4. **Google工具配置**（1小时）

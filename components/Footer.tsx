@@ -8,80 +8,113 @@ interface FooterProps {
 export default function Footer({ variant = 'simple' }: FooterProps) {
   if (variant === 'full') {
     return (
-      <footer className="bg-neutral-900 text-white section">
-        <div className="container">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            {/* 品牌信息 */}
-            <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">
-                BestTime<span className="text-gradient">Guide</span>
+      <footer className="wikihow-menu-bg text-white py-12">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* 左侧：Logo + 搜索框 */}
+            <div>
+              <h3 className="text-2xl font-bold mb-4 text-white">
+                BestTime<span className="text-wikihow-button">Guide</span>
               </h3>
-              <p className="text-neutral-400 text-lg mb-6 max-w-md">
-                Find the best time for everything. Expert guides on travel, social media, health, shopping, and lifestyle.
+              <div className="wikihow-search-box mb-4">
+                <input
+                  type="search"
+                  placeholder="Search for best time to..."
+                  className="wikihow-search-input"
+                />
+                <svg
+                  className="wikihow-search-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              
+              {/* 社交媒体图标 */}
+              <div className="flex gap-3 mt-4">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* 中间：导航链接（两列） */}
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <h4 className="font-bold mb-4 text-white">Navigation</h4>
+                <div className="space-y-2 text-white/90">
+                  <Link href="/" className="block hover:text-white transition-colors">Home</Link>
+                  <Link href="/about" className="block hover:text-white transition-colors">About Us</Link>
+                  <Link href="/help/contact" className="block hover:text-white transition-colors">Contact Us</Link>
+                  <Link href="/help/faq" className="block hover:text-white transition-colors">FAQ</Link>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold mb-4 text-white">Legal</h4>
+                <div className="space-y-2 text-white/90">
+                  <Link href="/privacy" className="block hover:text-white transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="block hover:text-white transition-colors">Terms of Use</Link>
+                  <Link href="/cookies" className="block hover:text-white transition-colors">Cookie Policy</Link>
+                  <Link href="/sitemap.xml" className="block hover:text-white transition-colors">Site Map</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* 右侧：邮件订阅 */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h4 className="font-bold text-white">BestTimeGuide Newsletter</h4>
+              </div>
+              <p className="text-white/90 mb-4 text-sm">
+                Helpful guides delivered to your inbox every week!
               </p>
-              <div className="flex items-center gap-4">
-                <div className="text-sm">
-                  <div className="text-white font-semibold">99.9% Uptime</div>
-                  <div className="text-neutral-400">Reliable Service</div>
-                </div>
-                <div className="text-sm">
-                  <div className="text-white font-semibold">24/7 Support</div>
-                  <div className="text-neutral-400">Always Here to Help</div>
-                </div>
-              </div>
-            </div>
-
-            {/* 分类链接 */}
-            <div>
-              <h4 className="font-bold mb-4">Categories</h4>
-              <div className="space-y-3 text-neutral-400">
-                <Link href="/travel" className="block hover:text-primary-400 transition-colors">Travel</Link>
-                <Link href="/social-media" className="block hover:text-primary-400 transition-colors">Social Media</Link>
-                <Link href="/health" className="block hover:text-primary-400 transition-colors">Health</Link>
-                <Link href="/shopping" className="block hover:text-primary-400 transition-colors">Shopping</Link>
-                <Link href="/lifestyle" className="block hover:text-primary-400 transition-colors">Lifestyle</Link>
-              </div>
-            </div>
-
-            {/* 支持链接 */}
-            <div>
-              <h4 className="font-bold mb-4">Support</h4>
-              <div className="space-y-3 text-neutral-400">
-                <Link href="/help/faq" className="block hover:text-primary-400 transition-colors">FAQ</Link>
-                <Link href="/help/contact" className="block hover:text-primary-400 transition-colors">Contact Us</Link>
-                <Link href="/tutorials" className="block hover:text-primary-400 transition-colors">Tutorials</Link>
-                <Link href="/cancel-subscription" className="block hover:text-primary-400 transition-colors">Cancel Subscription</Link>
+              <div className="space-y-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full px-4 py-2 rounded-lg text-neutral-900 bg-white border-none focus:outline-none focus:ring-2 focus:ring-white/50"
+                />
+                <button
+                  type="button"
+                  className="wikihow-btn-large"
+                  style={{ width: '100%' }}
+                >
+                  Sign me up!
+                </button>
+                <p className="text-white/70 text-xs mt-2">
+                  By signing up you are agreeing to receive emails according to our privacy policy.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* 热门指南快速链接 */}
-          <div className="border-t border-neutral-800 pt-8 mb-8">
-            <h4 className="font-bold mb-4 text-center">Popular Guides</h4>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-400">
-              <Link href="/best-time-to-visit-japan" className="hover:text-primary-400 transition-colors">Best Time to Visit Japan</Link>
-              <Link href="/best-time-to-post-on-instagram" className="hover:text-primary-400 transition-colors">Best Time to Post on Instagram</Link>
-              <Link href="/best-time-to-post-on-tiktok" className="hover:text-primary-400 transition-colors">Best Time to Post on TikTok</Link>
-              <Link href="/best-time-to-visit-hawaii" className="hover:text-primary-400 transition-colors">Best Time to Visit Hawaii</Link>
-              <Link href="/best-time-to-take-creatine" className="hover:text-primary-400 transition-colors">Best Time to Take Creatine</Link>
-              <Link href="/best-time-to-buy-a-car" className="hover:text-primary-400 transition-colors">Best Time to Buy a Car</Link>
+          {/* 底部版权信息 */}
+          <div className="border-t border-white/20 pt-6 mt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-white/80 text-sm">
+                © 2025 BestTimeGuide. All rights reserved.
+              </p>
+              <div className="flex items-center gap-2 text-white/60 text-xs">
+                <span>Build: {getBuildTimeFormatted()}</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="border-t border-neutral-800 pt-8 text-center">
-            <div className="flex flex-wrap items-center justify-center gap-8 mb-4 text-sm text-neutral-400">
-              <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms of Service</Link>
-              <Link href="/cookies" className="hover:text-primary-400 transition-colors">Cookie Policy</Link>
-              <Link href="/about" className="hover:text-primary-400 transition-colors">About Us</Link>
-              <Link href="/tutorials" className="hover:text-primary-400 transition-colors">Tutorials</Link>
-            </div>
-            <p className="text-neutral-500">
-              © 2025 BestTimeGuide.com. Find the Best Time for Everything
-            </p>
-            <p className="text-neutral-600 text-xs mt-2 opacity-50">
-              Build: {getBuildTimeFormatted()}
-            </p>
           </div>
         </div>
       </footer>
@@ -90,35 +123,35 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
 
   // Simple footer for most pages
   return (
-    <footer className="bg-neutral-900 text-white section">
-      <div className="container">
+    <footer className="wikihow-menu-bg text-white py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center">
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold mb-4">
-              BestTime<span className="text-gradient">Guide</span>
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold mb-3 text-white">
+              BestTime<span className="text-wikihow-button">Guide</span>
             </h3>
-            <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
+            <p className="text-white/90 text-sm max-w-2xl mx-auto">
               Find the best time for everything. Expert guides with data-driven insights.
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-8 mb-8 text-neutral-300">
-            <Link href="/" className="hover:text-primary-400 transition-colors">Home</Link>
-            <Link href="/travel" className="hover:text-primary-400 transition-colors">Travel</Link>
-            <Link href="/social-media" className="hover:text-primary-400 transition-colors">Social Media</Link>
-            <Link href="/health" className="hover:text-primary-400 transition-colors">Health</Link>
-            <Link href="/help/faq" className="hover:text-primary-400 transition-colors">FAQ</Link>
-            <Link href="/help/contact" className="hover:text-primary-400 transition-colors">Contact</Link>
-            <Link href="/about" className="hover:text-primary-400 transition-colors">About</Link>
-            <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms</Link>
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-6 text-white/90 text-sm">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+            <Link href="/travel" className="hover:text-white transition-colors">Travel</Link>
+            <Link href="/social-media" className="hover:text-white transition-colors">Social Media</Link>
+            <Link href="/health" className="hover:text-white transition-colors">Health</Link>
+            <Link href="/help/faq" className="hover:text-white transition-colors">FAQ</Link>
+            <Link href="/help/contact" className="hover:text-white transition-colors">Contact</Link>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           </div>
           
-          <div className="border-t border-neutral-800 pt-8">
-            <p className="text-neutral-500">
-              © 2025 CustomQR.pro. All rights reserved.
+          <div className="border-t border-white/20 pt-6">
+            <p className="text-white/80 text-sm">
+              © 2025 BestTimeGuide. All rights reserved.
             </p>
-            <p className="text-neutral-600 text-xs mt-2 opacity-50">
+            <p className="text-white/60 text-xs mt-2">
               Build: {getBuildTimeFormatted()}
             </p>
           </div>

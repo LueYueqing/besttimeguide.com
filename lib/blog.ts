@@ -1,6 +1,6 @@
-import fs from 'fs'
-import path from 'path'
-import matter from 'gray-matter'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export interface BlogPost {
   slug: string
@@ -15,8 +15,6 @@ export interface BlogPost {
   featured?: boolean
 }
 
-const postsDirectory = path.join(process.cwd(), 'content', 'blog')
-
 // 计算阅读时间（基于平均阅读速度200字/分钟）
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200
@@ -24,68 +22,79 @@ function calculateReadingTime(content: string): number {
   return Math.ceil(words / wordsPerMinute)
 }
 
-// 获取所有文章
-export function getAllPosts(): BlogPost[] {
-  if (!fs.existsSync(postsDirectory)) {
-    return []
+// 解析tags（从JSON字符串或数组）
+function parseTags(tags: string | null | undefined): string[] {
+  if (!tags) return []
+  try {
+    const parsed = JSON.parse(tags)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    // 如果不是JSON，尝试按逗号分割
+    return tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
   }
+}
 
-  const fileNames = fs.readdirSync(postsDirectory)
-  const allPostsData = fileNames
-    .filter((fileName) => fileName.endsWith('.md'))
-    .map((fileName) => {
-      const slug = fileName.replace(/\.md$/, '')
-      const fullPath = path.join(postsDirectory, fileName)
-      const fileContents = fs.readFileSync(fullPath, 'utf8')
-      const { data, content } = matter(fileContents)
-
-      return {
-        slug,
-        title: data.title || '',
-        description: data.description || '',
-        date: data.date || '',
-        author: data.author || 'besttimeguide.com Team',
-        category: data.category || 'General',
-        tags: data.tags || [],
-        content,
-        readingTime: calculateReadingTime(content),
-        featured: data.featured || false,
-      } as BlogPost
+// 获取所有已发布的文章
+export async function getAllPosts(): Promise<BlogPost[]> {
+  try {
+    const articles = await prisma.article.findMany({
+      where: {
+        published: true,
+      },
+      include: {
+        category: true,
+        author: true,
+      },
+      orderBy: {
+        publishedAt: 'desc',
+      },
     })
 
-  // 按日期排序（最新的在前）
-  return allPostsData.sort((a, b) => {
-    if (a.date < b.date) {
-      return 1
-    } else {
-      return -1
-    }
-  })
+    return articles.map((article) => ({
+      slug: article.slug,
+      title: article.title,
+      description: article.description || '',
+      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+      author: article.author.name || article.author.email || 'besttimeguide.com Team',
+      category: article.category.name,
+      tags: parseTags(article.tags),
+      content: article.content,
+      readingTime: article.readingTime || calculateReadingTime(article.content),
+      featured: article.featured,
+    }))
+  } catch (error) {
+    console.error('Error fetching posts:', error)
+    return []
+  }
 }
 
 // 根据slug获取单篇文章
-export function getPostBySlug(slug: string): BlogPost | null {
+export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
-    const fullPath = path.join(postsDirectory, `${slug}.md`)
-    if (!fs.existsSync(fullPath)) {
+    const article = await prisma.article.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        author: true,
+      },
+    })
+
+    if (!article || !article.published) {
       return null
     }
 
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
-    const { data, content } = matter(fileContents)
-
     return {
-      slug,
-      title: data.title || '',
-      description: data.description || '',
-      date: data.date || '',
-      author: data.author || 'besttimeguide.com Team',
-      category: data.category || 'General',
-      tags: data.tags || [],
-      content,
-      readingTime: calculateReadingTime(content),
-      featured: data.featured || false,
-    } as BlogPost
+      slug: article.slug,
+      title: article.title,
+      description: article.description || '',
+      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+      author: article.author.name || article.author.email || 'besttimeguide.com Team',
+      category: article.category.name,
+      tags: parseTags(article.tags),
+      content: article.content,
+      readingTime: article.readingTime || calculateReadingTime(article.content),
+      featured: article.featured,
+    }
   } catch (error) {
     console.error(`Error reading post ${slug}:`, error)
     return null
@@ -93,26 +102,134 @@ export function getPostBySlug(slug: string): BlogPost | null {
 }
 
 // 根据分类获取文章
-export function getPostsByCategory(category: string): BlogPost[] {
-  return getAllPosts().filter((post) => post.category === category)
+export async function getPostsByCategory(categorySlug: string): Promise<BlogPost[]> {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug: categorySlug },
+    })
+
+    if (!category) {
+      return []
+    }
+
+    const articles = await prisma.article.findMany({
+      where: {
+        categoryId: category.id,
+        published: true,
+      },
+      include: {
+        category: true,
+        author: true,
+      },
+      orderBy: {
+        publishedAt: 'desc',
+      },
+    })
+
+    return articles.map((article) => ({
+      slug: article.slug,
+      title: article.title,
+      description: article.description || '',
+      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+      author: article.author.name || article.author.email || 'besttimeguide.com Team',
+      category: article.category.name,
+      tags: parseTags(article.tags),
+      content: article.content,
+      readingTime: article.readingTime || calculateReadingTime(article.content),
+      featured: article.featured,
+    }))
+  } catch (error) {
+    console.error(`Error fetching posts by category ${categorySlug}:`, error)
+    return []
+  }
 }
 
 // 根据标签获取文章
-export function getPostsByTag(tag: string): BlogPost[] {
-  return getAllPosts().filter((post) => post.tags.includes(tag))
+export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
+  try {
+    const articles = await prisma.article.findMany({
+      where: {
+        published: true,
+        tags: {
+          contains: tag,
+        },
+      },
+      include: {
+        category: true,
+        author: true,
+      },
+      orderBy: {
+        publishedAt: 'desc',
+      },
+    })
+
+    // 过滤出真正包含该标签的文章
+    return articles
+      .filter((article) => parseTags(article.tags).includes(tag))
+      .map((article) => ({
+        slug: article.slug,
+        title: article.title,
+        description: article.description || '',
+        date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+        author: article.author.name || article.author.email || 'besttimeguide.com Team',
+        category: article.category.name,
+        tags: parseTags(article.tags),
+        content: article.content,
+        readingTime: article.readingTime || calculateReadingTime(article.content),
+        featured: article.featured,
+      }))
+  } catch (error) {
+    console.error(`Error fetching posts by tag ${tag}:`, error)
+    return []
+  }
 }
 
 // 获取所有分类
-export function getAllCategories(): string[] {
-  const posts = getAllPosts()
-  const categories = new Set(posts.map((post) => post.category))
-  return Array.from(categories).sort()
+export async function getAllCategories(): Promise<string[]> {
+  try {
+    const categories = await prisma.category.findMany({
+      where: {
+        articles: {
+          some: {
+            published: true,
+          },
+        },
+      },
+      orderBy: {
+        order: 'asc',
+      },
+    })
+
+    return categories.map((cat) => cat.name)
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
 }
 
 // 获取所有标签
-export function getAllTags(): string[] {
-  const posts = getAllPosts()
-  const tags = new Set(posts.flatMap((post) => post.tags))
-  return Array.from(tags).sort()
-}
+export async function getAllTags(): Promise<string[]> {
+  try {
+    const articles = await prisma.article.findMany({
+      where: {
+        published: true,
+        tags: {
+          not: null,
+        },
+      },
+      select: {
+        tags: true,
+      },
+    })
 
+    const allTags = new Set<string>()
+    articles.forEach((article) => {
+      parseTags(article.tags).forEach((tag) => allTags.add(tag))
+    })
+
+    return Array.from(allTags).sort()
+  } catch (error) {
+    console.error('Error fetching tags:', error)
+    return []
+  }
+}

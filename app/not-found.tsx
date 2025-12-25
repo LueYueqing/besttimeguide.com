@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-neutral-100">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
       <Navigation />
 
@@ -37,7 +37,7 @@ export default function NotFound() {
               </h1>
               <p className="text-lg lg:text-xl text-neutral-700 max-w-2xl mx-auto leading-relaxed">
                 The page you're looking for seems to have vanished into the digital ether. 
-                Don't worry though – let's get you back on track to creating amazing QR codes!
+                Don't worry though – let's get you back on track to finding the best time for everything!
               </p>
             </div>
 
@@ -49,7 +49,7 @@ export default function NotFound() {
                 </div>
                 <h3 className="text-xl font-bold text-neutral-900 mb-3">Go Home</h3>
                 <p className="text-neutral-700 mb-6">
-                  Return to our homepage and start creating professional QR codes
+                  Return to our homepage and discover the best time for everything
                 </p>
                 <Link href="/" className="btn btn-primary w-full">
                   <span>🚀</span>
@@ -59,15 +59,15 @@ export default function NotFound() {
 
               <div className="card p-8 text-center card-hover">
                 <div className="w-16 h-16 bg-accent-100 text-accent-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">
-                  🎯
+                  🔍
                 </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-3">Start Creating</h3>
+                <h3 className="text-xl font-bold text-neutral-900 mb-3">Browse Guides</h3>
                 <p className="text-neutral-700 mb-6">
-                  Jump straight into our QR code generator and make something awesome
+                  Explore our expert guides on travel, social media, health, and more
                 </p>
-                <Link href="/#generator" className="btn btn-accent w-full">
+                <Link href="/travel" className="btn btn-accent w-full">
                   <span>⚡</span>
-                  Create QR Code
+                  Browse Guides
                 </Link>
               </div>
             </div>
@@ -100,18 +100,18 @@ export default function NotFound() {
                 Here are some things you might want to try:
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-                <span className="px-3 py-1 bg-white rounded-full text-neutral-700">URL QR Codes</span>
-                <span className="px-3 py-1 bg-white rounded-full text-neutral-700">WiFi QR Codes</span>
-                <span className="px-3 py-1 bg-white rounded-full text-neutral-700">QR Analytics</span>
-                <span className="px-3 py-1 bg-white rounded-full text-neutral-700">Custom Design</span>
-                <span className="px-3 py-1 bg-white rounded-full text-neutral-700">API Access</span>
+                <Link href="/travel" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Travel Guides</Link>
+                <Link href="/social-media" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Social Media</Link>
+                <Link href="/health" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Health</Link>
+                <Link href="/shopping" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Shopping</Link>
+                <Link href="/lifestyle" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Lifestyle</Link>
               </div>
             </div>
 
             {/* 幽默元素 */}
             <div className="mt-12 text-center">
               <p className="text-neutral-600 italic">
-                "Even our 404 page generates better QR codes than our competitors!" 😄
+                "Even our 404 page knows the best time to show up!" 😄
               </p>
             </div>
           </div>
@@ -143,8 +143,8 @@ export default function NotFound() {
         </div>
       </section>
 
-      {/* Footer简化版 */}
-      <Footer />
+      {/* Footer - 与首页一致 */}
+      <Footer variant="full" />
     </div>
   )
 }

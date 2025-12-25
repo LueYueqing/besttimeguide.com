@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { getAppUrl } from '@/lib/app-url'
 // import { prisma } from '@/lib/db' // 如果使用 Prisma，取消注释并配置数据库连接
 
 /**
@@ -8,7 +9,7 @@ import { MetadataRoute } from 'next'
  * 参考文档: docs/12-动态Sitemap最佳实践.md
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = getAppUrl()
   const currentDate = new Date()
 
   // 静态页面配置

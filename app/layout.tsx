@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from '@/components/Providers'
+import { getAppUrl } from '@/lib/app-url'
+
+const appUrl = getAppUrl()
 
 export const metadata: Metadata = {
   title: {
@@ -21,11 +24,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'BestTimeGuide Team' }],
   creator: 'BestTimeGuide',
   publisher: 'BestTimeGuide',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(appUrl),
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    url: appUrl,
     siteName: 'BestTimeGuide',
     title: 'BestTimeGuide - Find the Best Time for Everything',
     description: 'Expert guides on the best time to visit places, post on social media, take supplements, and more.',

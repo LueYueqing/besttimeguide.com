@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth'
 import ProfileClient from './profile-client'
 
 export const metadata: Metadata = {
-  title: 'Profile | CustomQR.pro',
-  description: 'Review and manage your CustomQR.pro account details, subscription status, and security settings.',
+  title: 'Profile | besttimeguide.com',
+  description: 'Review and manage your besttimeguide.com account details, subscription status, and security settings.',
 }
 
 export default async function ProfilePage() {

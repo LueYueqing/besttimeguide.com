@@ -4,11 +4,11 @@ import Footer from '../../components/Footer'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Help Center - QR Code Generator Help & Support | CustomQR.pro',
-  description: 'Get help with CustomQR.pro QR code generator. Find answers to common questions, tutorials, troubleshooting guides, and contact our support team.',
+  title: 'Help Center - QR Code Generator Help & Support | besttimeguide.com',
+  description: 'Get help with besttimeguide.com QR code generator. Find answers to common questions, tutorials, troubleshooting guides, and contact our support team.',
   keywords: 'QR code help, QR generator support, QR code FAQ, QR code troubleshooting, customer support',
   alternates: {
-    canonical: 'https://customqr.pro/help',
+    canonical: 'https://besttimeguide.com/help',
   },
 }
 

@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import DashboardClient from './dashboard-client'
 
 export const metadata: Metadata = {
-  title: 'Dashboard | CustomQR.pro',
+  title: 'Dashboard | besttimeguide.com',
   description: 'Manage your QR codes, view analytics, and track performance.',
 }
 

@@ -5,7 +5,7 @@ import { hasAnalyticsAccess } from '@/lib/subscription'
 import AnalyticsClient from './analytics-client'
 
 export const metadata: Metadata = {
-  title: 'Analytics Dashboard | CustomQR.pro',
+  title: 'Analytics Dashboard | besttimeguide.com',
   description: 'View detailed analytics and statistics for your QR codes',
 }
 

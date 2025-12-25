@@ -184,12 +184,12 @@ export default function DashboardClient() {
               <Link href="/" className="flex items-center gap-3 text-xl lg:text-2xl font-bold text-primary-600 hover:text-primary-700 transition-colors">
                 <Image
                   src="/logo.png"
-                  alt="CustomQR.pro"
+                  alt="besttimeguide.com"
                   width={32}
                   height={32}
                   className="w-8 h-8"
                 />
-                <span>CustomQR<span className="text-gradient">.pro</span></span>
+                <span>BestTime<span className="text-gradient">Guide</span></span>
               </Link>
             </div>
             <div className="flex items-center gap-4">

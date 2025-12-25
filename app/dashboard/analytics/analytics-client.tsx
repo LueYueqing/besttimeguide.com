@@ -153,7 +153,7 @@ export default function AnalyticsClient() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-xl font-semibold text-neutral-900">
-                CustomQR.pro
+                besttimeguide.com
               </Link>
             </div>
             <div className="flex items-center gap-4">

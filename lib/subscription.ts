@@ -34,7 +34,7 @@ export async function hasAnalyticsAccess(userId: string | number): Promise<boole
     if (!user) return false
 
     // 开发测试用户（仅在开发环境）
-    if (process.env.NODE_ENV === 'development' && user.email === 'dev@customqr.pro') {
+    if (process.env.NODE_ENV === 'development' && user.email === 'dev@besttimeguide.com') {
       return true
     }
 

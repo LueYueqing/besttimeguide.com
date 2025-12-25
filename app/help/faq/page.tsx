@@ -4,9 +4,9 @@ import Footer from '@/components/Footer'
 import { Section, Container } from '@/components/Layout'
 
 export const metadata: Metadata = {
-  title: 'FAQ - Frequently Asked Questions | CustomQR.pro',
-  description: 'Get answers to common questions about CustomQR.pro QR code generator, pricing, features, and technical support.',
-  keywords: 'FAQ, questions, QR code help, support, CustomQR.pro help',
+  title: 'FAQ - Frequently Asked Questions | besttimeguide.com',
+  description: 'Get answers to common questions about besttimeguide.com QR code generator, pricing, features, and technical support.',
+  keywords: 'FAQ, questions, QR code help, support, besttimeguide.com help',
 }
 
 export default function FAQPage() {
@@ -23,7 +23,7 @@ export default function FAQPage() {
           </h1>
           
           <p className="hero-subtitle fade-in-up">
-            Find answers to common questions about CustomQR.pro. 
+            Find answers to common questions about besttimeguide.com. 
             Can't find what you're looking for? Contact our support team.
           </p>
         </div>
@@ -38,9 +38,9 @@ export default function FAQPage() {
               <h2 className="text-2xl font-bold text-neutral-900 mb-8">General Questions</h2>
               <div className="space-y-6">
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What is CustomQR.pro?</h3>
+                  <h3 className="font-bold text-lg mb-3">What is besttimeguide.com?</h3>
                   <p className="text-neutral-600">
-                    CustomQR.pro is a professional QR code generator that allows you to create, customize, and track QR codes. 
+                    besttimeguide.com is a professional QR code generator that allows you to create, customize, and track QR codes. 
                     We offer both static and dynamic QR codes with advanced analytics, custom branding, and API access.
                   </p>
                 </div>
@@ -66,7 +66,7 @@ export default function FAQPage() {
                 </div>
 
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Do I need to register to use CustomQR.pro?</h3>
+                  <h3 className="font-bold text-lg mb-3">Do I need to register to use besttimeguide.com?</h3>
                   <p className="text-neutral-600">
                     No! You can create and download static QR codes without any registration. 
                     However, to access dynamic QR codes, analytics, and other premium features, you'll need to create an account.
@@ -122,7 +122,7 @@ export default function FAQPage() {
                 <div className="card p-6">
                   <h3 className="font-bold text-lg mb-3">Do you offer refunds?</h3>
                   <p className="text-neutral-600">
-                    We offer a 30-day money-back guarantee. If you're not satisfied with CustomQR.pro 
+                    We offer a 30-day money-back guarantee. If you're not satisfied with besttimeguide.com 
                     within the first 30 days, contact us for a full refund.
                   </p>
                 </div>
@@ -252,10 +252,10 @@ export default function FAQPage() {
 
             {/* Comparison with Competitors */}
             <div className="mb-16">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Why Choose CustomQR.pro?</h2>
+              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Why Choose besttimeguide.com?</h2>
               <div className="space-y-6">
                 <div className="card p-6 border-2 border-primary-200">
-                  <h3 className="font-bold text-lg mb-3">What makes CustomQR.pro special?</h3>
+                  <h3 className="font-bold text-lg mb-3">What makes besttimeguide.com special?</h3>
                   <div className="text-neutral-600">
                     <p className="mb-3">We focus on delivering exceptional value and user experience:</p>
                     <div className="grid md:grid-cols-2 gap-4">
@@ -309,7 +309,7 @@ export default function FAQPage() {
                 </div>
 
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What makes CustomQR.pro unique?</h3>
+                  <h3 className="font-bold text-lg mb-3">What makes besttimeguide.com unique?</h3>
                   <div className="text-neutral-600">
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="text-center">

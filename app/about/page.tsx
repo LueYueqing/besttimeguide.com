@@ -3,11 +3,11 @@ import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'About Us | CustomQR.pro',
-  description: 'Learn about CustomQR.pro - the professional QR code generator trusted by thousands of businesses worldwide. Our mission, team, and commitment to excellence.',
-  keywords: 'about CustomQR.pro, QR code company, professional QR generator, team',
+  title: 'About Us | besttimeguide.com',
+  description: 'Learn about besttimeguide.com - the professional QR code generator trusted by thousands of businesses worldwide. Our mission, team, and commitment to excellence.',
+  keywords: 'about besttimeguide.com, QR code company, professional QR generator, team',
   alternates: {
-    canonical: 'https://customqr.pro/about',
+    canonical: 'https://besttimeguide.com/about',
   },
 }
 
@@ -22,7 +22,7 @@ export default function AboutPage() {
         <div className="hero-container text-center">
           <h1 className="hero-title fade-in-up">
             About<br />
-            <span className="text-gradient">CustomQR.pro</span>
+            <span className="text-gradient">besttimeguide.com</span>
           </h1>
           
           <p className="hero-subtitle fade-in-up">
@@ -39,7 +39,7 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl font-bold text-neutral-900 mb-6">Our Mission</h2>
               <p className="text-lg text-neutral-700 mb-6 leading-relaxed">
-                At CustomQR.pro, we believe that powerful QR code generation shouldn't cost a fortune. 
+                At besttimeguide.com, we believe that powerful QR code generation shouldn't cost a fortune. 
                 While competitors charge $35+ per month, we provide professional-grade features at just $4.99/month 
                 because we think great tools should be accessible to everyone.
               </p>
@@ -125,7 +125,7 @@ export default function AboutPage() {
             <div className="section-header">
               <h2 className="section-title">Our Story</h2>
               <p className="section-subtitle">
-                How CustomQR.pro became the go-to choice for professional QR codes
+                How besttimeguide.com became the go-to choice for professional QR codes
               </p>
             </div>
 
@@ -170,7 +170,7 @@ export default function AboutPage() {
                   <div>
                     <h3 className="text-xl font-bold text-neutral-900 mb-3">Serving Thousands</h3>
                     <p className="text-neutral-700 leading-relaxed">
-                      Today, CustomQR.pro serves over 2,500 customers worldwide, from solo entrepreneurs 
+                      Today, besttimeguide.com serves over 2,500 customers worldwide, from solo entrepreneurs 
                       to Fortune 500 companies. We're proud to offer unlimited dynamic QR codes, 
                       comprehensive analytics, and full API access at just $4.99/month.
                     </p>
@@ -289,7 +289,7 @@ export default function AboutPage() {
               Ready to Join Thousands of Satisfied Customers?
             </h2>
             <p className="text-xl text-primary-100 mb-8">
-              Experience the CustomQR.pro difference. Start your subscription today 
+              Experience the besttimeguide.com difference. Start your subscription today 
               and see why professionals choose us over expensive alternatives.
             </p>
             

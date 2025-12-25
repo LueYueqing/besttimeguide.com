@@ -5,11 +5,11 @@ import Footer from '../../components/Footer'
 import { getAllPosts, getAllCategories } from '@/lib/blog'
 
 export const metadata: Metadata = {
-  title: 'Blog - QR Code Tips, Guides & Industry News | CustomQR.pro',
+  title: 'Blog - QR Code Tips, Guides & Industry News | besttimeguide.com',
   description: 'Learn about QR codes, best practices, tutorials, case studies, and industry news. Expert guides to help you create effective QR codes for your business.',
   keywords: 'QR code blog, QR code tips, QR code guides, QR code tutorials, QR code case studies, QR code news',
   alternates: {
-    canonical: 'https://customqr.pro/blog',
+    canonical: 'https://besttimeguide.com/blog',
   },
 }
 

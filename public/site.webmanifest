@@ -1,7 +1,7 @@
 {
-  "name": "CustomQR.pro - Professional QR Code Generator",
-  "short_name": "CustomQR.pro",
-  "description": "Create professional custom QR codes with advanced design options",
+  "name": "BestTimeGuide - Find the Best Time for Everything",
+  "short_name": "BestTimeGuide",
+  "description": "Discover the best time to visit places, post on social media, take supplements, and more",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 import CancelSubscriptionClient from './cancel-subscription-client'
 
 export const metadata: Metadata = {
-  title: 'Cancel Subscription | CustomQR.pro',
-  description: 'Cancel your CustomQR.pro subscription',
+  title: 'Cancel Subscription | besttimeguide.com',
+  description: 'Cancel your besttimeguide.com subscription',
 }
 
 export default function CancelSubscriptionPage() {

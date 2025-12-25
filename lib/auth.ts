@@ -163,7 +163,7 @@ export const authOptions: any = {
             id: 'dev-credentials',
             name: 'Development Login',
             credentials: {
-              email: { label: 'Email', type: 'email', placeholder: 'dev@customqr.pro' },
+              email: { label: 'Email', type: 'email', placeholder: 'dev@besttimeguide.com' },
               password: { label: 'Password', type: 'password', placeholder: 'dev123' },
             },
             async authorize(credentials) {
@@ -171,8 +171,8 @@ export const authOptions: any = {
                 return null
               }
 
-              // Only allow dev@customqr.pro with password 'dev123' in development
-              const DEV_EMAIL = 'dev@customqr.pro'
+              // Only allow dev@besttimeguide.com with password 'dev123' in development
+              const DEV_EMAIL = 'dev@besttimeguide.com'
               const DEV_PASSWORD = 'dev123'
 
               if (credentials.email !== DEV_EMAIL || credentials.password !== DEV_PASSWORD) {

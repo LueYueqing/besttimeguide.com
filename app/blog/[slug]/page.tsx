@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 
   return {
-    title: `${post.title} | CustomQR.pro Blog`,
+    title: `${post.title} | besttimeguide.com Blog`,
     description: post.description,
     keywords: post.tags.join(', '),
     authors: [{ name: post.author }],
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       tags: post.tags,
     },
     alternates: {
-      canonical: `https://customqr.pro/blog/${slug}`,
+      canonical: `https://besttimeguide.com/blog/${slug}`,
     },
   }
 }

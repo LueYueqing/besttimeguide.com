@@ -187,7 +187,7 @@ function ApiKeysSection() {
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">API Keys</h2>
           <p className="text-sm text-neutral-600 mt-1">
-            Manage your API keys for programmatic access to CustomQR.pro
+            Manage your API keys for programmatic access to besttimeguide.com
           </p>
         </div>
         <button
@@ -436,12 +436,12 @@ export default function ProfileClient() {
               <Link href="/" className="flex items-center gap-3 text-xl lg:text-2xl font-bold text-primary-600 hover:text-primary-700 transition-colors">
                 <Image
                   src="/logo.png"
-                  alt="CustomQR.pro"
+                  alt="besttimeguide.com"
                   width={32}
                   height={32}
                   className="w-8 h-8"
                 />
-                <span>CustomQR<span className="text-gradient">.pro</span></span>
+                <span>BestTime<span className="text-gradient">Guide</span></span>
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -616,7 +616,7 @@ export default function ProfileClient() {
                   <div className="flex flex-col gap-3 md:items-end">
                     <p className="max-w-sm text-sm text-white/80">
                       {planDescriptions[planKey] ??
-                        'Welcome to CustomQR.pro — manage your QR codes and subscription here.'}
+                        'Welcome to besttimeguide.com — manage your QR codes and subscription here.'}
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <Link

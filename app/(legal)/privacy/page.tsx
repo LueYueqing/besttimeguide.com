@@ -3,9 +3,9 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | CustomQR.pro',
-  description: 'Learn how CustomQR.pro protects your privacy and handles your data. Read our comprehensive privacy policy for QR code generation services.',
-  keywords: 'privacy policy, data protection, GDPR, privacy, CustomQR.pro',
+  title: 'Privacy Policy | besttimeguide.com',
+  description: 'Learn how besttimeguide.com protects your privacy and handles your data. Read our comprehensive privacy policy for QR code generation services.',
+  keywords: 'privacy policy, data protection, GDPR, privacy, besttimeguide.com',
 }
 
 export default function PrivacyPage() {
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             <div className="card p-8 mb-8">
               <h2 className="text-2xl font-bold text-neutral-900 mb-4">Overview</h2>
               <p className="text-neutral-600 leading-relaxed">
-                CustomQR.pro ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
+                besttimeguide.com ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
                 explains how we collect, use, disclose, and safeguard your information when you visit our website 
                 and use our QR code generation services. Please read this privacy policy carefully.
               </p>
@@ -316,11 +316,11 @@ export default function PrivacyPage() {
               <div className="card p-8">
                 <h2 className="text-2xl font-bold text-neutral-900 mb-6">Data Controller</h2>
                 <p className="text-neutral-600 mb-4">
-                  CustomQR.pro is the data controller responsible for your personal information. Our 
+                  besttimeguide.com is the data controller responsible for your personal information. Our 
                   contact details are:
                 </p>
                 <div className="bg-neutral-50 p-4 rounded-lg space-y-2 text-neutral-700">
-                  <p><strong>Company:</strong> CustomQR.pro</p>
+                  <p><strong>Company:</strong> besttimeguide.com</p>
                   <p><strong>Address:</strong> P.O. Box 1234, San Francisco, CA 94102, United States</p>
                   <p><strong>Email:</strong> javajia@gmail.com</p>
                   <p><strong>Data Protection Officer:</strong> javajia@gmail.com</p>
@@ -336,7 +336,7 @@ export default function PrivacyPage() {
                 <div className="space-y-2 text-primary-700">
                   <p><strong>Email:</strong> javajia@gmail.com</p>
                   <p><strong>Data Protection Officer:</strong> javajia@gmail.com</p>
-                  <p><strong>Mailing Address:</strong> CustomQR.pro Privacy Team, P.O. Box 1234, San Francisco, CA 94102, United States</p>
+                  <p><strong>Mailing Address:</strong> besttimeguide.com Privacy Team, P.O. Box 1234, San Francisco, CA 94102, United States</p>
                 </div>
                 <div className="mt-6">
                   <a href="/help/contact" className="btn btn-primary">

@@ -105,7 +105,7 @@ export async function sendEmail(config: EmailConfig): Promise<boolean> {
     }
 
     const info = await transporter.sendMail({
-      from: `CustomQR.pro <${from}>`, // Format: "Name <email@domain.com>"
+      from: `besttimeguide.com <${from}>`, // Format: "Name <email@domain.com>"
       to: config.to,
       subject: config.subject,
       text: config.text || config.html.replace(/<[^>]*>/g, ''), // Plain text version
@@ -186,7 +186,7 @@ export async function sendContactNotification(data: {
             </div>
           </div>
           <div class="footer">
-            <p>This email was sent from the CustomQR.pro contact form.</p>
+            <p>This email was sent from the besttimeguide.com contact form.</p>
             <p>Timestamp: ${new Date().toLocaleString()}</p>
           </div>
         </div>
@@ -224,7 +224,7 @@ export async function sendContactAutoReply(userEmail: string, userName: string):
           </div>
           <div class="content">
             <p>Hi ${userName},</p>
-            <p>Thank you for reaching out to CustomQR.pro. We've received your message and our team will get back to you within 24 hours during business days.</p>
+            <p>Thank you for reaching out to besttimeguide.com. We've received your message and our team will get back to you within 24 hours during business days.</p>
             <p>In the meantime, you might find these resources helpful:</p>
             <ul>
               <li><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/help/faq">Frequently Asked Questions</a></li>
@@ -245,7 +245,7 @@ export async function sendContactAutoReply(userEmail: string, userName: string):
 
   return sendEmail({
     to: userEmail,
-    subject: 'Thank you for contacting CustomQR.pro',
+    subject: 'Thank you for contacting besttimeguide.com',
     html,
   })
 }

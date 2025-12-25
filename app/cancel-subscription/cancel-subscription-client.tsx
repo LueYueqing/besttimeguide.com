@@ -69,7 +69,7 @@ export default function CancelSubscriptionClient() {
               <div className="card p-6 md:p-8">
                 <form onSubmit={handleSubmit}>
                   <p className="text-neutral-600 mb-6">
-                    You can easily cancel your subscription by entering the email you used to subscribe to CustomQR.pro and click on the &quot;Cancel Subscription&quot; button.
+                    You can easily cancel your subscription by entering the email you used to subscribe to besttimeguide.com and click on the &quot;Cancel Subscription&quot; button.
                   </p>
 
                   <div className="form-group mb-4">

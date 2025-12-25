@@ -3,9 +3,9 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | CustomQR.pro',
-  description: 'Read the terms of service and user agreement for CustomQR.pro QR code generator. Understand your rights and responsibilities when using our service.',
-  keywords: 'terms of service, user agreement, terms and conditions, CustomQR.pro',
+  title: 'Terms of Service | besttimeguide.com',
+  description: 'Read the terms of service and user agreement for besttimeguide.com QR code generator. Understand your rights and responsibilities when using our service.',
+  keywords: 'terms of service, user agreement, terms and conditions, besttimeguide.com',
 }
 
 export default function TermsPage() {
@@ -23,7 +23,7 @@ export default function TermsPage() {
           </h1>
           
           <p className="hero-subtitle fade-in-up">
-            Please read these terms carefully before using CustomQR.pro services.
+            Please read these terms carefully before using besttimeguide.com services.
           </p>
           
           <div className="fade-in-up mt-6">
@@ -42,7 +42,7 @@ export default function TermsPage() {
             <div className="card p-8 mb-8">
               <h2 className="text-2xl font-bold text-neutral-900 mb-4">Agreement to Terms</h2>
               <p className="text-neutral-600 leading-relaxed">
-                By accessing or using CustomQR.pro ("we," "our," or "us"), you agree to be bound by these Terms of Service 
+                By accessing or using besttimeguide.com ("we," "our," or "us"), you agree to be bound by these Terms of Service 
                 ("Terms"). If you disagree with any part of these terms, you may not access or use our services.
               </p>
             </div>
@@ -53,7 +53,7 @@ export default function TermsPage() {
               <div className="card p-8">
                 <h2 className="text-2xl font-bold text-neutral-900 mb-6">Description of Service</h2>
                 <p className="text-neutral-600 mb-4">
-                  CustomQR.pro provides QR code generation services, including:
+                  besttimeguide.com provides QR code generation services, including:
                 </p>
                 <ul className="list-disc pl-6 text-neutral-600 space-y-2">
                   <li>Static and dynamic QR code creation</li>
@@ -144,7 +144,7 @@ export default function TermsPage() {
                 
                 <h3 className="text-xl font-semibold text-neutral-800 mb-4">Our Rights</h3>
                 <p className="text-neutral-600 mb-6">
-                  CustomQR.pro and all related trademarks, logos, and content are owned by us or our licensors. 
+                  besttimeguide.com and all related trademarks, logos, and content are owned by us or our licensors. 
                   You may not use our intellectual property without written permission.
                 </p>
 
@@ -262,7 +262,7 @@ export default function TermsPage() {
                 <div className="space-y-2 text-primary-700">
                   <p><strong>Email:</strong> javajia@gmail.com</p>
                   <p><strong>Support:</strong> javajia@gmail.com</p>
-                  <p><strong>Mailing Address:</strong> CustomQR.pro, Legal Department, P.O. Box 1234, San Francisco, CA 94102, United States</p>
+                  <p><strong>Mailing Address:</strong> besttimeguide.com, Legal Department, P.O. Box 1234, San Francisco, CA 94102, United States</p>
                 </div>
                 <div className="mt-6">
                   <a href="/help/contact" className="btn btn-primary">

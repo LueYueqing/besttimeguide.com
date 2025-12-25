@@ -39,276 +39,311 @@ export const metadata: Metadata = {
   },
 }
 
-// 五大核心分类数据
-const categories = [
-  {
-    id: 'travel',
-    name: 'Travel',
-    icon: '✈️',
-    description: 'Best time to visit destinations worldwide',
-    color: 'from-blue-500 to-blue-600',
-    href: '/travel',
-    count: '200+',
-    popular: [
-      { name: 'Japan', href: '/best-time-to-visit-japan', searchVolume: '90.5K' },
-      { name: 'Hawaii', href: '/best-time-to-visit-hawaii', searchVolume: '22.2K' },
-      { name: 'Iceland', href: '/best-time-to-visit-iceland', searchVolume: '14.8K' },
-      { name: 'Thailand', href: '/best-time-to-visit-thailand', searchVolume: '12.1K' },
-    ],
-  },
-  {
-    id: 'social-media',
-    name: 'Social Media',
-    icon: '📱',
-    description: 'Optimal posting times for maximum engagement',
-    color: 'from-purple-500 to-purple-600',
-    href: '/social-media',
-    count: '80+',
-    popular: [
-      { name: 'Instagram', href: '/best-time-to-post-on-instagram', searchVolume: '60.5K' },
-      { name: 'TikTok', href: '/best-time-to-post-on-tiktok', searchVolume: '60.5K' },
-      { name: 'Facebook', href: '/best-time-to-post-on-facebook', searchVolume: '6.6K' },
-      { name: 'LinkedIn', href: '/best-time-to-post-on-linkedin', searchVolume: '4.4K' },
-    ],
-  },
-  {
-    id: 'health',
-    name: 'Health',
-    icon: '💊',
-    description: 'Best time to take supplements and medications',
-    color: 'from-green-500 to-green-600',
-    href: '/health',
-    count: '100+',
-    popular: [
-      { name: 'Creatine', href: '/best-time-to-take-creatine', searchVolume: '12.1K' },
-      { name: 'Vitamin D', href: '/best-time-to-take-vitamin-d', searchVolume: '8.1K' },
-      { name: 'Magnesium', href: '/best-time-to-take-magnesium', searchVolume: '8.1K' },
-      { name: 'Probiotics', href: '/best-time-to-take-probiotics', searchVolume: '6.6K' },
-    ],
-  },
-  {
-    id: 'shopping',
-    name: 'Shopping',
-    icon: '🛒',
-    description: 'Best time to buy products and save money',
-    color: 'from-orange-500 to-orange-600',
-    href: '/shopping',
-    count: '50+',
-    popular: [
-      { name: 'Buy a Car', href: '/best-time-to-buy-a-car', searchVolume: '12.1K' },
-      { name: 'Buy Plane Tickets', href: '/best-time-to-buy-plane-tickets', searchVolume: '9.9K' },
-      { name: 'Buy a Mattress', href: '/best-time-to-buy-a-mattress', searchVolume: '4.4K' },
-      { name: 'Buy a House', href: '/best-time-to-buy-a-house', searchVolume: '2.4K' },
-    ],
-  },
-  {
-    id: 'lifestyle',
-    name: 'Lifestyle',
-    icon: '🌱',
-    description: 'Best time for daily activities and routines',
-    color: 'from-teal-500 to-teal-600',
-    href: '/lifestyle',
-    count: '70+',
-    popular: [
-      { name: 'Exercise', href: '/best-time-to-exercise', searchVolume: '4.4K' },
-      { name: 'Water Grass', href: '/best-time-to-water-grass', searchVolume: '6.6K' },
-      { name: 'Get Flu Shot', href: '/best-time-to-get-flu-shot', searchVolume: '3.6K' },
-      { name: 'Plant Grass Seed', href: '/best-time-to-plant-grass-seed', searchVolume: '4.4K' },
-    ],
-  },
+// Trending guides (most popular)
+const trendingGuides = [
+  { title: 'Best Time to Visit Japan', href: '/best-time-to-visit-japan', category: 'Travel', searchVolume: '90.5K' },
+  { title: 'Best Time to Post on Instagram', href: '/best-time-to-post-on-instagram', category: 'Social Media', searchVolume: '60.5K' },
+  { title: 'Best Time to Post on TikTok', href: '/best-time-to-post-on-tiktok', category: 'Social Media', searchVolume: '60.5K' },
+  { title: 'Best Time to Visit Hawaii', href: '/best-time-to-visit-hawaii', category: 'Travel', searchVolume: '22.2K' },
+  { title: 'Best Time to Take Creatine', href: '/best-time-to-take-creatine', category: 'Health', searchVolume: '12.1K' },
+  { title: 'Best Time to Buy a Car', href: '/best-time-to-buy-a-car', category: 'Shopping', searchVolume: '12.1K' },
+  { title: 'Best Time to Visit Iceland', href: '/best-time-to-visit-iceland', category: 'Travel', searchVolume: '14.8K' },
+  { title: 'Best Time to Visit Thailand', href: '/best-time-to-visit-thailand', category: 'Travel', searchVolume: '12.1K' },
+  { title: 'Best Time to Exercise', href: '/best-time-to-exercise', category: 'Lifestyle', searchVolume: '4.4K' },
+  { title: 'Best Time to Buy Plane Tickets', href: '/best-time-to-buy-plane-tickets', category: 'Shopping', searchVolume: '9.9K' },
+  { title: 'Best Time to Visit Italy', href: '/best-time-to-visit-italy', category: 'Travel', searchVolume: '9.9K' },
+  { title: 'Best Time to Take Vitamin D', href: '/best-time-to-take-vitamin-d', category: 'Health', searchVolume: '8.1K' },
 ]
+
+// Categories for Browse By Category section
+const browseCategories = [
+  { name: 'Travel', href: '/travel', count: '200+' },
+  { name: 'Social Media', href: '/social-media', count: '80+' },
+  { name: 'Health', href: '/health', count: '100+' },
+  { name: 'Shopping', href: '/shopping', count: '50+' },
+  { name: 'Lifestyle', href: '/lifestyle', count: '70+' },
+]
+
+// Featured guides by category
+const featuredByCategory = {
+  travel: [
+    { title: 'Best Time to Visit Japan', href: '/best-time-to-visit-japan' },
+    { title: 'Best Time to Visit Hawaii', href: '/best-time-to-visit-hawaii' },
+    { title: 'Best Time to Visit Iceland', href: '/best-time-to-visit-iceland' },
+    { title: 'Best Time to Visit Thailand', href: '/best-time-to-visit-thailand' },
+  ],
+  socialMedia: [
+    { title: 'Best Time to Post on Instagram', href: '/best-time-to-post-on-instagram' },
+    { title: 'Best Time to Post on TikTok', href: '/best-time-to-post-on-tiktok' },
+    { title: 'Best Time to Post on Facebook', href: '/best-time-to-post-on-facebook' },
+    { title: 'Best Time to Post on LinkedIn', href: '/best-time-to-post-on-linkedin' },
+  ],
+  health: [
+    { title: 'Best Time to Take Creatine', href: '/best-time-to-take-creatine' },
+    { title: 'Best Time to Take Vitamin D', href: '/best-time-to-take-vitamin-d' },
+    { title: 'Best Time to Take Magnesium', href: '/best-time-to-take-magnesium' },
+    { title: 'Best Time to Take Probiotics', href: '/best-time-to-take-probiotics' },
+  ],
+}
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-neutral-100">
+    <div className="min-h-screen bg-white">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,transparent)]" />
-        <div className="container mx-auto px-4 py-20 md:py-32 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-              Find the Best Time for
-              <span className="block text-accent-400">Everything</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-primary-100 mb-8 max-w-2xl mx-auto">
-              Expert guides on when to visit places, post on social media, take supplements, buy products, and more. Data-driven insights to help you make better decisions.
-            </p>
-            
-            {/* Search Box */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Search for best time to..."
-                  className="w-full px-6 py-4 pl-14 text-neutral-900 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-accent-400 shadow-lg"
-                />
-                <svg
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-neutral-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+      {/* Main Content - wikiHow style */}
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Hero Section - wikiHow style */}
+        <section className="text-center mb-12 py-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
+            Welcome to BestTimeGuide, the most trusted timing guide site on the internet.
+          </h1>
+          <p className="wikihow-text-standard text-lg mb-8 max-w-3xl mx-auto">
+            Discover the best time to visit places, post on social media, take supplements, buy products, and more. Expert guides with data-driven insights.
+          </p>
+          
+          {/* Quick Stats */}
+          <div className="wikihow-stats">
+            <div className="wikihow-stat-item">
+              <div className="wikihow-stat-number">500+</div>
+              <div className="wikihow-stat-label">Expert Guides</div>
             </div>
-
-            {/* Quick Stats */}
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm md:text-base">
-              <div>
-                <div className="text-2xl md:text-3xl font-bold">500+</div>
-                <div className="text-primary-200">Expert Guides</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold">1.5M+</div>
-                <div className="text-primary-200">Monthly Searches</div>
-              </div>
-              <div>
-                <div className="text-2xl md:text-3xl font-bold">100%</div>
-                <div className="text-primary-200">Data-Driven</div>
-              </div>
+            <div className="wikihow-stat-item">
+              <div className="wikihow-stat-number">1.5M+</div>
+              <div className="wikihow-stat-label">Monthly Searches</div>
+            </div>
+            <div className="wikihow-stat-item">
+              <div className="wikihow-stat-number">100%</div>
+              <div className="wikihow-stat-label">Data-Driven</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-              Browse by Category
-            </h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Find expert guides organized by topic. Everything you need to know about timing.
-            </p>
+          
+          {/* Search Box - wikiHow style */}
+          <div className="wikihow-search-box">
+            <input
+              type="search"
+              placeholder="Search for best time to..."
+              className="wikihow-search-input"
+            />
+            <svg
+              className="wikihow-search-icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {categories.map((category) => (
+        {/* Trending Now Section - wikiHow style */}
+        <section className="mb-12">
+          <div className="wikihow-heading-group">
+            <h2 className="wikihow-heading wikihow-heading-h2">Trending Now</h2>
+            <Link href="/trending" className="wikihow-link-standard wikihow-text-small">
+              See more trending <span className="ml-1">→</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trendingGuides.slice(0, 6).map((guide, index) => (
               <Link
-                key={category.id}
-                href={category.href}
-                className="group relative bg-white border-2 border-neutral-200 rounded-2xl p-6 hover:border-primary-300 hover:shadow-xl transition-all duration-300"
+                key={guide.href}
+                href={guide.href}
+                className="group wikihow-list-item"
               >
-                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform`}>
-                  {category.icon}
-                </div>
-                <h3 className="text-2xl font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-neutral-600 mb-4">
-                  {category.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-primary-600">
-                    {category.count} Guides
-                  </span>
-                  <svg
-                    className="w-5 h-5 text-neutral-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                <div className="wikihow-list-item-number">{index + 1}</div>
+                <div className="wikihow-list-item-content">
+                  <h3 className="wikihow-list-item-title">
+                    {guide.title}
+                  </h3>
+                  <div className="wikihow-list-item-meta">
+                    <span className="wikihow-badge">{guide.category}</span>
+                    <span className="ml-2">{guide.searchVolume}/mo</span>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Popular Guides Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-neutral-50 to-neutral-100">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-              Popular Guides
-            </h2>
-            <p className="text-lg text-neutral-600">
-              Most searched guides based on real search data
-            </p>
+        {/* Two Column Layout - wikiHow style */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Column */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Browse By Category Section */}
+            <section>
+              <h2 className="wikihow-heading wikihow-heading-h2 mb-6">Browse By Category</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {browseCategories.map((category) => (
+                  <Link
+                    key={category.href}
+                    href={category.href}
+                    className="group wikihow-card text-center hover:border-wikihow-green-400 transition-all border-2 border-wikihow-green-400"
+                  >
+                    <h3 className="wikihow-heading wikihow-heading-h3 mb-1 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
+                      {category.name}
+                    </h3>
+                    <p className="wikihow-text-small">{category.count} guides</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Featured Travel Guides */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="wikihow-heading wikihow-heading-h2">Travel Guides</h2>
+                <Link href="/travel" className="wikihow-link-standard font-semibold wikihow-text-small">
+                  View All →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {featuredByCategory.travel.map((guide) => (
+                  <Link
+                    key={guide.href}
+                    href={guide.href}
+                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                  >
+                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
+                      {guide.title}
+                    </h3>
+                    <p className="wikihow-text wikihow-text-small">
+                      Discover the best months, weather, prices, and crowds for your perfect trip.
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Featured Social Media Guides */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="wikihow-heading wikihow-heading-h2">Social Media Guides</h2>
+                <Link href="/social-media" className="wikihow-link-standard font-semibold wikihow-text-small">
+                  View All →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {featuredByCategory.socialMedia.map((guide) => (
+                  <Link
+                    key={guide.href}
+                    href={guide.href}
+                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                  >
+                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
+                      {guide.title}
+                    </h3>
+                    <p className="wikihow-text wikihow-text-small">
+                      Learn the optimal posting times for maximum engagement and reach.
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Featured Health Guides */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="wikihow-heading wikihow-heading-h2">Health Guides</h2>
+                <Link href="/health" className="wikihow-link-standard font-semibold wikihow-text-small">
+                  View All →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {featuredByCategory.health.map((guide) => (
+                  <Link
+                    key={guide.href}
+                    href={guide.href}
+                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                  >
+                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
+                      {guide.title}
+                    </h3>
+                    <p className="wikihow-text wikihow-text-small">
+                      Find the best time to take supplements for optimal effectiveness.
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
           </div>
 
-          <div className="max-w-6xl mx-auto">
-            {categories.map((category) => (
-              <div key={category.id} className="mb-12 last:mb-0">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center text-xl`}>
-                    {category.icon}
-                  </div>
-                  <h3 className="text-2xl font-bold text-neutral-900">{category.name}</h3>
+          {/* Sidebar - wikiHow style */}
+          <aside className="lg:col-span-1 space-y-6">
+            {/* Trust Section - wikiHow style */}
+            <div className="wikihow-sidebar-box">
+              <h3 className="wikihow-sidebar-title">
+                BestTimeGuide is an award-winning website where trusted research and expert knowledge come together.
+              </h3>
+              <p className="wikihow-text-standard mb-4">
+                Since 2025, BestTimeGuide has helped millions of people find the best time for everything. We work with credentialed experts and data-driven research to create the most reliable timing guides on the Internet.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 wikihow-text-standard">
+                  <span className="text-wikihow-linkHover font-bold">✓</span>
+                  <span><strong>Authoritative</strong> - 500+ data-driven guides</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {category.popular.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="group bg-white border border-neutral-200 rounded-xl p-4 hover:border-primary-300 hover:shadow-lg transition-all"
-                    >
-                      <div className="font-semibold text-neutral-900 mb-1 group-hover:text-primary-600 transition-colors">
-                        {item.name}
-                      </div>
-                      <div className="text-xs text-neutral-500">
-                        {item.searchVolume} searches/month
-                      </div>
-                    </Link>
-                  ))}
+                <div className="flex items-center gap-2 wikihow-text-standard">
+                  <span className="text-wikihow-linkHover font-bold">✓</span>
+                  <span><strong>Trustworthy</strong> - Expert-reviewed content</span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">
-              Why Trust BestTimeGuide?
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="flex items-center gap-2 wikihow-text-standard">
+                  <span className="text-wikihow-linkHover font-bold">✓</span>
+                  <span><strong>Comprehensive</strong> - Covering all timing needs</span>
                 </div>
-                <h3 className="font-bold text-lg mb-2">Data-Driven</h3>
-                <p className="text-neutral-600 text-sm">
-                  All recommendations based on real search data, weather patterns, and expert analysis
-                </p>
-              </div>
-              <div>
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-lg mb-2">Expert Guides</h3>
-                <p className="text-neutral-600 text-sm">
-                  Comprehensive guides written by travel and lifestyle experts
-                </p>
-              </div>
-              <div>
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-lg mb-2">Always Updated</h3>
-                <p className="text-neutral-600 text-sm">
-                  Content regularly updated to reflect latest trends and data
-                </p>
               </div>
             </div>
-          </div>
+
+            {/* Quick Links - wikiHow style */}
+            <div className="wikihow-sidebar-box">
+              <h3 className="wikihow-sidebar-title">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/travel" className="wikihow-link-standard">
+                    Travel Guides
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/social-media" className="wikihow-link-standard">
+                    Social Media Timing
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/health" className="wikihow-link-standard">
+                    Health & Supplements
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shopping" className="wikihow-link-standard">
+                    Shopping Deals
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/lifestyle" className="wikihow-link-standard">
+                    Lifestyle Tips
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Popular Searches - wikiHow style */}
+            <div className="wikihow-sidebar-box">
+              <h3 className="wikihow-sidebar-title">Popular Searches</h3>
+              <div className="flex flex-wrap gap-2">
+                {trendingGuides.slice(0, 8).map((guide) => (
+                  <Link
+                    key={guide.href}
+                    href={guide.href}
+                    className="px-3 py-1 bg-white border border-wikihow-green-200 rounded wikihow-text-small hover:border-wikihow-green-400 wikihow-link-standard transition-colors"
+                  >
+                    {guide.title.replace('Best Time to ', '')}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
-      </section>
+      </main>
 
       <Footer variant="full" />
     </div>

@@ -10,8 +10,8 @@
   }
   
   body {
-    @apply text-neutral-700 bg-neutral-50 antialiased;
-    line-height: 1.6;
+    @apply text-neutral-700 bg-white antialiased;
+    line-height: 21px; /* wikiHow标准行高 */
   }
   
   * {
@@ -20,6 +20,515 @@
 }
 
 @layer components {
+  /* =================== wikiHow 风格样式系统 =================== */
+  
+  /* wikiHow 菜单背景 */
+  .wikihow-menu-bg {
+    background-color: #93B874;
+  }
+  
+  /* wikiHow 次要区域背景 */
+  .wikihow-secondary-bg {
+    background-color: #E6EEE0;
+  }
+  
+  /* wikiHow 链接悬停颜色 */
+  .wikihow-link {
+    color: inherit;
+    transition: color 0.2s;
+  }
+  
+  .wikihow-link:hover {
+    color: #307530; /* wikihow-linkHover */
+  }
+  
+  /* Tailwind颜色类支持 */
+  .hover\:border-wikihow-green-400:hover {
+    border-color: #93B874;
+  }
+  
+  .group-hover\:text-wikihow-green-600.group:hover {
+    color: #307530;
+  }
+  
+  /* wikiHow 小字样式 */
+  .wikihow-text-small {
+    font-size: 11px;
+    color: #808080;
+    line-height: 21px;
+  }
+  
+  /* wikiHow 大按钮样式 */
+  .wikihow-btn-large {
+    box-sizing: border-box;
+    background: #FABC3B;
+    display: block;
+    width: 100%;
+    border: none;
+    color: #000;
+    padding: 0.44em;
+    font-weight: bold;
+    border-radius: 4px;
+    margin-top: 0px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    line-height: 21px;
+  }
+  
+  .wikihow-btn-large:hover {
+    background: #e8a92a;
+    transform: translateY(-1px);
+  }
+  
+  .wikihow-btn-large:active {
+    transform: translateY(0);
+  }
+  
+  /* wikiHow 标准链接样式 */
+  .wikihow-link-standard {
+    color: #307530;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .wikihow-link-standard:hover {
+    color: #255525;
+    text-decoration: underline;
+  }
+  
+  /* wikiHow 卡片样式 */
+  .wikihow-card {
+    background: white;
+    border: 1px solid #E6EEE0;
+    border-radius: 4px;
+    padding: 1rem;
+    line-height: 21px;
+  }
+  
+  /* wikiHow 标题样式 */
+  .wikihow-heading {
+    color: #000;
+    font-weight: bold;
+    line-height: 21px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .wikihow-heading-h1 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+  
+  .wikihow-heading-h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .wikihow-heading-h3 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+  
+  /* wikiHow 文本样式 */
+  .wikihow-text {
+    color: #000;
+    line-height: 21px;
+  }
+  
+  .wikihow-text-muted {
+    color: #808080;
+    line-height: 21px;
+  }
+  
+  /* wikiHow 边框样式 */
+  .wikihow-border {
+    border-color: #E6EEE0;
+  }
+  
+  /* wikiHow 输入框样式 */
+  .wikihow-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #E6EEE0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 21px;
+    color: #000;
+  }
+  
+  .wikihow-input:focus {
+    outline: none;
+    border-color: #93B874;
+    box-shadow: 0 0 0 2px rgba(147, 184, 116, 0.2);
+  }
+  
+  /* wikiHow 标签样式 */
+  .wikihow-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: #E6EEE0;
+    color: #000;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: normal;
+    line-height: 21px;
+  }
+  
+  /* wikiHow 分隔线 */
+  .wikihow-divider {
+    border: none;
+    border-top: 1px solid #E6EEE0;
+    margin: 1rem 0;
+  }
+
+  /* wikiHow 标准文本样式 */
+  .wikihow-text-standard {
+    color: #000;
+    font-size: 14px;
+    line-height: 21px;
+  }
+
+  /* wikiHow 标题组（带链接） */
+  .wikihow-heading-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  /* wikiHow 数字徽章（用于排名） */
+  .wikihow-badge-number {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    background: #FABC3B;
+    color: #000;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    line-height: 1;
+  }
+
+  /* wikiHow 文章容器 */
+  .wikihow-article {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .wikihow-article-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    .wikihow-article-content {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+
+  /* wikiHow 文章主体 */
+  .wikihow-article-main {
+    background: white;
+    border: 1px solid #E6EEE0;
+    border-radius: 4px;
+    padding: 1.5rem;
+    line-height: 21px;
+  }
+
+  /* wikiHow 文章头部 */
+  .wikihow-article-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #E6EEE0;
+  }
+
+  .wikihow-article-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #000;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  .wikihow-article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 11px;
+    color: #808080;
+    line-height: 21px;
+  }
+
+  /* wikiHow 文章主体内容 */
+  .wikihow-article-body {
+    color: #000;
+    font-size: 14px;
+    line-height: 21px;
+  }
+
+  .wikihow-article-body p {
+    margin-bottom: 1rem;
+  }
+
+  .wikihow-article-body h2 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #000;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+  }
+
+  .wikihow-article-body h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #000;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .wikihow-article-body ul,
+  .wikihow-article-body ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .wikihow-article-body li {
+    margin-bottom: 0.5rem;
+  }
+
+  /* wikiHow 侧边栏 */
+  .wikihow-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .wikihow-sidebar-box {
+    background: #E6EEE0;
+    border: 1px solid #93B874;
+    border-radius: 4px;
+    padding: 1.5rem;
+    line-height: 21px;
+  }
+
+  .wikihow-sidebar-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+  }
+
+  /* wikiHow 相关文章 */
+  .wikihow-related {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #E6EEE0;
+  }
+
+  .wikihow-related-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+  }
+
+  .wikihow-related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .wikihow-related-item {
+    background: white;
+    border: 1px solid #E6EEE0;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .wikihow-related-item:hover {
+    border-color: #93B874;
+  }
+
+  .wikihow-related-item-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background: #E6EEE0;
+  }
+
+  .wikihow-related-item-content {
+    padding: 0.75rem;
+  }
+
+  .wikihow-related-item-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #307530;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .wikihow-related-item-title:hover {
+    color: #255525;
+    text-decoration: underline;
+  }
+
+  .wikihow-related-item-meta {
+    font-size: 11px;
+    color: #808080;
+    line-height: 21px;
+  }
+
+  /* wikiHow 列表项样式 */
+  .wikihow-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid #E6EEE0;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .wikihow-list-item:hover {
+    border-color: #93B874;
+  }
+
+  .wikihow-list-item-number {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FABC3B;
+    color: #000;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+
+  .wikihow-list-item-content {
+    flex: 1;
+  }
+
+  .wikihow-list-item-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #307530;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .wikihow-list-item-title:hover {
+    color: #255525;
+    text-decoration: underline;
+  }
+
+  .wikihow-list-item-meta {
+    font-size: 11px;
+    color: #808080;
+    line-height: 21px;
+  }
+
+  /* wikiHow 搜索框增强 */
+  .wikihow-search-box {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .wikihow-search-input {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 3rem;
+    border: 2px solid #93B874;
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 21px;
+    color: #000;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .wikihow-search-input:focus {
+    outline: none;
+    border-color: #307530;
+    box-shadow: 0 0 0 3px rgba(48, 117, 48, 0.1);
+  }
+
+  .wikihow-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #808080;
+    pointer-events: none;
+  }
+
+  /* wikiHow 统计数字显示 */
+  .wikihow-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+
+  .wikihow-stat-item {
+    text-align: center;
+  }
+
+  .wikihow-stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #000;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+
+  .wikihow-stat-label {
+    font-size: 11px;
+    color: #808080;
+    line-height: 21px;
+  }
+
+  /* wikiHow 响应式工具类 */
+  @media (max-width: 768px) {
+    .wikihow-article-title {
+      font-size: 1.5rem;
+    }
+
+    .wikihow-related-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .wikihow-stats {
+      gap: 1rem;
+    }
+
+    .wikihow-stat-number {
+      font-size: 1.5rem;
+    }
+  }
+  
   /* =================== Float UI 风格按钮系统 =================== */
   
   .btn {
@@ -152,7 +661,45 @@
     @apply border-primary-200 shadow-strong;
   }
   
-  /* =================== 专业级导航组件 =================== */
+  /* =================== wikiHow 风格导航组件 =================== */
+  
+  .navbar-wikihow {
+    background-color: #93B874; /* wikiHow菜单背景色 */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navbar-wikihow-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .navbar-wikihow-content {
+    @apply flex items-center justify-between h-14;
+  }
+  
+  .navbar-wikihow-brand {
+    @apply flex items-center gap-2 text-lg font-bold text-white;
+    line-height: 21px;
+  }
+  
+  .navbar-wikihow-nav {
+    @apply hidden md:flex items-center gap-1;
+  }
+  
+  .navbar-wikihow-link {
+    @apply px-3 py-2 text-sm font-medium text-white rounded transition-colors;
+    line-height: 21px;
+  }
+  
+  .navbar-wikihow-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .navbar-wikihow-link.active {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  /* =================== 专业级导航组件（保留作为备选） =================== */
   
   .navbar {
     @apply sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-neutral-200 shadow-xs;

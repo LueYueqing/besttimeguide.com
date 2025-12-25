@@ -19,33 +19,30 @@ export default function Navigation({ variant }: NavigationProps) {
   }
 
   const navLinks = [
+    { href: '/', label: 'Home' },
     { href: '/travel', label: 'Travel' },
     { href: '/social-media', label: 'Social Media' },
     { href: '/health', label: 'Health' },
     { href: '/shopping', label: 'Shopping' },
     { href: '/lifestyle', label: 'Lifestyle' },
-    { href: '/help/faq', label: 'FAQ' },
   ]
 
-  const cta = {
-    href: '/help/contact',
-    label: 'Contact',
-  }
-
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <div className="navbar-content">
-          <Link href="/" className="navbar-brand">
-            <span className="text-2xl font-black">BestTime<span className="text-gradient">Guide</span></span>
+    <nav className="navbar-wikihow sticky top-0 z-50">
+      <div className="navbar-wikihow-container">
+        <div className="navbar-wikihow-content">
+          {/* Logo */}
+          <Link href="/" className="navbar-wikihow-brand">
+            <span>BestTime<span>Guide</span></span>
           </Link>
           
-          <div className="navbar-nav">
+          {/* Main Navigation - wikiHow style */}
+          <div className="navbar-wikihow-nav">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`navbar-link ${
+                className={`navbar-wikihow-link ${
                   isActive(link.href) ? 'active' : ''
                 }`}
               >
@@ -54,10 +51,19 @@ export default function Navigation({ variant }: NavigationProps) {
             ))}
           </div>
           
+          {/* Right side - Search and Menu */}
           <div className="flex items-center gap-4">
-            <Link href={cta.href} className="navbar-cta">
-              {cta.label}
+            <Link
+              href="/help/faq"
+              className="hidden md:block navbar-wikihow-link"
+            >
+              FAQ
             </Link>
+            <button className="md:hidden p-2 text-white hover:bg-white/20 rounded transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
             <AuthButton />
           </div>
         </div>

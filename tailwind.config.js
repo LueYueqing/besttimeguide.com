@@ -11,7 +11,42 @@ module.exports = {
         'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        // 深蓝专业系 - 主色调
+        // wikiHow 风格颜色系统
+        wikihow: {
+          // 主绿色系（基于wikiHow实际颜色）
+          menu: '#93B874',        // 菜单背景色
+          secondary: '#E6EEE0',   // 次要区域背景色
+          linkHover: '#307530',   // 链接悬停颜色
+          button: '#FABC3B',      // 大按钮背景色（黄色）
+          textSmall: '#808080',   // 小字颜色
+          // 扩展绿色系
+          green: {
+            50: '#f0f9f0',
+            100: '#E6EEE0',      // 次要背景
+            200: '#d4e8d4',
+            300: '#b8d9b8',
+            400: '#93B874',      // 菜单背景
+            500: '#7aa85a',
+            600: '#307530',      // 链接悬停
+            700: '#2d6a2d',
+            800: '#255525',
+            900: '#1e441e',
+          },
+          // 黄色按钮系
+          yellow: {
+            50: '#fefce8',
+            100: '#fef9c3',
+            200: '#fef08a',
+            300: '#fde047',
+            400: '#FABC3B',      // wikiHow按钮色
+            500: '#eab308',
+            600: '#ca8a04',
+            700: '#a16207',
+            800: '#854d0e',
+            900: '#713f12',
+          },
+        },
+        // 深蓝专业系 - 主色调（保留作为备选）
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -37,18 +72,18 @@ module.exports = {
           800: '#9a3412',
           900: '#7c2d12',
         },
-        // 语义色系
+        // 语义色系（更新为wikiHow绿色）
         success: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+          50: '#f0f9f0',
+          100: '#E6EEE0',      // wikiHow次要背景
+          200: '#d4e8d4',
+          300: '#b8d9b8',
+          400: '#93B874',      // wikiHow菜单背景
+          500: '#7aa85a',
+          600: '#307530',      // wikiHow链接悬停
+          700: '#2d6a2d',
+          800: '#255525',
+          900: '#1e441e',
         },
         warning: {
           50: '#fffbeb',
@@ -137,6 +172,16 @@ module.exports = {
         '2xl': '1rem',
         '3xl': '1.5rem',
         '4xl': '2rem',
+        'wikihow-button': '4px',
+      },
+      // wikiHow 字体大小
+      fontSize: {
+        'wikihow-small': '11px',
+        'wikihow-standard': '14px',
+      },
+      // wikiHow 行高
+      lineHeight: {
+        'wikihow': '21px',
       },
       // 断点优化
       screens: {

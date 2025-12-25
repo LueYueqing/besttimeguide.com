@@ -19,7 +19,7 @@ try {
   // @ts-ignore - 动态导入生成的文件
   const buildInfo = require('./build-info.generated')
   buildTimeFormatted = buildInfo.BUILD_TIME_FORMATTED || buildInfo.getBuildTimeFormatted()
-} catch {
+} catch (e) {
   // 如果文件不存在（开发环境），使用当前时间
   buildTimeFormatted = formatBuildTime(new Date())
 }

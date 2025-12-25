@@ -19,17 +19,17 @@ export default function Navigation({ variant }: NavigationProps) {
   }
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/scan-qr-code', label: 'Scan QR' },
-    { href: '/features', label: 'Features' },
-    { href: '/blog', label: 'Blog' },
-    { href: '/pricing', label: 'Pricing' },
+    { href: '/travel', label: 'Travel' },
+    { href: '/social-media', label: 'Social Media' },
+    { href: '/health', label: 'Health' },
+    { href: '/shopping', label: 'Shopping' },
+    { href: '/lifestyle', label: 'Lifestyle' },
     { href: '/help/faq', label: 'FAQ' },
   ]
 
   const cta = {
-    href: '/pricing',
-    label: 'Get Started',
+    href: '/help/contact',
+    label: 'Contact',
   }
 
   return (
@@ -37,8 +37,7 @@ export default function Navigation({ variant }: NavigationProps) {
       <div className="navbar-container">
         <div className="navbar-content">
           <Link href="/" className="navbar-brand">
-            <img src="/logo.png" alt="CustomQR.pro" className="w-8 h-8" />
-            <span>CustomQR<span className="text-gradient">.pro</span></span>
+            <span className="text-2xl font-black">BestTime<span className="text-gradient">Guide</span></span>
           </Link>
           
           <div className="navbar-nav">

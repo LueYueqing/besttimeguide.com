@@ -17,9 +17,12 @@ if (stripeSecretKey && !stripeSecretKey.startsWith('sk_')) {
   console.error('[Stripe] Make sure you are using the SECRET key, not the PUBLISHABLE key (pk_...)')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  // 使用默认 API 版本，避免版本不匹配问题
-})
+// 只在有 Stripe key 时初始化，避免构建时错误
+const stripe = stripeSecretKey && stripeSecretKey.startsWith('sk_')
+  ? new Stripe(stripeSecretKey, {
+      // 使用默认 API 版本，避免版本不匹配问题
+    })
+  : null
 
 // 价格配置（需要先在 Stripe Dashboard 创建这些 Price ID）
 const PRICE_IDS = {
@@ -149,6 +152,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建 Stripe Checkout Session
+    if (!stripe) {
+      return NextResponse.json(
+        { success: false, error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],

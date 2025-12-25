@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Navigation from '../../components/Navigation'
-import Footer from '../../components/Footer'
-import { Section, Container } from '../../components/Layout'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
+import { Section, Container } from '@/components/Layout'
 
 export const metadata: Metadata = {
   title: 'FAQ - Frequently Asked Questions | CustomQR.pro',

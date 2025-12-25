@@ -14,9 +14,12 @@ if (stripeSecretKey && !stripeSecretKey.startsWith('sk_')) {
   console.error('[Stripe] Make sure you are using the SECRET key, not the PUBLISHABLE key (pk_...)')
 }
 
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2024-11-20.acacia',
-})
+// 只在有 Stripe key 时初始化，避免构建时错误
+const stripe = stripeSecretKey && stripeSecretKey.startsWith('sk_')
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2024-11-20.acacia',
+    })
+  : null
 
 const prisma = new PrismaClient()
 
@@ -132,16 +135,18 @@ async function persistSubscription({
     })
 
     // 如果旧订阅在 Stripe 中仍然活跃，尝试取消它们
-    for (const oldSub of existingActiveSubscriptions) {
-      if (oldSub.stripeSubscriptionId) {
-        try {
-          const stripeSub = await stripe.subscriptions.retrieve(oldSub.stripeSubscriptionId)
-          if (stripeSub.status === 'active' || stripeSub.status === 'trialing') {
-            await stripe.subscriptions.cancel(oldSub.stripeSubscriptionId)
-            console.log(`[StripeWebhook] Canceled Stripe subscription ${oldSub.stripeSubscriptionId}`)
+    if (stripe) {
+      for (const oldSub of existingActiveSubscriptions) {
+        if (oldSub.stripeSubscriptionId) {
+          try {
+            const stripeSub = await stripe.subscriptions.retrieve(oldSub.stripeSubscriptionId)
+            if (stripeSub.status === 'active' || stripeSub.status === 'trialing') {
+              await stripe.subscriptions.cancel(oldSub.stripeSubscriptionId)
+              console.log(`[StripeWebhook] Canceled Stripe subscription ${oldSub.stripeSubscriptionId}`)
+            }
+          } catch (error) {
+            console.error(`[StripeWebhook] Failed to cancel Stripe subscription ${oldSub.stripeSubscriptionId}:`, error)
           }
-        } catch (error) {
-          console.error(`[StripeWebhook] Failed to cancel Stripe subscription ${oldSub.stripeSubscriptionId}:`, error)
         }
       }
     }
@@ -217,10 +222,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     (typeof session.customer === 'string' ? session.customer : session.customer?.id) ?? null
 
   let subscription: Stripe.Subscription | null = null
-  try {
-    subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
-  } catch (error) {
-    console.error('[StripeWebhook] Failed to retrieve subscription', error)
+  if (stripe) {
+    try {
+      subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+    } catch (error) {
+      console.error('[StripeWebhook] Failed to retrieve subscription', error)
+    }
   }
 
   const priceId = session.metadata?.priceId || subscription?.items?.data?.[0]?.price?.id || null

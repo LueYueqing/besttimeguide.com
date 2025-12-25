@@ -14,11 +14,10 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
             {/* 品牌信息 */}
             <div className="md:col-span-2">
               <h3 className="text-2xl font-bold mb-4">
-                CustomQR<span className="text-gradient">.pro</span>
+                BestTime<span className="text-gradient">Guide</span>
               </h3>
               <p className="text-neutral-400 text-lg mb-6 max-w-md">
-                The professional choice for custom QR code generation. 
-                Trusted by 2,500+ businesses worldwide.
+                Find the best time for everything. Expert guides on travel, social media, health, shopping, and lifestyle.
               </p>
               <div className="flex items-center gap-4">
                 <div className="text-sm">
@@ -32,14 +31,15 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
               </div>
             </div>
 
-            {/* 产品链接 */}
+            {/* 分类链接 */}
             <div>
-              <h4 className="font-bold mb-4">Product</h4>
+              <h4 className="font-bold mb-4">Categories</h4>
               <div className="space-y-3 text-neutral-400">
-                <Link href="/features" className="block hover:text-primary-400 transition-colors">Features</Link>
-                <Link href="/pricing" className="block hover:text-primary-400 transition-colors">Pricing</Link>
-                <Link href="/docs/api" className="block hover:text-primary-400 transition-colors">API Docs</Link>
-                <Link href="/help" className="block hover:text-primary-400 transition-colors">Help Center</Link>
+                <Link href="/travel" className="block hover:text-primary-400 transition-colors">Travel</Link>
+                <Link href="/social-media" className="block hover:text-primary-400 transition-colors">Social Media</Link>
+                <Link href="/health" className="block hover:text-primary-400 transition-colors">Health</Link>
+                <Link href="/shopping" className="block hover:text-primary-400 transition-colors">Shopping</Link>
+                <Link href="/lifestyle" className="block hover:text-primary-400 transition-colors">Lifestyle</Link>
               </div>
             </div>
 
@@ -55,16 +55,16 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
             </div>
           </div>
 
-          {/* QR码类型快速链接 */}
+          {/* 热门指南快速链接 */}
           <div className="border-t border-neutral-800 pt-8 mb-8">
-            <h4 className="font-bold mb-4 text-center">Popular QR Code Generators</h4>
+            <h4 className="font-bold mb-4 text-center">Popular Guides</h4>
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-400">
-              <Link href="/wifi-qr-code-generator" className="hover:text-primary-400 transition-colors">WiFi QR Code</Link>
-              <Link href="/business-card-qr-code-generator" className="hover:text-primary-400 transition-colors">Business Card QR</Link>
-              <Link href="/whatsapp-qr-code-generator" className="hover:text-primary-400 transition-colors">WhatsApp QR</Link>
-              <Link href="/url-qr-code-generator" className="hover:text-primary-400 transition-colors">URL QR Code</Link>
-              <Link href="/url-qr-code-generator" className="hover:text-primary-400 transition-colors">QR Code with Logo</Link>
-              <Link href="/pricing" className="hover:text-primary-400 transition-colors">Bulk QR Generator</Link>
+              <Link href="/best-time-to-visit-japan" className="hover:text-primary-400 transition-colors">Best Time to Visit Japan</Link>
+              <Link href="/best-time-to-post-on-instagram" className="hover:text-primary-400 transition-colors">Best Time to Post on Instagram</Link>
+              <Link href="/best-time-to-post-on-tiktok" className="hover:text-primary-400 transition-colors">Best Time to Post on TikTok</Link>
+              <Link href="/best-time-to-visit-hawaii" className="hover:text-primary-400 transition-colors">Best Time to Visit Hawaii</Link>
+              <Link href="/best-time-to-take-creatine" className="hover:text-primary-400 transition-colors">Best Time to Take Creatine</Link>
+              <Link href="/best-time-to-buy-a-car" className="hover:text-primary-400 transition-colors">Best Time to Buy a Car</Link>
             </div>
           </div>
           
@@ -77,7 +77,7 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
               <Link href="/tutorials" className="hover:text-primary-400 transition-colors">Tutorials</Link>
             </div>
             <p className="text-neutral-500">
-              © 2025 CustomQR.pro. Professional QR Code Generator for Businesses
+              © 2025 BestTimeGuide.com. Find the Best Time for Everything
             </p>
             <p className="text-neutral-600 text-xs mt-2 opacity-50">
               Build: {getBuildTimeFormatted()}
@@ -95,22 +95,23 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
         <div className="text-center">
           <div className="mb-8">
             <h3 className="text-2xl font-bold mb-4">
-              CustomQR<span className="text-gradient">.pro</span>
+              BestTime<span className="text-gradient">Guide</span>
             </h3>
             <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
-              The professional choice for custom QR code generation.
+              Find the best time for everything. Expert guides with data-driven insights.
             </p>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-8 mb-8 text-neutral-300">
             <Link href="/" className="hover:text-primary-400 transition-colors">Home</Link>
-            <Link href="/pricing" className="hover:text-primary-400 transition-colors">Pricing</Link>
+            <Link href="/travel" className="hover:text-primary-400 transition-colors">Travel</Link>
+            <Link href="/social-media" className="hover:text-primary-400 transition-colors">Social Media</Link>
+            <Link href="/health" className="hover:text-primary-400 transition-colors">Health</Link>
             <Link href="/help/faq" className="hover:text-primary-400 transition-colors">FAQ</Link>
             <Link href="/help/contact" className="hover:text-primary-400 transition-colors">Contact</Link>
             <Link href="/about" className="hover:text-primary-400 transition-colors">About</Link>
             <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms</Link>
-            <Link href="/cookies" className="hover:text-primary-400 transition-colors">Cookies</Link>
           </div>
           
           <div className="border-t border-neutral-800 pt-8">

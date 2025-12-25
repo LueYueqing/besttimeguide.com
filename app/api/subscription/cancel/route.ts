@@ -3,9 +3,12 @@ import { auth } from '@/lib/auth'
 import Stripe from 'stripe'
 import { PrismaClient } from '@prisma/client'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  // 使用默认 API 版本
-})
+// 只在有 Stripe key 时初始化，避免构建时错误
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      // 使用默认 API 版本
+    })
+  : null
 
 const prisma = new PrismaClient()
 
@@ -62,6 +65,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 通过 Stripe API 取消订阅（在周期结束时取消）
+    if (!stripe) {
+      return NextResponse.json(
+        { success: false, error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
+
     try {
       const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId)
 

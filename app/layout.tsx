@@ -4,37 +4,46 @@ import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Your App Name',
-    template: '%s | Your App Name',
+    default: 'BestTimeGuide - Find the Best Time for Everything',
+    template: '%s | BestTimeGuide',
   },
-  description: 'Your app description - built with Next.js 15 and modern web technologies.',
-  keywords: ['keyword1', 'keyword2', 'keyword3'],
-  authors: [{ name: 'Your Team' }],
-  creator: 'Your App Name',
-  publisher: 'Your App Name',
+  description: 'Discover the best time to visit places, post on social media, take supplements, buy products, and more. Expert guides with data-driven insights.',
+  keywords: [
+    'best time to visit',
+    'best time to post on instagram',
+    'best time to post on tiktok',
+    'best time to travel',
+    'when is the best time',
+    'travel guide',
+    'social media timing',
+    'health supplements timing'
+  ],
+  authors: [{ name: 'BestTimeGuide Team' }],
+  creator: 'BestTimeGuide',
+  publisher: 'BestTimeGuide',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   openGraph: {
     type: 'website',
-    locale: 'zh_CN',
+    locale: 'en_US',
     url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    siteName: 'Your App Name',
-    title: 'Your App Name',
-    description: 'Your app description',
+    siteName: 'BestTimeGuide',
+    title: 'BestTimeGuide - Find the Best Time for Everything',
+    description: 'Expert guides on the best time to visit places, post on social media, take supplements, and more.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Your App Name',
+        alt: 'BestTimeGuide - Find the Best Time for Everything',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Your App Name',
-    description: 'Create professional custom QR codes with advanced design options.',
+    title: 'BestTimeGuide - Find the Best Time for Everything',
+    description: 'Expert guides on the best time to visit places, post on social media, take supplements, and more.',
     images: ['/og-image.png'],
-    creator: 'Your App Name',
+    creator: '@BestTimeGuide',
   },
   robots: {
     index: true,
@@ -82,9 +91,9 @@ export default function RootLayout({
         <meta name="color-scheme" content="light" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Your App" />
+        <meta name="apple-mobile-web-app-title" content="BestTimeGuide" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="application-name" content="Your App" />
+        <meta name="application-name" content="BestTimeGuide" />
       </head>
       <body className="font-sans antialiased bg-neutral-50 text-neutral-700">
         <Providers>

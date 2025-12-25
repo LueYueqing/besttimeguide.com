@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import SidebarNavigation from './components/SidebarNavigation'
 import StatsCards from './components/StatsCards'
-import QRCodeList from './components/QRCodeList'
+// import QRCodeList from './components/QRCodeList' // TODO: Create this component
 import DowngradeWarning from './components/DowngradeWarning'
 
 type QRCodeStatus = 'all' | 'active' | 'paused' | 'archived'
@@ -530,12 +530,20 @@ export default function DashboardClient() {
             </div>
 
             {/* QR码列表 */}
-            <QRCodeList
-              qrCodes={qrCodes}
-              loading={loading}
-              onRefresh={fetchQRCodes}
-              user={user}
-            />
+            {loading ? (
+              <div className="mt-6 text-center text-neutral-600">Loading QR codes...</div>
+            ) : qrCodes.length === 0 ? (
+              <div className="mt-6 text-center text-neutral-600">No QR codes found.</div>
+            ) : (
+              <div className="mt-6 grid gap-4">
+                {qrCodes.map((qr) => (
+                  <div key={qr.id} className="bg-white p-4 rounded-lg border border-neutral-200">
+                    <div className="font-medium">{qr.title || 'Untitled QR Code'}</div>
+                    <div className="text-sm text-neutral-600">{qr.shortCode || 'No short code'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </main>
       </div>

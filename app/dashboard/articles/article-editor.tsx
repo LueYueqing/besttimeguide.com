@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TurndownService from 'turndown'
 import { useToast } from '@/components/Toast'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Category {
   id: number
@@ -42,10 +44,11 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
-  
+  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write')
+
   // 初始化 Turndown 服务（HTML 转 Markdown）
   const turndownServiceRef = useRef<TurndownService | null>(null)
-  
+
   useEffect(() => {
     if (!turndownServiceRef.current) {
       const turndownService = new TurndownService({
@@ -145,7 +148,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
         if (filter) returnParams.set('filter', filter)
         if (category) returnParams.set('category', category)
         if (page) returnParams.set('page', page)
-        const returnUrl = returnParams.toString() 
+        const returnUrl = returnParams.toString()
           ? `/dashboard/articles?${returnParams.toString()}`
           : '/dashboard/articles'
         router.push(returnUrl)
@@ -202,7 +205,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
   // 处理粘贴事件：自动将 HTML 转换为 Markdown
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const clipboardData = e.clipboardData
-    
+
     // 优先获取 HTML 格式，如果没有则获取纯文本
     const htmlContent = clipboardData.getData('text/html')
     const plainText = clipboardData.getData('text/plain')
@@ -215,21 +218,21 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
         try {
           // 转换 HTML 为 Markdown
           const markdown = turndownServiceRef.current.turndown(htmlContent)
-          
+
           // 获取当前光标位置
           const textarea = e.currentTarget
           const start = textarea.selectionStart
           const end = textarea.selectionEnd
           const currentValue = formData.sourceContent
-          
+
           // 插入转换后的 Markdown 内容
           const newValue =
             currentValue.substring(0, start) +
             markdown +
             currentValue.substring(end)
-          
+
           setFormData({ ...formData, sourceContent: newValue })
-          
+
           // 设置光标位置到插入内容之后
           setTimeout(() => {
             const newCursorPos = start + markdown.length
@@ -410,16 +413,15 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
               {article?.aiRewriteStatus && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-neutral-500">AI 改写状态：</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                    article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
-                    article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded ${article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                      article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                    }`}>
                     {article.aiRewriteStatus === 'pending' ? '待处理' :
-                     article.aiRewriteStatus === 'processing' ? '处理中' :
-                     article.aiRewriteStatus === 'completed' ? '已完成' :
-                     article.aiRewriteStatus === 'failed' ? '失败' : article.aiRewriteStatus}
+                      article.aiRewriteStatus === 'processing' ? '处理中' :
+                        article.aiRewriteStatus === 'completed' ? '已完成' :
+                          article.aiRewriteStatus === 'failed' ? '失败' : article.aiRewriteStatus}
                   </span>
                   {article.aiRewriteAt && (
                     <span className="text-xs text-neutral-400">
@@ -433,17 +435,57 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              内容 (Markdown) <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              required
-              rows={20}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
-              placeholder="# 标题&#10;&#10;文章内容使用 Markdown 格式..."
-            />
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-neutral-700">
+                内容 (Markdown) <span className="text-red-500">*</span>
+              </label>
+              <div className="flex bg-neutral-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('write')}
+                  className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'write'
+                      ? 'bg-white text-primary-600 shadow-sm font-medium'
+                      : 'text-neutral-500 hover:text-neutral-700'
+                    }`}
+                >
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('preview')}
+                  className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'preview'
+                      ? 'bg-white text-primary-600 shadow-sm font-medium'
+                      : 'text-neutral-500 hover:text-neutral-700'
+                    }`}
+                >
+                  预览
+                </button>
+              </div>
+            </div>
+
+            {activeTab === 'write' ? (
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                required
+                rows={20}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+                placeholder="# 标题&#10;&#10;文章内容使用 Markdown 格式..."
+              />
+            ) : (
+              <div className="w-full px-4 py-4 border border-neutral-300 rounded-lg bg-neutral-50 min-h-[500px] max-h-[800px] overflow-y-auto prose prose-sm max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ node, ...props }) => (
+                      <img {...props} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '400px' }} />
+                    )
+                  }}
+                >
+                  {formData.content || '*暂无内容*'}
+                </ReactMarkdown>
+              </div>
+            )}
             <p className="mt-1 text-xs text-neutral-500">
               支持 Markdown 格式。阅读时间将自动计算。
             </p>

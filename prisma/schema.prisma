@@ -241,6 +241,9 @@ model Article {
   // 阅读时间（分钟，自动计算）
   readingTime     Int?      // 阅读时间（分钟）
   
+  // AI 内容生成相关
+  sourceContent   String?   @db.Text // 参考范本/原文（用于 AI 生成正式内容）
+  
   // 时间戳
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

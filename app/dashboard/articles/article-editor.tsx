@@ -24,6 +24,7 @@ interface Article {
   featured: boolean
   published: boolean
   publishedAt: string | null
+  sourceContent: string | null
 }
 
 interface ArticleEditorProps {
@@ -49,6 +50,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
     publishedAt: article?.publishedAt
       ? new Date(article.publishedAt).toISOString().slice(0, 16)
       : '',
+    sourceContent: article?.sourceContent || '',
   })
 
   // 自动生成slug
@@ -201,6 +203,23 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
                 placeholder="用逗号分隔，例如：travel, japan, guide"
               />
             </div>
+          </div>
+
+          {/* Source Content (Reference Template) */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              参考范本（原文）
+            </label>
+            <textarea
+              value={formData.sourceContent}
+              onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
+              rows={15}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+              placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容..."
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              参考范本/原文内容，将用于 AI 生成正式文章内容。此字段为可选。
+            </p>
           </div>
 
           {/* Content */}

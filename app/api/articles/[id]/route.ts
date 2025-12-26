@@ -123,6 +123,7 @@ export async function PUT(
       featured,
       published,
       publishedAt,
+      sourceContent,
     } = body
 
     // 检查文章是否存在
@@ -177,6 +178,7 @@ export async function PUT(
     if (keywords !== undefined) updateData.keywords = keywords || null
     if (tags !== undefined) updateData.tags = tagsJson
     if (featured !== undefined) updateData.featured = featured
+    if (sourceContent !== undefined) updateData.sourceContent = sourceContent || null
     if (published !== undefined) {
       updateData.published = published
       // 如果从未发布变为发布，设置发布时间

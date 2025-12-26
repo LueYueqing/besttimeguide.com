@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
       featured,
       published,
       publishedAt,
+      sourceContent,
     } = body
 
     // 验证必填字段
@@ -161,6 +162,7 @@ export async function POST(request: NextRequest) {
         published: published || false,
         publishedAt: published && publishedAt ? new Date(publishedAt) : published ? new Date() : null,
         readingTime,
+        sourceContent: sourceContent || null,
       },
       include: {
         category: true,

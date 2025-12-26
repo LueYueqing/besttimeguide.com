@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
+import { uploadImagesToR2 } from '@/lib/r2'
 
 const prisma = new PrismaClient()
 
@@ -281,10 +282,38 @@ export async function GET(request: NextRequest) {
         const sourceContent = article.sourceContent || ''
         const { images, processedContent } = extractImages(sourceContent)
 
+        // 上传图片到 R2（如果有图片）
+        const imageUrlMap = new Map<string, string>()
+        if (images.length > 0) {
+          try {
+            console.log(`[AI Rewrite] Uploading ${images.length} images to R2...`)
+            const uploadResults = await uploadImagesToR2(
+              images.map((img) => ({ url: img.url, alt: img.alt }))
+            )
+            uploadResults.forEach((newUrl, oldUrl) => {
+              imageUrlMap.set(oldUrl, newUrl)
+            })
+            console.log(`[AI Rewrite] Successfully uploaded ${imageUrlMap.size} images to R2`)
+          } catch (error) {
+            console.error('[AI Rewrite] Error uploading images to R2:', error)
+            // 如果上传失败，继续使用原 URL
+          }
+        }
+
+        // 更新图片 URL（如果已上传到 R2）
+        const updatedImages = images.map((img) => {
+          const newUrl = imageUrlMap.get(img.url) || img.url
+          return {
+            ...img,
+            url: newUrl,
+            markdown: `![${img.alt}](${newUrl})`,
+          }
+        })
+
         // 在提示词中添加图片占位符说明（如果有图片）
         let enhancedPrompt = AI_REWRITE_PROMPT
-        if (images.length > 0) {
-          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${images.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
+        if (updatedImages.length > 0) {
+          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
         }
 
         // 调用 AI API 进行改写
@@ -311,9 +340,9 @@ export async function GET(request: NextRequest) {
           throw new Error('AI returned empty content')
         }
 
-        // 后处理：插入图片
-        if (images.length > 0) {
-          rewrittenContent = insertImages(rewrittenContent, images)
+        // 后处理：插入图片（使用更新后的 URL）
+        if (updatedImages.length > 0) {
+          rewrittenContent = insertImages(rewrittenContent, updatedImages)
         }
 
         // 计算阅读时间
@@ -341,6 +370,22 @@ export async function GET(request: NextRequest) {
             },
           },
         })
+
+        // 触发页面重新生成（主动清除缓存）
+        try {
+          // 方法1: 通过路径重新验证
+          const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(revalidateUrl, { method: 'POST' })
+          
+          // 方法2: 通过 cache tag 重新验证（更精确）
+          const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(tagUrl, { method: 'POST' })
+          
+          console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
+        } catch (revalidateError) {
+          console.error('[AI Rewrite] Error revalidating page:', revalidateError)
+          // 不阻止流程，即使 revalidate 失败
+        }
 
         results.push({
           id: article.id,
@@ -458,10 +503,38 @@ export async function POST(request: NextRequest) {
         const sourceContent = article.sourceContent || ''
         const { images, processedContent } = extractImages(sourceContent)
 
+        // 上传图片到 R2（如果有图片）
+        const imageUrlMap = new Map<string, string>()
+        if (images.length > 0) {
+          try {
+            console.log(`[AI Rewrite] Uploading ${images.length} images to R2...`)
+            const uploadResults = await uploadImagesToR2(
+              images.map((img) => ({ url: img.url, alt: img.alt }))
+            )
+            uploadResults.forEach((newUrl, oldUrl) => {
+              imageUrlMap.set(oldUrl, newUrl)
+            })
+            console.log(`[AI Rewrite] Successfully uploaded ${imageUrlMap.size} images to R2`)
+          } catch (error) {
+            console.error('[AI Rewrite] Error uploading images to R2:', error)
+            // 如果上传失败，继续使用原 URL
+          }
+        }
+
+        // 更新图片 URL（如果已上传到 R2）
+        const updatedImages = images.map((img) => {
+          const newUrl = imageUrlMap.get(img.url) || img.url
+          return {
+            ...img,
+            url: newUrl,
+            markdown: `![${img.alt}](${newUrl})`,
+          }
+        })
+
         // 在提示词中添加图片占位符说明（如果有图片）
         let enhancedPrompt = AI_REWRITE_PROMPT
-        if (images.length > 0) {
-          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${images.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
+        if (updatedImages.length > 0) {
+          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
         }
 
         // 调用 AI API 进行改写
@@ -488,9 +561,9 @@ export async function POST(request: NextRequest) {
           throw new Error('AI returned empty content')
         }
 
-        // 后处理：插入图片
-        if (images.length > 0) {
-          rewrittenContent = insertImages(rewrittenContent, images)
+        // 后处理：插入图片（使用更新后的 URL）
+        if (updatedImages.length > 0) {
+          rewrittenContent = insertImages(rewrittenContent, updatedImages)
         }
 
         // 计算阅读时间
@@ -518,6 +591,22 @@ export async function POST(request: NextRequest) {
             },
           },
         })
+
+        // 触发页面重新生成（主动清除缓存）
+        try {
+          // 方法1: 通过路径重新验证
+          const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(revalidateUrl, { method: 'POST' })
+          
+          // 方法2: 通过 cache tag 重新验证（更精确）
+          const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(tagUrl, { method: 'POST' })
+          
+          console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
+        } catch (revalidateError) {
+          console.error('[AI Rewrite] Error revalidating page:', revalidateError)
+          // 不阻止流程，即使 revalidate 失败
+        }
 
         results.push({
           id: article.id,

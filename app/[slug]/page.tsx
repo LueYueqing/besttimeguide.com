@@ -4,13 +4,19 @@ import Link from 'next/link'
 import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 import ShareButtons from '../../components/ShareButtons'
-import { getPostBySlug, getAllPosts } from '@/lib/blog'
+import { getPostBySlug, getAllPosts, type BlogPost } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
 }
+
+// 完全禁用自动刷新，只使用 on-demand revalidation（按需重新生成）
+// 只有在后台主动请求时（文章更新、AI 改写完成）才会重新生成内容
+// 这样可以完全避免数据库的定期查询负担
+// 注意：不设置 revalidate 或设置为很大的值，配合 on-demand revalidation 使用
+export const revalidate = false // Next.js 15 支持 false 来禁用自动刷新
 
 export async function generateStaticParams() {
   const posts = await getAllPosts()
@@ -21,13 +27,17 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params
-  const post = await getPostBySlug(slug)
+  const postResult = await getPostBySlug(slug)
 
-  if (!post) {
+  // 检查是否是数据库错误或文章不存在
+  if (!postResult || ('error' in postResult && postResult.error === 'DATABASE_ERROR')) {
     return {
       title: 'Article Not Found',
     }
   }
+
+  // 此时 postResult 一定是 BlogPost（已经过滤了错误情况）
+  const post = postResult as BlogPost
 
   return {
     title: `${post.title} | besttimeguide.com`,
@@ -79,11 +89,25 @@ function extractHeadings(content: string): Array<{ level: number; text: string; 
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params
-  const post = await getPostBySlug(slug)
-
-  if (!post) {
+  // 使用 unstable_cache 和 cache tag，便于精确控制缓存
+  const postResult = await getPostBySlug(slug)
+  
+  // 检查是否是数据库连接错误
+  if (postResult && 'error' in postResult && postResult.error === 'DATABASE_ERROR') {
+    // 数据库连接失败时，Next.js ISR 会自动使用之前生成的静态页面（如果存在）
+    // 但如果静态页面不存在或已过期，我们需要显示错误页面
+    // 这里我们让 Next.js 的 ISR 机制处理，它会自动使用缓存的静态页面
+    // 如果缓存也不存在，则显示 404
+    console.warn(`[ArticlePage] Database connection error for ${slug}, ISR will use cached page if available`)
+    notFound() // 这会触发 Next.js 使用缓存的静态页面（如果存在）
+  }
+  
+  // 如果文章不存在
+  if (!postResult || 'error' in postResult) {
     notFound()
   }
+  
+  const post = postResult
 
   const allPosts = await getAllPosts()
   const relatedPosts = allPosts

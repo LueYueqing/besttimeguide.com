@@ -198,6 +198,24 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // 触发页面重新生成（如果文章已发布）
+    if (article.published) {
+      try {
+        // 方法1: 通过路径重新验证
+        const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+        await fetch(revalidateUrl, { method: 'POST' })
+        
+        // 方法2: 通过 cache tag 重新验证（更精确）
+        const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+        await fetch(tagUrl, { method: 'POST' })
+        
+        console.log(`[Article Create] Revalidated page: /${article.slug}`)
+      } catch (revalidateError) {
+        console.error('[Article Create] Error revalidating page:', revalidateError)
+        // 不阻止创建，即使 revalidate 失败
+      }
+    }
+
     return NextResponse.json({ success: true, article }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating article:', error)

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import AuthButton from './AuthButton'
 
@@ -33,6 +34,14 @@ export default function Navigation({ variant }: NavigationProps) {
         <div className="navbar-wikihow-content">
           {/* Logo */}
           <Link href="/" className="navbar-wikihow-brand">
+            <Image
+              src="/images/logo-quart.png"
+              alt="BestTimeGuide"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              priority
+            />
             <span>BestTime<span>Guide</span></span>
           </Link>
           

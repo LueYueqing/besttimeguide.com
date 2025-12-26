@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getBuildTimeFormatted } from '@/lib/build-info'
 import NewsletterSubscription from './NewsletterSubscription'
 
@@ -14,9 +15,18 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* 左侧：Logo + 搜索框 */}
             <div>
-              <h3 className="text-2xl font-bold mb-4 text-white">
-                BestTime<span className="text-wikihow-button">Guide</span>
-              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <Image
+                  src="/images/logo-quart.png"
+                  alt="BestTimeGuide"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 object-contain"
+                />
+                <h3 className="text-2xl font-bold text-white">
+                  BestTime<span className="text-wikihow-button">Guide</span>
+                </h3>
+              </div>
               <div className="wikihow-search-box mb-4">
                 <input
                   type="search"
@@ -103,9 +113,18 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center">
           <div className="mb-6">
-            <h3 className="text-2xl font-bold mb-3 text-white">
-              BestTime<span className="text-wikihow-button">Guide</span>
-            </h3>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <Image
+                src="/images/logo-quart.png"
+                alt="BestTimeGuide"
+                width={40}
+                height={40}
+                className="w-10 h-10 object-contain"
+              />
+              <h3 className="text-2xl font-bold text-white">
+                BestTime<span className="text-wikihow-button">Guide</span>
+              </h3>
+            </div>
             <p className="text-white/90 text-sm max-w-2xl mx-auto">
               Find the best time for everything. Expert guides with data-driven insights.
             </p>

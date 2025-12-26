@@ -435,11 +435,11 @@ export default function ProfileClient() {
             <div className="flex items-center">
               <Link href="/" className="flex items-center gap-3 text-xl lg:text-2xl font-bold text-primary-600 hover:text-primary-700 transition-colors">
                 <Image
-                  src="/logo.png"
+                  src="/images/logo-quart.png"
                   alt="besttimeguide.com"
                   width={32}
                   height={32}
-                  className="w-8 h-8"
+                  className="w-8 h-8 object-contain"
                 />
                 <span>BestTime<span className="text-gradient">Guide</span></span>
               </Link>

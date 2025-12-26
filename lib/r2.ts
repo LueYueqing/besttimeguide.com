@@ -1,0 +1,204 @@
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { Readable } from 'stream'
+
+// 初始化 R2 客户端
+const getR2Client = () => {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
+  const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID
+  const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY
+  const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'besttimeguide'
+  const endpoint = `https://${accountId}.r2.cloudflarestorage.com`
+
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error('Cloudflare R2 credentials are not configured')
+  }
+
+  return {
+    client: new S3Client({
+      region: 'auto',
+      endpoint,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    }),
+    bucketName,
+  }
+}
+
+// 生成文件名（从 alt 文本或 URL 提取）
+function generateFileName(alt: string, url: string, index: number): string {
+  // 尝试从 alt 文本生成文件名
+  let baseName = alt
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // 移除特殊字符
+    .replace(/\s+/g, '-') // 空格替换为连字符
+    .replace(/-+/g, '-') // 多个连字符合并为一个
+    .replace(/^-|-$/g, '') // 移除开头和结尾的连字符
+    .substring(0, 50) // 限制长度
+
+  // 如果 alt 文本为空或太短，尝试从 URL 提取
+  if (!baseName || baseName.length < 3) {
+    try {
+      const urlObj = new URL(url)
+      const pathname = urlObj.pathname
+      const urlFileName = pathname.split('/').pop() || ''
+      baseName = urlFileName
+        .replace(/[^a-z0-9.-]/gi, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 50)
+    } catch {
+      // URL 解析失败，使用默认名称
+    }
+  }
+
+  // 如果还是没有有效的名称，使用索引
+  if (!baseName || baseName.length < 3) {
+    baseName = `image-${index + 1}`
+  }
+
+  // 确保有扩展名
+  if (!baseName.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+    baseName += '.png' // 默认使用 png
+  }
+
+  return baseName
+}
+
+// 生成 R2 路径：article\{year-month-day}\filename
+function generateR2Path(fileName: string): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const datePath = `${year}-${month}-${day}`
+  
+  return `article/${datePath}/${fileName}`
+}
+
+// 下载图片
+async function downloadImage(url: string): Promise<Buffer> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status} ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  } catch (error) {
+    console.error(`Error downloading image from ${url}:`, error)
+    throw error
+  }
+}
+
+// 上传图片到 R2
+export async function uploadImageToR2(
+  imageUrl: string,
+  alt: string,
+  index: number
+): Promise<string> {
+  try {
+    const { client, bucketName } = getR2Client()
+
+    // 下载图片
+    console.log(`[R2] Downloading image ${index + 1}: ${imageUrl}`)
+    const imageBuffer = await downloadImage(imageUrl)
+
+    // 生成文件名和路径
+    const fileName = generateFileName(alt, imageUrl, index)
+    const r2Path = generateR2Path(fileName)
+
+    // 检测内容类型
+    const contentType = getContentType(imageUrl, imageBuffer)
+
+    // 上传到 R2
+    console.log(`[R2] Uploading to: ${r2Path}`)
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: r2Path,
+      Body: imageBuffer,
+      ContentType: contentType,
+      CacheControl: 'public, max-age=31536000', // 1 年缓存
+    })
+
+    await client.send(command)
+
+    // 生成公共访问 URL（如果配置了自定义域名）
+    const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL
+      ? `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${r2Path}`
+      : `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucketName}/${r2Path}`
+
+    console.log(`[R2] Uploaded successfully: ${publicUrl}`)
+    return publicUrl
+  } catch (error) {
+    console.error(`[R2] Error uploading image:`, error)
+    throw error
+  }
+}
+
+// 检测图片内容类型
+function getContentType(url: string, buffer: Buffer): string {
+  // 从 URL 扩展名判断
+  const urlLower = url.toLowerCase()
+  if (urlLower.includes('.jpg') || urlLower.includes('.jpeg')) {
+    return 'image/jpeg'
+  }
+  if (urlLower.includes('.png')) {
+    return 'image/png'
+  }
+  if (urlLower.includes('.gif')) {
+    return 'image/gif'
+  }
+  if (urlLower.includes('.webp')) {
+    return 'image/webp'
+  }
+  if (urlLower.includes('.svg')) {
+    return 'image/svg+xml'
+  }
+
+  // 从文件头判断（Magic Number）
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+    return 'image/jpeg'
+  }
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return 'image/png'
+  }
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+    return 'image/gif'
+  }
+  if (buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+    return 'image/webp'
+  }
+
+  // 默认返回 png
+  return 'image/png'
+}
+
+// 批量上传图片
+export async function uploadImagesToR2(
+  images: Array<{ url: string; alt: string }>
+): Promise<Map<string, string>> {
+  const urlMap = new Map<string, string>()
+
+  for (let i = 0; i < images.length; i++) {
+    const { url, alt } = images[i]
+    try {
+      const newUrl = await uploadImageToR2(url, alt, i)
+      urlMap.set(url, newUrl)
+    } catch (error) {
+      console.error(`[R2] Failed to upload image ${i + 1} (${url}):`, error)
+      // 如果上传失败，保留原 URL
+      urlMap.set(url, url)
+    }
+  }
+
+  return urlMap
+}
+

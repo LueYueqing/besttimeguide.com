@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { unstable_cache } from 'next/cache'
 
 const prisma = new PrismaClient()
 
@@ -69,15 +70,29 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 }
 
 // 根据slug获取单篇文章
-export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+// 返回值：BlogPost | null | { error: 'DATABASE_ERROR' }
+export async function getPostBySlug(slug: string): Promise<BlogPost | null | { error: 'DATABASE_ERROR' }> {
   try {
-    const article = await prisma.article.findUnique({
-      where: { slug },
-      include: {
-        category: true,
-        author: true,
+    // 使用 unstable_cache 包装查询，添加 cache tag 便于精确清除缓存
+    const getCachedArticle = unstable_cache(
+      async () => {
+        return await prisma.article.findUnique({
+          where: { slug },
+          include: {
+            category: true,
+            author: true,
+          },
+        })
       },
-    })
+      [`article-${slug}`],
+      {
+        tags: [`article-${slug}`],
+        // 不设置 revalidate，完全依赖 on-demand revalidation
+        // 这样只有在主动调用 revalidateTag 时才会重新生成
+      }
+    )
+
+    const article = await getCachedArticle()
 
     if (!article || !article.published) {
       return null
@@ -95,7 +110,18 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       readingTime: article.readingTime || calculateReadingTime(article.content),
       featured: article.featured,
     }
-  } catch (error) {
+  } catch (error: any) {
+    // 检查是否是数据库连接错误
+    const isDatabaseError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)
+    
+    if (isDatabaseError) {
+      console.warn(`[Blog] Database connection error for ${slug}`)
+      // 返回特殊标记，让页面组件知道这是数据库错误
+      // Next.js ISR 会在后台使用缓存的静态页面（如果存在）
+      return { error: 'DATABASE_ERROR' as const }
+    }
+    
+    // 其他错误记录并返回 null
     console.error(`Error reading post ${slug}:`, error)
     return null
   }

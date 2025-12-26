@@ -152,8 +152,15 @@ export default function AnalyticsClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-xl font-semibold text-neutral-900">
-                besttimeguide.com
+              <Link href="/" className="flex items-center gap-3 text-xl font-semibold text-neutral-900 hover:text-primary-600 transition-colors">
+                <Image
+                  src="/images/logo-quart.png"
+                  alt="besttimeguide.com"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 object-contain"
+                />
+                <span>besttimeguide.com</span>
               </Link>
             </div>
             <div className="flex items-center gap-4">

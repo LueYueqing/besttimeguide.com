@@ -27,7 +27,7 @@ async function checkAdmin() {
 // POST - 标记文章为 AI 改写状态
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const adminId = await checkAdmin()
@@ -35,8 +35,8 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const articleId = parseInt(id, 10)
+    const { slug } = await params
+    const articleId = parseInt(slug, 10)
 
     if (isNaN(articleId)) {
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
@@ -86,4 +86,3 @@ export async function POST(
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
-

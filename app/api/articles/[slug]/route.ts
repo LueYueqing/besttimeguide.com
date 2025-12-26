@@ -34,7 +34,7 @@ function calculateReadingTime(content: string): number {
 // GET - 获取单篇文章
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const adminId = await checkAdmin()
@@ -42,8 +42,8 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const articleId = parseInt(id, 10)
+    const { slug } = await params
+    const articleId = parseInt(slug, 10)
 
     if (isNaN(articleId)) {
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
@@ -94,7 +94,7 @@ export async function GET(
 // PUT - 更新文章
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const adminId = await checkAdmin()
@@ -102,8 +102,8 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const articleId = parseInt(id, 10)
+    const { slug: paramSlug } = await params
+    const articleId = parseInt(paramSlug, 10)
 
     if (isNaN(articleId)) {
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
@@ -220,15 +220,15 @@ export async function PUT(
         // 方法1: 通过路径重新验证
         const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
         await fetch(revalidateUrl, { method: 'POST' })
-        
+
         // 方法2: 通过 cache tag 重新验证（更精确）
         const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
         await fetch(tagUrl, { method: 'POST' })
-        
+
         // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
         const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
         await fetch(allPostsUrl, { method: 'POST' })
-        
+
         console.log(`[Article Update] Revalidated page: /${article.slug}`)
       } catch (revalidateError) {
         console.error('[Article Update] Error revalidating page:', revalidateError)
@@ -255,7 +255,7 @@ export async function PUT(
 // PATCH - 重置 AI 改写冷却时间（将 aiRewriteAt 设置为 24 小时前）
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const adminId = await checkAdmin()
@@ -263,8 +263,8 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const articleId = parseInt(id, 10)
+    const { slug } = await params
+    const articleId = parseInt(slug, 10)
 
     if (isNaN(articleId)) {
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
@@ -337,7 +337,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const adminId = await checkAdmin()
@@ -345,8 +345,8 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const articleId = parseInt(id, 10)
+    const { slug } = await params
+    const articleId = parseInt(slug, 10)
 
     if (isNaN(articleId)) {
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
@@ -372,4 +372,3 @@ export async function DELETE(
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
-

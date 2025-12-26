@@ -248,7 +248,74 @@ export async function PUT(
   }
 }
 
-// DELETE - 删除文章
+// PATCH - 重置 AI 改写冷却时间（将 aiRewriteAt 设置为 24 小时前）
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const adminId = await checkAdmin()
+    if (!adminId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const articleId = parseInt(id, 10)
+
+    if (isNaN(articleId)) {
+      return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
+    }
+
+    const body = await request.json().catch(() => ({}))
+    const { action } = body
+
+    // 只处理 resetCooldown 操作
+    if (action !== 'resetCooldown') {
+      return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 })
+    }
+
+    // 检查文章是否存在
+    const existing = await prisma.article.findUnique({
+      where: { id: articleId },
+    })
+
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
+    }
+
+    // 将 aiRewriteAt 设置为 24 小时前，绕过冷却期
+    const cooldownHours = 24
+    const resetTime = new Date()
+    resetTime.setHours(resetTime.getHours() - cooldownHours - 1) // 设置为 25 小时前，确保绕过 24 小时限制
+
+    const article = await prisma.article.update({
+      where: { id: articleId },
+      data: {
+        aiRewriteAt: resetTime,
+      },
+      include: {
+        category: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json({
+      success: true,
+      article,
+      message: 'AI rewrite cooldown reset successfully',
+    })
+  } catch (error: any) {
+    console.error('Error resetting cooldown:', error)
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -43,6 +43,7 @@ interface ArticlesClientProps {
 export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const router = useRouter()
   const { user } = useUser()
+  const toast = useToast()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
@@ -154,6 +155,43 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       console.error('Error deleting article:', error)
       alert('删除失败')
     }
+  }
+
+  const handleResetCooldown = async (id: number) => {
+    if (!confirm('确定要重置这篇文章的 AI 改写冷却时间吗？这将允许立即重新处理。')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/articles/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'resetCooldown' }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('冷却时间已重置，可以立即重新处理')
+        fetchArticles() // 刷新列表
+      } else {
+        toast.error('重置失败：' + data.error)
+      }
+    } catch (error) {
+      console.error('Error resetting cooldown:', error)
+      toast.error('重置失败')
+    }
+  }
+
+  // 检查文章是否在冷却期内（24小时内处理过）
+  const isInCooldown = (aiRewriteAt: string | null): boolean => {
+    if (!aiRewriteAt) return false
+    const lastProcessed = new Date(aiRewriteAt)
+    const now = new Date()
+    const hoursSinceLastProcess = (now.getTime() - lastProcessed.getTime()) / (1000 * 60 * 60)
+    return hoursSinceLastProcess < 24
   }
 
   const formatDate = (dateString: string | null) => {
@@ -318,27 +356,39 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {article.aiRewriteStatus ? (
                         <div className="flex flex-col gap-1">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              article.aiRewriteStatus === 'completed'
-                                ? 'bg-green-100 text-green-800'
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                article.aiRewriteStatus === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : article.aiRewriteStatus === 'processing'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : article.aiRewriteStatus === 'failed'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              {article.aiRewriteStatus === 'pending'
+                                ? '待处理'
                                 : article.aiRewriteStatus === 'processing'
-                                ? 'bg-blue-100 text-blue-800'
+                                ? '处理中'
+                                : article.aiRewriteStatus === 'completed'
+                                ? '已完成'
                                 : article.aiRewriteStatus === 'failed'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {article.aiRewriteStatus === 'pending'
-                              ? '待处理'
-                              : article.aiRewriteStatus === 'processing'
-                              ? '处理中'
-                              : article.aiRewriteStatus === 'completed'
-                              ? '已完成'
-                              : article.aiRewriteStatus === 'failed'
-                              ? '失败'
-                              : article.aiRewriteStatus}
-                          </span>
+                                ? '失败'
+                                : article.aiRewriteStatus}
+                            </span>
+                            {/* 如果在冷却期内，显示重置按钮 */}
+                            {article.aiRewriteAt && isInCooldown(article.aiRewriteAt) && (
+                              <button
+                                onClick={() => handleResetCooldown(article.id)}
+                                className="px-2 py-0.5 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                                title="重置冷却时间，允许立即重新处理"
+                              >
+                                重置
+                              </button>
+                            )}
+                          </div>
                           {article.aiRewriteAt && (
                             <span className="text-xs text-neutral-500">
                               {new Date(article.aiRewriteAt).toLocaleString('zh-CN', {
@@ -347,6 +397,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
+                              {isInCooldown(article.aiRewriteAt) && (
+                                <span className="ml-1 text-orange-600">(冷却中)</span>
+                              )}
                             </span>
                           )}
                         </div>
@@ -361,27 +414,37 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                       {formatDate(article.updatedAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-3">
                         <Link
                           href={`/dashboard/articles/${article.id}`}
-                          className="text-primary-600 hover:text-primary-900"
+                          className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                          title="编辑文章"
                         >
-                          编辑
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </Link>
                         {article.published && (
                           <Link
                             href={`/${article.slug}`}
                             target="_blank"
-                            className="text-blue-600 hover:text-blue-900"
+                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                            title="查看文章"
                           >
-                            查看
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
                           </Link>
                         )}
                         <button
                           onClick={() => handleDelete(article.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                          title="删除文章"
                         >
-                          删除
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </td>

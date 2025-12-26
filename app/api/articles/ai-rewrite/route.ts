@@ -233,13 +233,16 @@ export async function GET(request: NextRequest) {
     // 获取请求参数（可选：指定文章 ID）
     const { searchParams } = new URL(request.url)
     const articleId = searchParams.get('articleId') ? parseInt(searchParams.get('articleId')!, 10) : null
+    // 如果指定了 articleId，表示是手动触发，应该跳过冷却期检查
+    const isManualRequest = articleId !== null
 
     // 配置：最大内容长度和重试限制
     const MAX_CONTENT_LENGTH = 50000 // 最大内容长度（字符数），超过此长度直接跳过
-    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试
+    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试（仅适用于批量处理）
 
     // 查询待改写的文章
     // 排除最近失败的文章（避免反复尝试失败的文章）
+    // 注意：如果是手动指定文章ID，不应用冷却期限制
     const excludeRecentFailures = new Date()
     excludeRecentFailures.setHours(excludeRecentFailures.getHours() - MAX_RETRY_HOURS)
 
@@ -303,13 +306,14 @@ export async function GET(request: NextRequest) {
         }
 
         // 检查是否最近失败过（如果 aiRewriteAt 在最近24小时内，可能是刚失败过）
-        if (article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
+        // 注意：如果是手动指定文章ID，跳过冷却期检查，允许立即处理
+        if (!isManualRequest && article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
           console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" was recently processed (${article.aiRewriteAt.toISOString()}), skipping to avoid repeated failures`)
           results.push({
             id: article.id,
             title: article.title,
             status: 'skipped',
-            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying.`,
+            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying, or specify articleId to force processing.`,
           })
           continue
         }
@@ -326,17 +330,20 @@ export async function GET(request: NextRequest) {
         const { images, processedContent } = extractImages(sourceContent)
 
         // 上传图片到 R2（如果有图片）
+        // 注意：会自动跳过已经是 R2 URL 的图片，避免重复上传
         const imageUrlMap = new Map<string, string>()
         if (images.length > 0) {
           try {
-            console.log(`[AI Rewrite] Uploading ${images.length} images to R2...`)
+            console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
+            
             const uploadResults = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt }))
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)
             })
-            console.log(`[AI Rewrite] Successfully uploaded ${imageUrlMap.size} images to R2`)
+            
+            console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
           } catch (error) {
             console.error('[AI Rewrite] Error uploading images to R2:', error)
             // 如果上传失败，继续使用原 URL
@@ -391,11 +398,22 @@ export async function GET(request: NextRequest) {
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
-        // 更新文章：保存改写后的内容，更新状态，设置为已发布
+        // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
+        let updatedSourceContent = sourceContent
+        if (imageUrlMap.size > 0) {
+          for (const [oldUrl, newUrl] of imageUrlMap.entries()) {
+            // 替换 sourceContent 中的第三方图片 URL 为 R2 URL
+            updatedSourceContent = updatedSourceContent.replace(oldUrl, newUrl)
+          }
+          console.log(`[AI Rewrite] Updated sourceContent with R2 image URLs to avoid duplicate uploads`)
+        }
+
+        // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
           data: {
             content: rewrittenContent,
+            sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
             aiRewriteStatus: 'completed',
             aiRewriteAt: new Date(),
             readingTime,
@@ -510,13 +528,16 @@ export async function POST(request: NextRequest) {
     // 获取请求参数（可选：指定文章 ID，如果不指定则处理所有待改写文章）
     const body = await request.json().catch(() => ({}))
     const articleId = body.articleId ? parseInt(body.articleId, 10) : null
+    // 如果指定了 articleId，表示是手动触发，应该跳过冷却期检查
+    const isManualRequest = articleId !== null
 
     // 配置：最大内容长度和重试限制
     const MAX_CONTENT_LENGTH = 50000 // 最大内容长度（字符数），超过此长度直接跳过
-    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试
+    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试（仅适用于批量处理）
 
     // 查询待改写的文章
     // 排除最近失败的文章（避免反复尝试失败的文章）
+    // 注意：如果是手动指定文章ID，不应用冷却期限制
     const excludeRecentFailures = new Date()
     excludeRecentFailures.setHours(excludeRecentFailures.getHours() - MAX_RETRY_HOURS)
 
@@ -577,13 +598,14 @@ export async function POST(request: NextRequest) {
         }
 
         // 检查是否最近失败过（如果 aiRewriteAt 在最近24小时内，可能是刚失败过）
-        if (article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
+        // 注意：如果是手动指定文章ID，跳过冷却期检查，允许立即处理
+        if (!isManualRequest && article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
           console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" was recently processed (${article.aiRewriteAt.toISOString()}), skipping to avoid repeated failures`)
           results.push({
             id: article.id,
             title: article.title,
             status: 'skipped',
-            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying.`,
+            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying, or specify articleId to force processing.`,
           })
           continue
         }
@@ -600,17 +622,20 @@ export async function POST(request: NextRequest) {
         const { images, processedContent } = extractImages(sourceContent)
 
         // 上传图片到 R2（如果有图片）
+        // 注意：会自动跳过已经是 R2 URL 的图片，避免重复上传
         const imageUrlMap = new Map<string, string>()
         if (images.length > 0) {
           try {
-            console.log(`[AI Rewrite] Uploading ${images.length} images to R2...`)
+            console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
+            
             const uploadResults = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt }))
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)
             })
-            console.log(`[AI Rewrite] Successfully uploaded ${imageUrlMap.size} images to R2`)
+            
+            console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
           } catch (error) {
             console.error('[AI Rewrite] Error uploading images to R2:', error)
             // 如果上传失败，继续使用原 URL
@@ -665,11 +690,22 @@ export async function POST(request: NextRequest) {
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
-        // 更新文章：保存改写后的内容，更新状态，设置为已发布
+        // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
+        let updatedSourceContent = sourceContent
+        if (imageUrlMap.size > 0) {
+          for (const [oldUrl, newUrl] of imageUrlMap.entries()) {
+            // 替换 sourceContent 中的第三方图片 URL 为 R2 URL
+            updatedSourceContent = updatedSourceContent.replace(oldUrl, newUrl)
+          }
+          console.log(`[AI Rewrite] Updated sourceContent with R2 image URLs to avoid duplicate uploads`)
+        }
+
+        // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
           data: {
             content: rewrittenContent,
+            sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
             aiRewriteStatus: 'completed',
             aiRewriteAt: new Date(),
             readingTime,

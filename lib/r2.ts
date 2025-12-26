@@ -98,6 +98,17 @@ async function downloadImage(url: string): Promise<Buffer> {
   }
 }
 
+// 检查图片 URL 是否已经是 R2 URL
+function isR2Url(url: string): boolean {
+  const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL
+  if (r2PublicUrl) {
+    const baseUrl = r2PublicUrl.replace(/\/$/, '')
+    return url.startsWith(baseUrl) || url.includes('/article/')
+  }
+  // 检查是否是 R2 默认 URL 格式
+  return url.includes('.r2.cloudflarestorage.com') || url.includes('.r2.dev')
+}
+
 // 上传图片到 R2
 export async function uploadImageToR2(
   imageUrl: string,
@@ -105,6 +116,12 @@ export async function uploadImageToR2(
   index: number
 ): Promise<string> {
   try {
+    // 如果图片 URL 已经是 R2 URL，直接返回，不重复上传
+    if (isR2Url(imageUrl)) {
+      console.log(`[R2] Image ${index + 1} is already in R2: ${imageUrl}`)
+      return imageUrl
+    }
+
     const { client, bucketName } = getR2Client()
 
     // 下载图片
@@ -192,22 +209,36 @@ function getContentType(url: string, buffer: Buffer): string {
   return 'image/png'
 }
 
-// 批量上传图片
+// 批量上传图片（自动去重，跳过已上传的图片）
 export async function uploadImagesToR2(
   images: Array<{ url: string; alt: string }>
 ): Promise<Map<string, string>> {
   const urlMap = new Map<string, string>()
+  let skippedCount = 0
+  let uploadedCount = 0
 
   for (let i = 0; i < images.length; i++) {
     const { url, alt } = images[i]
     try {
+      // 如果图片已经是 R2 URL，直接使用，不重复上传
+      if (isR2Url(url)) {
+        skippedCount++
+        urlMap.set(url, url)
+        continue
+      }
+
       const newUrl = await uploadImageToR2(url, alt, i)
+      uploadedCount++
       urlMap.set(url, newUrl)
     } catch (error) {
       console.error(`[R2] Failed to upload image ${i + 1} (${url}):`, error)
       // 如果上传失败，保留原 URL
       urlMap.set(url, url)
     }
+  }
+
+  if (skippedCount > 0) {
+    console.log(`[R2] Skipped ${skippedCount} already uploaded images, uploaded ${uploadedCount} new images`)
   }
 
   return urlMap

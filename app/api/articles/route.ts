@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
     const published = searchParams.get('published')
     const categoryId = searchParams.get('categoryId')
     const search = searchParams.get('search') || searchParams.get('q') // 支持 search 或 q 参数
+    const sortField = searchParams.get('sort') as 'publishedAt' | 'updatedAt' | null
+    const sortOrder = searchParams.get('order') as 'asc' | 'desc' | 'asc' || 'desc'
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const skip = (page - 1) * limit
@@ -90,9 +92,9 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: sortField && (sortField === 'publishedAt' || sortField === 'updatedAt')
+        ? { [sortField]: sortOrder }
+        : { createdAt: 'desc' },
       skip,
       take: limit,
     })

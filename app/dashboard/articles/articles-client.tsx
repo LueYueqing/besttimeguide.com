@@ -75,6 +75,18 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>(getInitialCategory())
   const [currentPage, setCurrentPage] = useState(getInitialPage())
   const [searchQuery, setSearchQuery] = useState<string>(getInitialSearch())
+  
+  // 排序状态
+  const getInitialSort = (): { field: 'publishedAt' | 'updatedAt' | null; order: 'asc' | 'desc' } => {
+    const sortField = searchParams.get('sort')
+    const sortOrder = searchParams.get('order') as 'asc' | 'desc' | null
+    if (sortField === 'publishedAt' || sortField === 'updatedAt') {
+      return { field: sortField, order: sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'desc' }
+    }
+    return { field: null, order: 'desc' }
+  }
+  const [sortField, setSortField] = useState<'publishedAt' | 'updatedAt' | null>(getInitialSort().field)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(getInitialSort().order)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [quickCreateTitles, setQuickCreateTitles] = useState('')
   const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
@@ -89,13 +101,20 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   })
 
   // 更新 URL 参数
-  const updateUrlParams = (newFilter: 'all' | 'published' | 'draft', newCategory: string, newPage: number) => {
+  const updateUrlParams = (newFilter: 'all' | 'published' | 'draft', newCategory: string, newPage: number, newSearch: string, newSortField: 'publishedAt' | 'updatedAt' | null, newSortOrder: 'asc' | 'desc') => {
     const params = new URLSearchParams()
     if (newFilter !== 'all') {
       params.set('filter', newFilter)
     }
     if (newCategory !== 'all') {
       params.set('category', newCategory)
+    }
+    if (newSearch.trim()) {
+      params.set('search', newSearch.trim())
+    }
+    if (newSortField) {
+      params.set('sort', newSortField)
+      params.set('order', newSortOrder)
     }
     if (newPage > 1) {
       params.set('page', newPage.toString())
@@ -104,18 +123,32 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     const newUrl = queryString ? `/dashboard/articles?${queryString}` : '/dashboard/articles'
     router.push(newUrl, { scroll: false })
   }
+  
+  // 处理排序
+  const handleSort = (field: 'publishedAt' | 'updatedAt') => {
+    if (sortField === field) {
+      // 如果点击同一列，切换排序顺序
+      const newOrder = sortOrder === 'asc' ? 'desc' : 'asc'
+      setSortOrder(newOrder)
+    } else {
+      // 如果点击不同列，设置为该列，默认降序
+      setSortField(field)
+      setSortOrder('desc')
+    }
+    setCurrentPage(1) // 排序时重置到第一页
+  }
 
   useEffect(() => {
-    setCurrentPage(1) // 切换筛选条件或搜索时重置到第一页
-  }, [filter, categoryFilter, searchQuery])
+    setCurrentPage(1) // 切换筛选条件、搜索或排序时重置到第一页
+  }, [filter, categoryFilter, searchQuery, sortField, sortOrder])
 
   useEffect(() => {
-    updateUrlParams(filter, categoryFilter, currentPage, searchQuery) // 更新 URL 参数
-  }, [filter, categoryFilter, currentPage, searchQuery])
+    updateUrlParams(filter, categoryFilter, currentPage, searchQuery, sortField, sortOrder) // 更新 URL 参数
+  }, [filter, categoryFilter, currentPage, searchQuery, sortField, sortOrder])
 
   useEffect(() => {
     fetchArticles()
-  }, [filter, categoryFilter, currentPage, searchQuery])
+  }, [filter, categoryFilter, currentPage, searchQuery, sortField, sortOrder])
 
   // 页面加载时，后台自动触发 AI 改写（不等待返回）
   useEffect(() => {
@@ -165,6 +198,13 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       }
       if (categoryFilter !== 'all') {
         params.append('categoryId', categoryFilter)
+      }
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
+      if (sortField) {
+        params.append('sort', sortField)
+        params.append('order', sortOrder)
       }
       params.append('page', currentPage.toString())
       params.append('limit', '10')
@@ -467,10 +507,40 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     AI 处理
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    发布时间
+                    <button
+                      onClick={() => handleSort('publishedAt')}
+                      className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
+                    >
+                      发布时间
+                      {sortField === 'publishedAt' && (
+                        <svg
+                          className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      )}
+                    </button>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    更新时间
+                    <button
+                      onClick={() => handleSort('updatedAt')}
+                      className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
+                    >
+                      更新时间
+                      {sortField === 'updatedAt' && (
+                        <svg
+                          className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      )}
+                    </button>
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     操作

@@ -410,17 +410,24 @@ export async function GET(request: NextRequest) {
         }
 
         // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
+        // 注意：publishedAt 只在文章从未发布时才设置，已发布的文章保持原有发布时间
+        const updateData: any = {
+          content: rewrittenContent,
+          sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
+          aiRewriteStatus: 'completed',
+          aiRewriteAt: new Date(),
+          readingTime,
+          published: true, // 设置为已发布
+        }
+        // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
+        if (!article.published && !article.publishedAt) {
+          updateData.publishedAt = new Date()
+        }
+        // updatedAt 会自动更新（Prisma @updatedAt）
+        
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
-          data: {
-            content: rewrittenContent,
-            sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
-            aiRewriteStatus: 'completed',
-            aiRewriteAt: new Date(),
-            readingTime,
-            published: true, // 设置为已发布
-            publishedAt: new Date(), // 设置发布时间
-          },
+          data: updateData,
           include: {
             category: true,
             author: {
@@ -703,17 +710,24 @@ export async function POST(request: NextRequest) {
         }
 
         // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
+        // 注意：publishedAt 只在文章从未发布时才设置，已发布的文章保持原有发布时间
+        const updateData: any = {
+          content: rewrittenContent,
+          sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
+          aiRewriteStatus: 'completed',
+          aiRewriteAt: new Date(),
+          readingTime,
+          published: true, // 设置为已发布
+        }
+        // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
+        if (!article.published && !article.publishedAt) {
+          updateData.publishedAt = new Date()
+        }
+        // updatedAt 会自动更新（Prisma @updatedAt）
+        
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
-          data: {
-            content: rewrittenContent,
-            sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
-            aiRewriteStatus: 'completed',
-            aiRewriteAt: new Date(),
-            readingTime,
-            published: true, // 设置为已发布
-            publishedAt: new Date(), // 设置发布时间
-          },
+          data: updateData,
           include: {
             category: true,
             author: {

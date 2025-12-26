@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
+import ShareButtons from '../../components/ShareButtons'
 import { getPostBySlug, getAllPosts } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -300,31 +301,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 </div>
 
                 {/* 分享按钮 */}
-                <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-6">
-                  <h3 className="text-lg font-bold text-neutral-900 mb-4">Share This Article</h3>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      Facebook
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank')
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm font-medium"
-                    >
-                      Twitter
-                    </button>
-                  </div>
-                </div>
+                <ShareButtons
+                  url={`https://besttimeguide.com/${slug}`}
+                  title={post.title}
+                />
 
                 {/* 分类相关文章 */}
                 {relatedPosts.length > 0 && (

@@ -17,6 +17,7 @@
     "keyword-analysis": "node scripts/keyword-analysis.js",
     "analyze-features": "node scripts/analyze-feature-opportunities.js",
     "seed-articles": "tsx scripts/seed-articles.ts",
+    "seed-keywords": "tsx scripts/seed-keyword-articles.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "jspdf": "^3.0.4",
     "next": "^15.0.0",
     "next-auth": "^5.0.0-beta.30",
-    "nodemailer": "^7.0.10",
+    "nodemailer": "^6.9.15",
     "prisma": "^6.19.0",
     "qrcode": "^1.5.3",
     "react": "^19.0.0",
@@ -44,7 +45,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/nodemailer": "^7.0.4",
+    "@types/nodemailer": "^6.4.14",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",

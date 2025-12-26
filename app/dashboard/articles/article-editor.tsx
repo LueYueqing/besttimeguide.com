@@ -25,6 +25,8 @@ interface Article {
   published: boolean
   publishedAt: string | null
   sourceContent: string | null
+  aiRewriteStatus: string | null
+  aiRewriteAt: string | null
 }
 
 interface ArticleEditorProps {
@@ -35,6 +37,7 @@ interface ArticleEditorProps {
 export default function ArticleEditor({ categories, article }: ArticleEditorProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: article?.title || '',
     slug: article?.slug || '',
@@ -107,6 +110,44 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       alert('保存失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAiRewrite = async () => {
+    if (!article || !formData.sourceContent) {
+      alert('请先填写参考范本内容')
+      return
+    }
+
+    if (!confirm('确定要标记此文章为 AI 改写状态吗？这将更新文章的 AI 改写状态和时间。')) {
+      return
+    }
+
+    setAiRewriteLoading(true)
+    try {
+      const response = await fetch(`/api/articles/${article.id}/ai-rewrite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sourceContent: formData.sourceContent,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('文章已标记为 AI 改写状态')
+        router.refresh()
+      } else {
+        alert('操作失败：' + data.error)
+      }
+    } catch (error) {
+      console.error('Error marking AI rewrite:', error)
+      alert('操作失败')
+    } finally {
+      setAiRewriteLoading(false)
     }
   }
 
@@ -207,9 +248,33 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
 
           {/* Source Content (Reference Template) */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              参考范本（原文）
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-neutral-700">
+                参考范本（原文）
+              </label>
+              {article && (
+                <button
+                  type="button"
+                  onClick={handleAiRewrite}
+                  disabled={aiRewriteLoading || !formData.sourceContent}
+                  className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {aiRewriteLoading ? (
+                    <>
+                      <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <span>处理中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>标记为 AI 改写</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
             <textarea
               value={formData.sourceContent}
               onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
@@ -217,9 +282,32 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
               className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
               placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容..."
             />
-            <p className="mt-1 text-xs text-neutral-500">
-              参考范本/原文内容，将用于 AI 生成正式文章内容。此字段为可选。
-            </p>
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-xs text-neutral-500">
+                参考范本/原文内容，将用于 AI 生成正式文章内容。此字段为可选。
+              </p>
+              {article?.aiRewriteStatus && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-500">AI 改写状态：</span>
+                  <span className={`text-xs px-2 py-0.5 rounded ${
+                    article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                    article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                    article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {article.aiRewriteStatus === 'pending' ? '待处理' :
+                     article.aiRewriteStatus === 'processing' ? '处理中' :
+                     article.aiRewriteStatus === 'completed' ? '已完成' :
+                     article.aiRewriteStatus === 'failed' ? '失败' : article.aiRewriteStatus}
+                  </span>
+                  {article.aiRewriteAt && (
+                    <span className="text-xs text-neutral-400">
+                      {new Date(article.aiRewriteAt).toLocaleString('zh-CN')}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Content */}

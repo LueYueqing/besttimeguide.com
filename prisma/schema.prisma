@@ -243,6 +243,8 @@ model Article {
   
   // AI 内容生成相关
   sourceContent   String?   @db.Text // 参考范本/原文（用于 AI 生成正式内容）
+  aiRewriteStatus String?   // AI 改写状态：pending, processing, completed, failed
+  aiRewriteAt     DateTime? // AI 改写时间
   
   // 时间戳
   createdAt       DateTime  @default(now())

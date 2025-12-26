@@ -18,11 +18,21 @@ interface ArticlePageProps {
 // 注意：不设置 revalidate 或设置为很大的值，配合 on-demand revalidation 使用
 export const revalidate = false // Next.js 15 支持 false 来禁用自动刷新
 
+// 允许动态参数：即使 slug 不在 generateStaticParams 中，也会在运行时动态生成
+// 这对于构建后新创建的文章很重要，避免 404 错误
+export const dynamicParams = true
+
 export async function generateStaticParams() {
-  const posts = await getAllPosts()
-  return posts.map((post) => ({
-    slug: post.slug,
-  }))
+  try {
+    const posts = await getAllPosts()
+    return posts.map((post) => ({
+      slug: post.slug,
+    }))
+  } catch (error) {
+    console.error('[generateStaticParams] Error fetching posts:', error)
+    // 如果获取失败，返回空数组，让所有路由都动态生成
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {

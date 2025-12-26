@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
  * 给邀请人发放奖励（3天 Pro 权限）
  * @param referrerId 邀请人用户 ID
  */
-export async function grantReferralReward(referrerId: string) {
+export async function grantReferralReward(referrerId: number) {
   try {
     // 获取邀请人信息
     const referrer = await prisma.user.findUnique({
@@ -52,7 +52,7 @@ export async function grantReferralReward(referrerId: string) {
  * 处理被邀请人首次登录，发放邀请奖励
  * @param referredUserId 被邀请人用户 ID
  */
-export async function processReferralReward(referredUserId: string) {
+export async function processReferralReward(referredUserId: number) {
   try {
     // 获取被邀请人信息
     const referredUser = await prisma.user.findUnique({
@@ -117,7 +117,7 @@ export async function processReferralReward(referredUserId: string) {
 /**
  * 获取用户的邀请统计
  */
-export async function getReferralStats(userId: string) {
+export async function getReferralStats(userId: number) {
   try {
     const [totalReferrals, rewardedReferrals] = await Promise.all([
       prisma.referral.count({

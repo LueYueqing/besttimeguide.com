@@ -31,6 +31,7 @@ interface Article {
   sourceContent: string | null
   aiRewriteStatus: string | null
   aiRewriteAt: string | null
+  coverImage: string | null
 }
 
 interface ArticleEditorProps {
@@ -93,7 +94,57 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       ? new Date(article.publishedAt).toISOString().slice(0, 16)
       : '',
     sourceContent: article?.sourceContent || '',
+    coverImage: article?.coverImage || '',
   })
+
+  // 上传图片函数
+  const uploadImage = async (file: File, shouldResize = false): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const url = shouldResize ? '/api/upload?resize=true' : '/api/upload'
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await res.json()
+    if (!data.success) {
+      throw new Error(data.error || '上传失败')
+    }
+    return data.url
+  }
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const url = await uploadImage(file, true)
+      setFormData(prev => ({ ...prev, coverImage: url }))
+      toast.success('缩略图上传成功')
+    } catch (error) {
+      console.error('Upload failed:', error)
+      toast.error('上传失败')
+    }
+  }
+
+  const handleCoverPaste = async (e: React.ClipboardEvent) => {
+    const clipboardData = e.clipboardData
+    if (clipboardData.files && clipboardData.files.length > 0) {
+      const file = clipboardData.files[0]
+      if (file.type.startsWith('image/')) {
+        e.preventDefault()
+        try {
+          const url = await uploadImage(file, true)
+          setFormData(prev => ({ ...prev, coverImage: url }))
+          toast.success('缩略图已粘贴并上传')
+        } catch (error) {
+          console.error('Cover paste failed:', error)
+          toast.error('缩略图粘贴上传失败')
+        }
+      }
+    }
+  }
 
   // 自动生成slug
   useEffect(() => {
@@ -202,9 +253,41 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
     }
   }
 
-  // 处理粘贴事件：自动将 HTML 转换为 Markdown
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  // 处理粘贴事件：自动将 HTML 转换为 Markdown，或上传粘贴的图片
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>, fieldName: 'sourceContent' | 'content') => {
     const clipboardData = e.clipboardData
+
+    // 1. 处理图片粘贴
+    if (clipboardData.files && clipboardData.files.length > 0) {
+      const file = clipboardData.files[0]
+      if (file.type.startsWith('image/')) {
+        e.preventDefault()
+        const textarea = e.currentTarget
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const currentValue = formData[fieldName] || ''
+
+        // 插入占位符
+        const placeholder = `![Uploading ${file.name}...]()`
+        let newValue = currentValue.substring(0, start) + placeholder + currentValue.substring(end)
+
+        setFormData(prev => ({ ...prev, [fieldName]: newValue }))
+
+        try {
+          const url = await uploadImage(file, true)
+          const markdown = `![${file.name}](${url})`
+          newValue = currentValue.substring(0, start) + markdown + currentValue.substring(end)
+          setFormData(prev => ({ ...prev, [fieldName]: newValue }))
+        } catch (error) {
+          toast.error('图片上传失败')
+          // 恢复原状
+          setFormData(prev => ({ ...prev, [fieldName]: currentValue }))
+        }
+        return
+      }
+    }
+
+    // 2. 处理 HTML 内容
 
     // 优先获取 HTML 格式，如果没有则获取纯文本
     const htmlContent = clipboardData.getData('text/html')
@@ -223,7 +306,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
           const textarea = e.currentTarget
           const start = textarea.selectionStart
           const end = textarea.selectionEnd
-          const currentValue = formData.sourceContent
+          const currentValue = formData[fieldName] || ''
 
           // 插入转换后的 Markdown 内容
           const newValue =
@@ -231,7 +314,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             markdown +
             currentValue.substring(end)
 
-          setFormData({ ...formData, sourceContent: newValue })
+          setFormData(prev => ({ ...prev, [fieldName]: newValue }))
 
           // 设置光标位置到插入内容之后
           setTimeout(() => {
@@ -245,12 +328,12 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
           const textarea = e.currentTarget
           const start = textarea.selectionStart
           const end = textarea.selectionEnd
-          const currentValue = formData.sourceContent
+          const currentValue = formData[fieldName] || ''
           const newValue =
             currentValue.substring(0, start) +
             plainText +
             currentValue.substring(end)
-          setFormData({ ...formData, sourceContent: newValue })
+          setFormData(prev => ({ ...prev, [fieldName]: newValue }))
         }
       }
     }
@@ -369,6 +452,43 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             </div>
           </div>
 
+          {/* Thumbnail */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">缩略图</label>
+            <div
+              onPaste={handleCoverPaste}
+              className="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center hover:bg-neutral-50 transition-colors relative"
+            >
+              {formData.coverImage ? (
+                <div className="relative group mx-auto w-full max-w-[375px]">
+                  <img src={formData.coverImage} className="w-full h-auto rounded shadow-sm" alt="Cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, coverImage: '' })}
+                    className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="删除缩略图"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <label className="cursor-pointer bg-white text-xs px-2 py-1 rounded shadow hover:bg-gray-100">
+                      更换
+                      <input type="file" onChange={handleCoverUpload} className="hidden" accept="image/*" />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8">
+                  <p className="text-neutral-500 mb-2 text-sm">点击上传缩略图 (建议 375x250)</p>
+                  <label className="cursor-pointer inline-block px-4 py-2 bg-white border border-neutral-300 rounded shadow-sm hover:bg-neutral-50 text-sm">
+                    选择图片
+                    <input type="file" onChange={handleCoverUpload} className="hidden" accept="image/*" />
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Source Content (Reference Template) */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -401,7 +521,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             <textarea
               value={formData.sourceContent}
               onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
-              onPaste={handlePaste}
+              onPaste={(e) => handlePaste(e, 'sourceContent')}
               rows={15}
               className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
               placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容...（支持直接粘贴 HTML 内容，将自动转换为 Markdown）"
@@ -414,9 +534,9 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-neutral-500">AI 改写状态：</span>
                   <span className={`text-xs px-2 py-0.5 rounded ${article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                      article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
-                        article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
+                    article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                      article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
                     }`}>
                     {article.aiRewriteStatus === 'pending' ? '待处理' :
                       article.aiRewriteStatus === 'processing' ? '处理中' :
@@ -444,8 +564,8 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
                   type="button"
                   onClick={() => setActiveTab('write')}
                   className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'write'
-                      ? 'bg-white text-primary-600 shadow-sm font-medium'
-                      : 'text-neutral-500 hover:text-neutral-700'
+                    ? 'bg-white text-primary-600 shadow-sm font-medium'
+                    : 'text-neutral-500 hover:text-neutral-700'
                     }`}
                 >
                   编辑
@@ -454,8 +574,8 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
                   type="button"
                   onClick={() => setActiveTab('preview')}
                   className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'preview'
-                      ? 'bg-white text-primary-600 shadow-sm font-medium'
-                      : 'text-neutral-500 hover:text-neutral-700'
+                    ? 'bg-white text-primary-600 shadow-sm font-medium'
+                    : 'text-neutral-500 hover:text-neutral-700'
                     }`}
                 >
                   预览
@@ -468,6 +588,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
+                onPaste={(e) => handlePaste(e, 'content')}
                 rows={20}
                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
                 placeholder="# 标题&#10;&#10;文章内容使用 Markdown 格式..."

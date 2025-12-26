@@ -154,45 +154,49 @@ export async function uploadImageToR2(
 
     // 生成文件名和路径
     const fileName = generateFileName(alt, imageUrl, index)
-    const r2Path = generateR2Path(fileName)
 
     // 检测内容类型
     const contentType = getContentType(imageUrl, imageBuffer)
 
     // 上传到 R2
-    console.log(`[R2] Uploading to: ${r2Path}`)
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: r2Path,
-      Body: imageBuffer,
-      ContentType: contentType,
-      CacheControl: 'public, max-age=31536000', // 1 年缓存
-    })
-
-    await client.send(command)
-
-    // 生成公共访问 URL
-    // 如果配置了自定义域名（推荐），使用自定义域名
-    // 否则使用 R2 的默认公共访问 URL（需要配置 R2 公共访问）
-    let publicUrl: string
-    if (R2_PUBLIC_URL) {
-      // 使用自定义域名，路径不包含 bucket 名称
-      const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '') // 移除末尾的斜杠
-      publicUrl = `${baseUrl}/${r2Path}`
-    } else {
-      // 使用 R2 默认公共访问 URL（不推荐，建议配置自定义域名）
-      // 注意：R2 的默认公共访问 URL 格式为：https://pub-{hash}.r2.dev/{path}
-      // 但通常需要配置自定义域名才能正常访问
-      console.warn('[R2] CUSTOM_DOMAIN/CDN_BASE_URL not set, using default R2 URL (may not work without custom domain)')
-      publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Path}`
-    }
-
-    console.log(`[R2] Uploaded successfully: ${publicUrl}`)
-    return publicUrl
+    return await uploadBufferToR2(imageBuffer, fileName, contentType)
   } catch (error) {
     console.error(`[R2] Error uploading image:`, error)
     throw error
   }
+}
+
+// 直接上传 Buffer 到 R2
+export async function uploadBufferToR2(
+  buffer: Buffer,
+  fileName: string,
+  contentType: string
+): Promise<string> {
+  const { client, bucketName } = getR2Client()
+  const r2Path = generateR2Path(fileName)
+
+  console.log(`[R2] Uploading buffer to: ${r2Path}`)
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: r2Path,
+    Body: buffer,
+    ContentType: contentType,
+    CacheControl: 'public, max-age=31536000', // 1 年缓存
+  })
+
+  await client.send(command)
+
+  // 生成公共访问 URL
+  let publicUrl: string
+  if (R2_PUBLIC_URL) {
+    const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
+    publicUrl = `${baseUrl}/${r2Path}`
+  } else {
+    publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Path}`
+  }
+
+  console.log(`[R2] Buffer uploaded successfully: ${publicUrl}`)
+  return publicUrl
 }
 
 // 检测图片内容类型

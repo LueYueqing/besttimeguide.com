@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
-import { uploadImagesToR2 } from '@/lib/r2'
+import { uploadImagesToR2, uploadBufferToR2 } from '@/lib/r2'
+import sharp from 'sharp'
 
 const prisma = new PrismaClient()
 
@@ -135,7 +136,7 @@ function extractImages(content: string): { images: ImageInfo[]; processedContent
   for (const { match, alt, url } of matches) {
     imageIndex++
     const placeholder = `[IMAGE_${imageIndex}]`
-    
+
     images.unshift({
       // unshift 保持顺序（因为我们是倒序处理的）
       markdown: match,
@@ -171,7 +172,7 @@ function insertImages(rewrittenContent: string, images: ImageInfo[]): string {
 
   // 策略2：如果还有未插入的图片，尝试智能插入
   const remainingImages = images.filter((img) => !result.includes(img.markdown))
-  
+
   if (remainingImages.length > 0) {
     // 按段落结构插入图片
     const lines = result.split('\n')
@@ -284,7 +285,7 @@ export async function GET(request: NextRequest) {
     // 处理每篇文章
     for (const article of articles) {
       const sourceContent = article.sourceContent || ''
-      
+
       try {
         // 检查内容长度，如果太长则直接跳过（避免处理失败）
         if (sourceContent.length > MAX_CONTENT_LENGTH) {
@@ -336,14 +337,14 @@ export async function GET(request: NextRequest) {
         if (images.length > 0) {
           try {
             console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
-            
+
             const uploadResults = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt }))
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)
             })
-            
+
             console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
           } catch (error) {
             console.error('[AI Rewrite] Error uploading images to R2:', error)
@@ -399,6 +400,45 @@ export async function GET(request: NextRequest) {
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
+        // -- Start Thumbnail Logic --
+        let coverImageUrl = (article as any).coverImage // 保留原有缩略图（如果有）
+
+        // 从改写后的内容中寻找第一张图片
+        // 注意：此时图片应该已经是 R2 URL 或 CDN URL
+        const firstImageMatch = rewrittenContent.match(/!\[([^\]]*)\]\(([^)]+)(?:\s+"[^"]*")?\)/)
+        if (firstImageMatch && firstImageMatch[2]) {
+          const firstImageUrl = firstImageMatch[2]
+          try {
+            // 检查是否已经在处理中或强制生成
+            console.log(`[AI Rewrite] Generating thumbnail from: ${firstImageUrl}`)
+
+            const response = await fetch(firstImageUrl)
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer()
+              const inputBuffer = Buffer.from(arrayBuffer)
+
+              // Sharp 处理：缩放并裁剪为 375x250
+              const coverBuffer = await sharp(inputBuffer)
+                .resize(375, 250, {
+                  fit: 'cover',
+                  position: 'center'
+                })
+                .jpeg({ quality: 80 })
+                .toBuffer()
+
+              // 上传
+              const coverFileName = `thumbnail-${article.slug}-${Date.now()}.jpg`
+              // 覆盖旧的 coverUrl
+              coverImageUrl = await uploadBufferToR2(coverBuffer, coverFileName, 'image/jpeg')
+              console.log(`[AI Rewrite] Generated thumbnail: ${coverImageUrl}`)
+            }
+          } catch (err) {
+            console.error('[AI Rewrite] Failed to generate thumbnail:', err)
+            // 不阻断流程
+          }
+        }
+        // -- End Thumbnail Logic --
+
         // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
         let updatedSourceContent = sourceContent
         if (imageUrlMap.size > 0) {
@@ -418,13 +458,14 @@ export async function GET(request: NextRequest) {
           aiRewriteAt: new Date(),
           readingTime,
           published: true, // 设置为已发布
+          coverImage: coverImageUrl,
         }
         // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
         if (!article.published && !article.publishedAt) {
           updateData.publishedAt = new Date()
         }
         // updatedAt 会自动更新（Prisma @updatedAt）
-        
+
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
           data: updateData,
@@ -445,15 +486,15 @@ export async function GET(request: NextRequest) {
           // 方法1: 通过路径重新验证
           const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(revalidateUrl, { method: 'POST' })
-          
+
           // 方法2: 通过 cache tag 重新验证（更精确）
           const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(tagUrl, { method: 'POST' })
-          
+
           // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
           const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(allPostsUrl, { method: 'POST' })
-          
+
           console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {
           console.error('[AI Rewrite] Error revalidating page:', revalidateError)
@@ -470,9 +511,9 @@ export async function GET(request: NextRequest) {
         console.error(`Error processing article ${article.id}:`, error)
 
         const errorMessage = error.message || 'Unknown error'
-        
+
         // 检查是否是内容相关错误（内容太长、格式问题等）
-        const isContentError = 
+        const isContentError =
           errorMessage.includes('too long') ||
           errorMessage.includes('token') ||
           errorMessage.includes('length') ||
@@ -506,7 +547,7 @@ export async function GET(request: NextRequest) {
       success: true,
       message: `Processed ${articles.length} article(s)`,
       processed: articles.length,
-      success: successCount,
+      successCount,
       failed: failedCount,
       skipped: skippedCount,
       results,
@@ -588,7 +629,7 @@ export async function POST(request: NextRequest) {
     // 处理每篇文章
     for (const article of articles) {
       const sourceContent = article.sourceContent || ''
-      
+
       try {
         // 检查内容长度，如果太长则直接跳过（避免处理失败）
         if (sourceContent.length > MAX_CONTENT_LENGTH) {
@@ -640,14 +681,14 @@ export async function POST(request: NextRequest) {
         if (images.length > 0) {
           try {
             console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
-            
+
             const uploadResults = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt }))
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)
             })
-            
+
             console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
           } catch (error) {
             console.error('[AI Rewrite] Error uploading images to R2:', error)
@@ -703,6 +744,45 @@ export async function POST(request: NextRequest) {
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
+        // -- Start Thumbnail Logic --
+        let coverImageUrl = (article as any).coverImage // 保留原有缩略图（如果有）
+
+        // 从改写后的内容中寻找第一张图片
+        // 注意：此时图片应该已经是 R2 URL 或 CDN URL
+        const firstImageMatch = rewrittenContent.match(/!\[([^\]]*)\]\(([^)]+)(?:\s+"[^"]*")?\)/)
+        if (firstImageMatch && firstImageMatch[2]) {
+          const firstImageUrl = firstImageMatch[2]
+          try {
+            // 检查是否已经在处理中或强制生成
+            console.log(`[AI Rewrite] Generating thumbnail from: ${firstImageUrl}`)
+
+            const response = await fetch(firstImageUrl)
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer()
+              const inputBuffer = Buffer.from(arrayBuffer)
+
+              // Sharp 处理：缩放并裁剪为 375x250
+              const coverBuffer = await sharp(inputBuffer)
+                .resize(375, 250, {
+                  fit: 'cover',
+                  position: 'center'
+                })
+                .jpeg({ quality: 80 })
+                .toBuffer()
+
+              // 上传
+              const coverFileName = `thumbnail-${article.slug}-${Date.now()}.jpg`
+              // 覆盖旧的 coverUrl
+              coverImageUrl = await uploadBufferToR2(coverBuffer, coverFileName, 'image/jpeg')
+              console.log(`[AI Rewrite] Generated thumbnail: ${coverImageUrl}`)
+            }
+          } catch (err) {
+            console.error('[AI Rewrite] Failed to generate thumbnail:', err)
+            // 不阻断流程
+          }
+        }
+        // -- End Thumbnail Logic --
+
         // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
         let updatedSourceContent = sourceContent
         if (imageUrlMap.size > 0) {
@@ -719,16 +799,17 @@ export async function POST(request: NextRequest) {
           content: rewrittenContent,
           sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
           aiRewriteStatus: 'completed',
-          aiRewriteAt: new Date(),
           readingTime,
           published: true, // 设置为已发布
+          coverImage: coverImageUrl,
+          aiRewriteAt: new Date(),
         }
         // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
         if (!article.published && !article.publishedAt) {
           updateData.publishedAt = new Date()
         }
         // updatedAt 会自动更新（Prisma @updatedAt）
-        
+
         const updatedArticle = await prisma.article.update({
           where: { id: article.id },
           data: updateData,
@@ -749,15 +830,15 @@ export async function POST(request: NextRequest) {
           // 方法1: 通过路径重新验证
           const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(revalidateUrl, { method: 'POST' })
-          
+
           // 方法2: 通过 cache tag 重新验证（更精确）
           const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(tagUrl, { method: 'POST' })
-          
+
           // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
           const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(allPostsUrl, { method: 'POST' })
-          
+
           console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {
           console.error('[AI Rewrite] Error revalidating page:', revalidateError)
@@ -774,9 +855,9 @@ export async function POST(request: NextRequest) {
         console.error(`Error processing article ${article.id}:`, error)
 
         const errorMessage = error.message || 'Unknown error'
-        
+
         // 检查是否是内容相关错误（内容太长、格式问题等）
-        const isContentError = 
+        const isContentError =
           errorMessage.includes('too long') ||
           errorMessage.includes('token') ||
           errorMessage.includes('length') ||
@@ -810,7 +891,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Processed ${articles.length} article(s)`,
       processed: articles.length,
-      success: successCount,
+      successCount,
       failed: failedCount,
       skipped: skippedCount,
       results,

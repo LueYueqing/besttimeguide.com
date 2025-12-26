@@ -222,7 +222,7 @@ export const authOptions: any = {
               const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
 
               return {
-                id: userId,
+                id: String(userId),
                 email: user.email,
                 name: user.name,
                 image: user.image,
@@ -376,12 +376,12 @@ export const authOptions: any = {
                         ? userByEmail.subscriptions[0] ?? null
                         : null
 
-                      const safeImage = userByEmail.image || (userByEmail as any).avatar || session.user.image || session.user.picture || null
+                      const safeImage = userByEmail.image || (userByEmail as any).avatar || session.user.image || session.user.picture || null;
 
-                        ; (session.user as any).plan = safePlan
-                        ; (session.user as any).isAdmin = Boolean(userByEmail.isAdmin)
-                        ; (session.user as any).subscription = safeSubscription
-                        ; (session.user as any).image = safeImage
+                      (session.user as any).plan = safePlan;
+                      (session.user as any).isAdmin = Boolean(userByEmail.isAdmin);
+                      (session.user as any).subscription = safeSubscription;
+                      (session.user as any).image = safeImage;
 
                       console.log('[Auth][Callback][session] User found by email and hydrated', {
                         originalUserId: userId,
@@ -426,12 +426,12 @@ export const authOptions: any = {
                 ? dbUser.subscriptions[0] ?? null
                 : null
 
-              const safeImage = dbUser.image || (dbUser as any).avatar || session.user.image || session.user.picture || null
+              const safeImage = dbUser.image || (dbUser as any).avatar || session.user.image || session.user.picture || null;
 
-                ; (session.user as any).plan = safePlan
-                ; (session.user as any).isAdmin = Boolean(dbUser.isAdmin)
-                ; (session.user as any).subscription = safeSubscription
-                ; (session.user as any).image = safeImage
+              (session.user as any).plan = safePlan;
+              (session.user as any).isAdmin = Boolean(dbUser.isAdmin);
+              (session.user as any).subscription = safeSubscription;
+              (session.user as any).image = safeImage;
 
               console.log('[Auth][Callback][session] user hydrated', {
                 userId,

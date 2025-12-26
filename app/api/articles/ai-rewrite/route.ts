@@ -234,12 +234,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const articleId = searchParams.get('articleId') ? parseInt(searchParams.get('articleId')!, 10) : null
 
+    // 配置：最大内容长度和重试限制
+    const MAX_CONTENT_LENGTH = 50000 // 最大内容长度（字符数），超过此长度直接跳过
+    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试
+
     // 查询待改写的文章
+    // 排除最近失败的文章（避免反复尝试失败的文章）
+    const excludeRecentFailures = new Date()
+    excludeRecentFailures.setHours(excludeRecentFailures.getHours() - MAX_RETRY_HOURS)
+
     const where: any = {
       aiRewriteStatus: 'pending',
       sourceContent: {
         not: null,
       },
+      // 排除最近失败的文章：如果 aiRewriteAt 在最近24小时内，说明可能刚失败过
+      // 但这里我们只查询 pending 状态，所以不会包含 failed 状态
+      // 这个逻辑主要用于防止用户重新标记为 pending 后立即重试
     }
 
     if (articleId) {
@@ -269,7 +280,40 @@ export async function GET(request: NextRequest) {
 
     // 处理每篇文章
     for (const article of articles) {
+      const sourceContent = article.sourceContent || ''
+      
       try {
+        // 检查内容长度，如果太长则直接跳过（避免处理失败）
+        if (sourceContent.length > MAX_CONTENT_LENGTH) {
+          console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" content too long (${sourceContent.length} chars, max ${MAX_CONTENT_LENGTH}), skipping to avoid failure`)
+          await prisma.article.update({
+            where: { id: article.id },
+            data: {
+              aiRewriteStatus: 'failed',
+              aiRewriteAt: new Date(),
+            },
+          })
+          results.push({
+            id: article.id,
+            title: article.title,
+            status: 'skipped',
+            error: `Content too long (${sourceContent.length} chars, max ${MAX_CONTENT_LENGTH}). Please split the content or reduce its length.`,
+          })
+          continue
+        }
+
+        // 检查是否最近失败过（如果 aiRewriteAt 在最近24小时内，可能是刚失败过）
+        if (article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
+          console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" was recently processed (${article.aiRewriteAt.toISOString()}), skipping to avoid repeated failures`)
+          results.push({
+            id: article.id,
+            title: article.title,
+            status: 'skipped',
+            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying.`,
+          })
+          continue
+        }
+
         // 更新状态为处理中
         await prisma.article.update({
           where: { id: article.id },
@@ -279,7 +323,6 @@ export async function GET(request: NextRequest) {
         })
 
         // 预处理：提取图片
-        const sourceContent = article.sourceContent || ''
         const { images, processedContent } = extractImages(sourceContent)
 
         // 上传图片到 R2（如果有图片）
@@ -396,6 +439,16 @@ export async function GET(request: NextRequest) {
       } catch (error: any) {
         console.error(`Error processing article ${article.id}:`, error)
 
+        const errorMessage = error.message || 'Unknown error'
+        
+        // 检查是否是内容相关错误（内容太长、格式问题等）
+        const isContentError = 
+          errorMessage.includes('too long') ||
+          errorMessage.includes('token') ||
+          errorMessage.includes('length') ||
+          errorMessage.includes('empty') ||
+          sourceContent.length > 30000 // 如果内容超过30000字符，很可能是内容问题
+
         // 更新状态为失败
         await prisma.article.update({
           where: { id: article.id },
@@ -409,13 +462,15 @@ export async function GET(request: NextRequest) {
           id: article.id,
           title: article.title,
           status: 'failed',
-          error: error.message || 'Unknown error',
+          error: errorMessage,
+          skipped: isContentError, // 标记为因内容问题跳过，避免重复尝试
         })
       }
     }
 
     const successCount = results.filter((r) => r.status === 'success').length
     const failedCount = results.filter((r) => r.status === 'failed').length
+    const skippedCount = results.filter((r) => r.status === 'skipped').length
 
     return NextResponse.json({
       success: true,
@@ -423,6 +478,7 @@ export async function GET(request: NextRequest) {
       processed: articles.length,
       success: successCount,
       failed: failedCount,
+      skipped: skippedCount,
       results,
     })
   } catch (error: any) {
@@ -455,7 +511,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const articleId = body.articleId ? parseInt(body.articleId, 10) : null
 
+    // 配置：最大内容长度和重试限制
+    const MAX_CONTENT_LENGTH = 50000 // 最大内容长度（字符数），超过此长度直接跳过
+    const MAX_RETRY_HOURS = 24 // 失败后24小时内不再自动重试
+
     // 查询待改写的文章
+    // 排除最近失败的文章（避免反复尝试失败的文章）
+    const excludeRecentFailures = new Date()
+    excludeRecentFailures.setHours(excludeRecentFailures.getHours() - MAX_RETRY_HOURS)
+
     const where: any = {
       aiRewriteStatus: 'pending',
       sourceContent: {
@@ -490,7 +554,40 @@ export async function POST(request: NextRequest) {
 
     // 处理每篇文章
     for (const article of articles) {
+      const sourceContent = article.sourceContent || ''
+      
       try {
+        // 检查内容长度，如果太长则直接跳过（避免处理失败）
+        if (sourceContent.length > MAX_CONTENT_LENGTH) {
+          console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" content too long (${sourceContent.length} chars, max ${MAX_CONTENT_LENGTH}), skipping to avoid failure`)
+          await prisma.article.update({
+            where: { id: article.id },
+            data: {
+              aiRewriteStatus: 'failed',
+              aiRewriteAt: new Date(),
+            },
+          })
+          results.push({
+            id: article.id,
+            title: article.title,
+            status: 'skipped',
+            error: `Content too long (${sourceContent.length} chars, max ${MAX_CONTENT_LENGTH}). Please split the content or reduce its length.`,
+          })
+          continue
+        }
+
+        // 检查是否最近失败过（如果 aiRewriteAt 在最近24小时内，可能是刚失败过）
+        if (article.aiRewriteAt && article.aiRewriteAt > excludeRecentFailures) {
+          console.warn(`[AI Rewrite] Article ${article.id} "${article.title}" was recently processed (${article.aiRewriteAt.toISOString()}), skipping to avoid repeated failures`)
+          results.push({
+            id: article.id,
+            title: article.title,
+            status: 'skipped',
+            error: `Recently processed. Please wait ${MAX_RETRY_HOURS} hours before retrying.`,
+          })
+          continue
+        }
+
         // 更新状态为处理中
         await prisma.article.update({
           where: { id: article.id },
@@ -500,7 +597,6 @@ export async function POST(request: NextRequest) {
         })
 
         // 预处理：提取图片
-        const sourceContent = article.sourceContent || ''
         const { images, processedContent } = extractImages(sourceContent)
 
         // 上传图片到 R2（如果有图片）
@@ -617,6 +713,16 @@ export async function POST(request: NextRequest) {
       } catch (error: any) {
         console.error(`Error processing article ${article.id}:`, error)
 
+        const errorMessage = error.message || 'Unknown error'
+        
+        // 检查是否是内容相关错误（内容太长、格式问题等）
+        const isContentError = 
+          errorMessage.includes('too long') ||
+          errorMessage.includes('token') ||
+          errorMessage.includes('length') ||
+          errorMessage.includes('empty') ||
+          sourceContent.length > 30000 // 如果内容超过30000字符，很可能是内容问题
+
         // 更新状态为失败
         await prisma.article.update({
           where: { id: article.id },
@@ -630,13 +736,15 @@ export async function POST(request: NextRequest) {
           id: article.id,
           title: article.title,
           status: 'failed',
-          error: error.message || 'Unknown error',
+          error: errorMessage,
+          skipped: isContentError, // 标记为因内容问题跳过，避免重复尝试
         })
       }
     }
 
     const successCount = results.filter((r) => r.status === 'success').length
     const failedCount = results.filter((r) => r.status === 'failed').length
+    const skippedCount = results.filter((r) => r.status === 'skipped').length
 
     return NextResponse.json({
       success: true,
@@ -644,6 +752,7 @@ export async function POST(request: NextRequest) {
       processed: articles.length,
       success: successCount,
       failed: failedCount,
+      skipped: skippedCount,
       results,
     })
   } catch (error: any) {

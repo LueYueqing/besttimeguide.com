@@ -32,6 +32,8 @@ interface Article {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  aiRewriteStatus: string | null
+  aiRewriteAt: string | null
 }
 
 interface ArticlesClientProps {
@@ -266,6 +268,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     状态
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                    AI 处理
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                     发布时间
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
@@ -308,6 +313,45 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         <span className="px-2 py-1 text-xs bg-neutral-100 text-neutral-800 rounded">
                           草稿
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {article.aiRewriteStatus ? (
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              article.aiRewriteStatus === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : article.aiRewriteStatus === 'processing'
+                                ? 'bg-blue-100 text-blue-800'
+                                : article.aiRewriteStatus === 'failed'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {article.aiRewriteStatus === 'pending'
+                              ? '待处理'
+                              : article.aiRewriteStatus === 'processing'
+                              ? '处理中'
+                              : article.aiRewriteStatus === 'completed'
+                              ? '已完成'
+                              : article.aiRewriteStatus === 'failed'
+                              ? '失败'
+                              : article.aiRewriteStatus}
+                          </span>
+                          {article.aiRewriteAt && (
+                            <span className="text-xs text-neutral-500">
+                              {new Date(article.aiRewriteAt).toLocaleString('zh-CN', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-neutral-400">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">

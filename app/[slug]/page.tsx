@@ -114,8 +114,28 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     .filter((p) => p.slug !== slug && (p.category === post.category || p.tags.some((tag) => post.tags.includes(tag))))
     .slice(0, 6)
 
-  // 提取目录
-  const headings = extractHeadings(post.content)
+  // 处理内容：移除第一个与文章标题相同的 h1 标题，避免重复显示
+  let processedContent = post.content
+  // 转义标题中的特殊字符，用于正则匹配
+  const escapedTitle = post.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // 匹配开头的 # 标题（可能包含空格和换行）
+  const titleRegex = new RegExp(`^#\\s+${escapedTitle}\\s*$`, 'm')
+  if (titleRegex.test(processedContent)) {
+    processedContent = processedContent.replace(titleRegex, '').trim()
+  } else {
+    // 如果精确匹配失败，尝试匹配第一个 h1 标题（更宽松的匹配）
+    const firstH1Match = processedContent.match(/^#\s+(.+?)\s*$/m)
+    if (firstH1Match) {
+      const firstH1Text = firstH1Match[1].trim()
+      // 如果第一个 h1 标题与文章标题相同，移除它
+      if (firstH1Text === post.title) {
+        processedContent = processedContent.replace(/^#\s+.+?\s*$/m, '').trim()
+      }
+    }
+  }
+
+  // 提取目录（使用处理后的内容）
+  const headings = extractHeadings(processedContent)
 
   return (
     <div className="min-h-screen bg-white">
@@ -220,7 +240,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     strong: ({ node, ...props }) => <strong className="font-bold text-neutral-900" {...props} />,
                   }}
                 >
-                  {post.content}
+                  {processedContent}
                 </ReactMarkdown>
               </div>
 

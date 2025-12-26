@@ -8,6 +8,7 @@ import ArticleFeedback from '../../components/ArticleFeedback'
 import { getPostBySlug, getAllPosts, type BlogPost } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import ArticleViewTracker from '../../components/ArticleViewTracker'
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
@@ -162,6 +163,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
+      <ArticleViewTracker slug={slug} />
 
       {/* WikiHow Style Article Layout */}
       <article className="pt-16 pb-12">
@@ -325,8 +327,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                           key={index}
                           href={`#${heading.id}`}
                           className={`block text-sm hover:text-primary-600 transition-colors ${heading.level === 1 ? 'font-semibold text-neutral-900' :
-                              heading.level === 2 ? 'text-neutral-700 ml-4' :
-                                'text-neutral-600 ml-8'
+                            heading.level === 2 ? 'text-neutral-700 ml-4' :
+                              'text-neutral-600 ml-8'
                             }`}
                         >
                           {heading.text}

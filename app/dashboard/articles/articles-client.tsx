@@ -35,6 +35,7 @@ interface Article {
   updatedAt: string
   aiRewriteStatus: string | null
   aiRewriteAt: string | null
+  viewCount: number
 }
 
 interface ArticlesClientProps {
@@ -392,8 +393,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <button
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'bg-white text-neutral-600 hover:bg-neutral-50'
                       }`}
                   >
                     全部
@@ -401,8 +402,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <button
                     onClick={() => setFilter('published')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'published'
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'bg-white text-neutral-600 hover:bg-neutral-50'
                       }`}
                   >
                     已发布
@@ -410,8 +411,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <button
                     onClick={() => setFilter('draft')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'draft'
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'bg-white text-neutral-600 hover:bg-neutral-50'
                       }`}
                   >
                     草稿
@@ -508,6 +509,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         AI 处理
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        浏览量
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                         <button
                           onClick={() => handleSort('publishedAt')}
                           className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
@@ -588,12 +592,12 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                               <div className="flex items-center gap-2">
                                 <span
                                   className={`px-2 py-1 text-xs font-medium rounded-full ${article.aiRewriteStatus === 'completed'
-                                      ? 'bg-green-100 text-green-800'
-                                      : article.aiRewriteStatus === 'processing'
-                                        ? 'bg-blue-100 text-blue-800'
-                                        : article.aiRewriteStatus === 'failed'
-                                          ? 'bg-red-100 text-red-800'
-                                          : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : article.aiRewriteStatus === 'processing'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : article.aiRewriteStatus === 'failed'
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-yellow-100 text-yellow-800'
                                     }`}
                                 >
                                   {article.aiRewriteStatus === 'pending'
@@ -638,6 +642,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           ) : (
                             <span className="text-xs text-neutral-400">—</span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                          {article.viewCount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                           {formatDate(article.publishedAt)}
@@ -702,8 +709,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={!pagination.hasPrev}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasPrev
-                        ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
-                        : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                      ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                      : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                       }`}
                   >
                     上一页
@@ -728,8 +735,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                              ? 'bg-primary-600 text-white'
-                              : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
                             }`}
                         >
                           {pageNum}
@@ -742,8 +749,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={!pagination.hasNext}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasNext
-                        ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
-                        : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                      ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                      : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                       }`}
                   >
                     下一页

@@ -63,6 +63,43 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     fetchArticles()
   }, [filter, categoryFilter, currentPage])
 
+  // 页面加载时，后台自动触发 AI 改写（不等待返回）
+  useEffect(() => {
+    // 只在管理员用户访问时触发
+    if (!user?.isAdmin) {
+      return
+    }
+
+    // 异步触发 AI 改写，不阻塞页面加载
+    const triggerAiRewrite = async () => {
+      try {
+        // 使用 fetch 但不等待响应，让它在后台运行
+        // 注意：这个 API 调用会在后台处理待改写的文章，可能需要较长时间
+        fetch('/api/articles/ai-rewrite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // 不等待响应，立即返回，让任务在后台运行
+        }).catch((error) => {
+          // 静默处理错误，不影响用户体验
+          console.log('[AI Rewrite] Background task triggered (may fail silently):', error)
+        })
+        console.log('[AI Rewrite] Background task triggered')
+      } catch (error) {
+        // 静默处理错误
+        console.log('[AI Rewrite] Error triggering background task:', error)
+      }
+    }
+
+    // 延迟一小段时间，确保页面先加载完成
+    const timer = setTimeout(() => {
+      triggerAiRewrite()
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [user?.isAdmin]) // 依赖管理员状态，只在管理员访问时执行
+
   const fetchArticles = async () => {
     try {
       setLoading(true)

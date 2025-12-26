@@ -221,6 +221,10 @@ export async function POST(request: NextRequest) {
         const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
         await fetch(tagUrl, { method: 'POST' })
         
+        // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
+        const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
+        await fetch(allPostsUrl, { method: 'POST' })
+        
         console.log(`[Article Create] Revalidated page: /${article.slug}`)
       } catch (revalidateError) {
         console.error('[Article Create] Error revalidating page:', revalidateError)

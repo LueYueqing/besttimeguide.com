@@ -450,6 +450,10 @@ export async function GET(request: NextRequest) {
           const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(tagUrl, { method: 'POST' })
           
+          // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
+          const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(allPostsUrl, { method: 'POST' })
+          
           console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {
           console.error('[AI Rewrite] Error revalidating page:', revalidateError)
@@ -749,6 +753,10 @@ export async function POST(request: NextRequest) {
           // 方法2: 通过 cache tag 重新验证（更精确）
           const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(tagUrl, { method: 'POST' })
+          
+          // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
+          const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
+          await fetch(allPostsUrl, { method: 'POST' })
           
           console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {

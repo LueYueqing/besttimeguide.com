@@ -2,9 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 // 用于触发页面重新生成的 API
-// 使用方法: POST /api/revalidate?path=/best-time-to-water-grass
-// 或者: POST /api/revalidate?tag=articles
+// 使用方法: 
+//   POST /api/revalidate?path=/best-time-to-water-grass&secret=xxx
+//   GET /api/revalidate?path=/best-time-to-water-grass&secret=xxx (浏览器访问)
+// 或者: 
+//   POST /api/revalidate?tag=articles&secret=xxx
+//   GET /api/revalidate?tag=articles&secret=xxx (浏览器访问)
 export async function POST(request: NextRequest) {
+  return handleRevalidate(request)
+}
+
+// 支持 GET 方法，方便在浏览器中直接访问
+export async function GET(request: NextRequest) {
+  return handleRevalidate(request)
+}
+
+async function handleRevalidate(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const path = searchParams.get('path')

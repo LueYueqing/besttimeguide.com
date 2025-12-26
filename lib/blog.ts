@@ -38,31 +38,42 @@ function parseTags(tags: string | null | undefined): string[] {
 // 获取所有已发布的文章
 export async function getAllPosts(): Promise<BlogPost[]> {
   try {
-    const articles = await prisma.article.findMany({
-      where: {
-        published: true,
-      },
-      include: {
-        category: true,
-        author: true,
-      },
-      orderBy: {
-        publishedAt: 'desc',
-      },
-    })
+    // 使用 unstable_cache 包装查询，添加 cache tag 便于精确清除缓存
+    const getCachedAllPosts = unstable_cache(
+      async () => {
+        const articles = await prisma.article.findMany({
+          where: {
+            published: true,
+          },
+          include: {
+            category: true,
+            author: true,
+          },
+          orderBy: {
+            publishedAt: 'desc',
+          },
+        })
 
-    return articles.map((article) => ({
-      slug: article.slug,
-      title: article.title,
-      description: article.description || '',
-      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
-      author: article.author.name || article.author.email || 'besttimeguide.com Team',
-      category: article.category.name,
-      tags: parseTags(article.tags),
-      content: article.content,
-      readingTime: article.readingTime || calculateReadingTime(article.content),
-      featured: article.featured,
-    }))
+        return articles.map((article) => ({
+          slug: article.slug,
+          title: article.title,
+          description: article.description || '',
+          date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+          author: article.author.name || article.author.email || 'besttimeguide.com Team',
+          category: article.category.name,
+          tags: parseTags(article.tags),
+          content: article.content,
+          readingTime: article.readingTime || calculateReadingTime(article.content),
+          featured: article.featured,
+        }))
+      },
+      ['all-posts'],
+      {
+        tags: ['all-posts'],
+        revalidate: false, // 禁用自动刷新，只使用 on-demand revalidation
+      }
+    )
+    return await getCachedAllPosts()
   } catch (error) {
     console.error('Error fetching posts:', error)
     return []

@@ -21,11 +21,11 @@ export default function Navigation({ variant }: NavigationProps) {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/travel', label: 'Travel' },
-    { href: '/social-media', label: 'Social Media' },
-    { href: '/health', label: 'Health' },
-    { href: '/shopping', label: 'Shopping' },
-    { href: '/lifestyle', label: 'Lifestyle' },
+    { href: '/category/travel', label: 'Travel' },
+    { href: '/category/social-media', label: 'Social Media' },
+    { href: '/category/health', label: 'Health' },
+    { href: '/category/shopping', label: 'Shopping' },
+    { href: '/category/lifestyle', label: 'Lifestyle' },
   ]
 
   return (
@@ -44,22 +44,21 @@ export default function Navigation({ variant }: NavigationProps) {
             />
             <span>BestTime<span>Guide</span></span>
           </Link>
-          
+
           {/* Main Navigation - wikiHow style */}
           <div className="navbar-wikihow-nav">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`navbar-wikihow-link ${
-                  isActive(link.href) ? 'active' : ''
-                }`}
+                className={`navbar-wikihow-link ${isActive(link.href) ? 'active' : ''
+                  }`}
               >
                 {link.label}
               </Link>
             ))}
           </div>
-          
+
           {/* Right side - Search and Menu */}
           <div className="flex items-center gap-4">
             <Link

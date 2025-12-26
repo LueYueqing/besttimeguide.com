@@ -57,11 +57,11 @@ const trendingGuides = [
 
 // Categories for Browse By Category section
 const browseCategories = [
-  { name: 'Travel', href: '/travel', count: '200+' },
-  { name: 'Social Media', href: '/social-media', count: '80+' },
-  { name: 'Health', href: '/health', count: '100+' },
-  { name: 'Shopping', href: '/shopping', count: '50+' },
-  { name: 'Lifestyle', href: '/lifestyle', count: '70+' },
+  { name: 'Travel', href: '/category/travel', count: '200+' },
+  { name: 'Social Media', href: '/category/social-media', count: '80+' },
+  { name: 'Health', href: '/category/health', count: '100+' },
+  { name: 'Shopping', href: '/category/shopping', count: '50+' },
+  { name: 'Lifestyle', href: '/category/lifestyle', count: '70+' },
 ]
 
 // Featured guides by category
@@ -90,7 +90,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      
+
       {/* Main Content - wikiHow style */}
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Hero Section - wikiHow style */}
@@ -101,7 +101,7 @@ export default function HomePage() {
           <p className="wikihow-text-standard text-lg mb-8 max-w-3xl mx-auto">
             Discover the best time to visit places, post on social media, take supplements, buy products, and more. Expert guides with data-driven insights.
           </p>
-          
+
           {/* Quick Stats */}
           <div className="wikihow-stats">
             <div className="wikihow-stat-item">
@@ -117,7 +117,7 @@ export default function HomePage() {
               <div className="wikihow-stat-label">Data-Driven</div>
             </div>
           </div>
-          
+
           {/* Search Box - wikiHow style */}
           <div className="wikihow-search-box">
             <input
@@ -193,7 +193,7 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="wikihow-heading wikihow-heading-h2">Travel Guides</h2>
-                <Link href="/travel" className="wikihow-link-standard font-semibold wikihow-text-small">
+                <Link href="/category/travel" className="wikihow-link-standard font-semibold wikihow-text-small">
                   View All →
                 </Link>
               </div>
@@ -219,7 +219,7 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="wikihow-heading wikihow-heading-h2">Social Media Guides</h2>
-                <Link href="/social-media" className="wikihow-link-standard font-semibold wikihow-text-small">
+                <Link href="/category/social-media" className="wikihow-link-standard font-semibold wikihow-text-small">
                   View All →
                 </Link>
               </div>
@@ -245,7 +245,7 @@ export default function HomePage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="wikihow-heading wikihow-heading-h2">Health Guides</h2>
-                <Link href="/health" className="wikihow-link-standard font-semibold wikihow-text-small">
+                <Link href="/category/health" className="wikihow-link-standard font-semibold wikihow-text-small">
                   View All →
                 </Link>
               </div>
@@ -299,27 +299,27 @@ export default function HomePage() {
               <h3 className="wikihow-sidebar-title">Quick Links</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/travel" className="wikihow-link-standard">
+                  <Link href="/category/travel" className="wikihow-link-standard">
                     Travel Guides
                   </Link>
                 </li>
                 <li>
-                  <Link href="/social-media" className="wikihow-link-standard">
+                  <Link href="/category/social-media" className="wikihow-link-standard">
                     Social Media Timing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/health" className="wikihow-link-standard">
+                  <Link href="/category/health" className="wikihow-link-standard">
                     Health & Supplements
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shopping" className="wikihow-link-standard">
+                  <Link href="/category/shopping" className="wikihow-link-standard">
                     Shopping Deals
                   </Link>
                 </li>
                 <li>
-                  <Link href="/lifestyle" className="wikihow-link-standard">
+                  <Link href="/category/lifestyle" className="wikihow-link-standard">
                     Lifestyle Tips
                   </Link>
                 </li>

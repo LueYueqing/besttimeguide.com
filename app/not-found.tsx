@@ -36,7 +36,7 @@ export default function NotFound() {
                 Oops! Page Not Found
               </h1>
               <p className="text-lg lg:text-xl text-neutral-700 max-w-2xl mx-auto leading-relaxed">
-                The page you're looking for seems to have vanished into the digital ether. 
+                The page you're looking for seems to have vanished into the digital ether.
                 Don't worry though – let's get you back on track to finding the best time for everything!
               </p>
             </div>
@@ -65,7 +65,7 @@ export default function NotFound() {
                 <p className="text-neutral-700 mb-6">
                   Explore our expert guides on travel, social media, health, and more
                 </p>
-                <Link href="/travel" className="btn btn-accent w-full">
+                <Link href="/category/travel" className="btn btn-accent w-full">
                   <span>⚡</span>
                   Browse Guides
                 </Link>
@@ -100,11 +100,11 @@ export default function NotFound() {
                 Here are some things you might want to try:
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-                <Link href="/travel" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Travel Guides</Link>
-                <Link href="/social-media" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Social Media</Link>
-                <Link href="/health" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Health</Link>
-                <Link href="/shopping" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Shopping</Link>
-                <Link href="/lifestyle" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Lifestyle</Link>
+                <Link href="/category/travel" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Travel Guides</Link>
+                <Link href="/category/social-media" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Social Media</Link>
+                <Link href="/category/health" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Health</Link>
+                <Link href="/category/shopping" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Shopping</Link>
+                <Link href="/category/lifestyle" className="px-3 py-1 bg-white rounded-full text-neutral-700 hover:text-wikihow-linkHover transition-colors">Lifestyle</Link>
               </div>
             </div>
 
@@ -128,7 +128,7 @@ export default function NotFound() {
             <p className="text-lg text-neutral-700 mb-8">
               Our support team is here to help! Reach out to us and we'll get you sorted in no time.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/help/contact" className="btn btn-primary btn-lg">
                 <span>💬</span>

@@ -22,32 +22,6 @@ const nextConfig = {
   //   optimizeCss: true,
   // },
   output: 'standalone',
-  async rewrites() {
-    return [
-      // Rewrite category pages to use clean URLs
-      // /health -> /category/health
-      {
-        source: '/health',
-        destination: '/category/health',
-      },
-      {
-        source: '/travel',
-        destination: '/category/travel',
-      },
-      {
-        source: '/shopping',
-        destination: '/category/shopping',
-      },
-      {
-        source: '/lifestyle',
-        destination: '/category/lifestyle',
-      },
-      {
-        source: '/social-media',
-        destination: '/category/social-media',
-      },
-    ]
-  },
 }
 
 module.exports = nextConfig

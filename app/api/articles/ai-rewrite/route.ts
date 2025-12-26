@@ -318,11 +318,12 @@ export async function GET(request: NextRequest) {
           continue
         }
 
-        // 更新状态为处理中
+        // 更新状态为处理中，并设置处理时间
         await prisma.article.update({
           where: { id: article.id },
           data: {
             aiRewriteStatus: 'processing',
+            aiRewriteAt: new Date(), // 开始处理时设置时间
           },
         })
 
@@ -610,11 +611,12 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // 更新状态为处理中
+        // 更新状态为处理中，并设置处理时间
         await prisma.article.update({
           where: { id: article.id },
           data: {
             aiRewriteStatus: 'processing',
+            aiRewriteAt: new Date(), // 开始处理时设置时间
           },
         })
 

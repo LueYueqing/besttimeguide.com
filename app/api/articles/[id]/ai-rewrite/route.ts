@@ -54,13 +54,15 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
     }
 
-    // 更新文章的 AI 改写状态和时间
+    // 更新文章的 AI 改写状态
+    // 注意：标记为待处理时，不设置 aiRewriteAt，因为还没有开始处理
+    // aiRewriteAt 只在实际开始处理（processing）或完成/失败时才设置
     const article = await prisma.article.update({
       where: { id: articleId },
       data: {
         sourceContent: sourceContent || existing.sourceContent,
         aiRewriteStatus: 'pending', // 标记为待处理状态
-        aiRewriteAt: new Date(), // 更新改写时间
+        // 不设置 aiRewriteAt，保持为 null，直到实际开始处理
       },
       include: {
         category: true,

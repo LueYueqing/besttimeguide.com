@@ -490,8 +490,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 ? '失败'
                                 : article.aiRewriteStatus}
                             </span>
-                            {/* 如果在冷却期内或状态为 failed，显示重置按钮 */}
-                            {article.aiRewriteAt && (isInCooldown(article.aiRewriteAt) || article.aiRewriteStatus === 'failed') && (
+                            {/* 重置按钮：只在失败状态时显示（无论是否在冷却期） */}
+                            {article.aiRewriteStatus === 'failed' && (
                               <button
                                 onClick={() => handleResetCooldown(article.id)}
                                 className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
@@ -503,6 +503,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                               </button>
                             )}
                           </div>
+                          {/* 显示处理时间：只在有 aiRewriteAt 时显示（即已开始处理、完成或失败） */}
                           {article.aiRewriteAt && (
                             <span className="text-xs text-neutral-500">
                               {new Date(article.aiRewriteAt).toLocaleString('zh-CN', {
@@ -511,7 +512,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
-                              {isInCooldown(article.aiRewriteAt) && (
+                              {/* 只在失败状态且处于冷却期时显示"冷却中" */}
+                              {article.aiRewriteStatus === 'failed' && isInCooldown(article.aiRewriteAt) && (
                                 <span className="ml-1 text-orange-600">(冷却中)</span>
                               )}
                             </span>

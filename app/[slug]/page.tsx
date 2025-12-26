@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 import ShareButtons from '../../components/ShareButtons'
+import ArticleFeedback from '../../components/ArticleFeedback'
 import { getPostBySlug, getAllPosts, type BlogPost } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -359,6 +360,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   url={`https://besttimeguide.com/${slug}`}
                   title={post.title}
                 />
+
+                {/* 文章反馈 */}
+                <ArticleFeedback slug={slug} />
 
                 {/* 分类相关文章 */}
                 {relatedPosts.length > 0 && (

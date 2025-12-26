@@ -4,6 +4,7 @@ import { unstable_cache } from 'next/cache'
 const prisma = new PrismaClient()
 
 export interface BlogPost {
+  id: number
   slug: string
   title: string
   description: string
@@ -55,6 +56,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
         })
 
         return articles.map((article) => ({
+          id: article.id,
           slug: article.slug,
           title: article.title,
           description: article.description || '',
@@ -110,6 +112,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
     }
 
     return {
+      id: article.id,
       slug: article.slug,
       title: article.title,
       description: article.description || '',
@@ -124,14 +127,14 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
   } catch (error: any) {
     // 检查是否是数据库连接错误
     const isDatabaseError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)
-    
+
     if (isDatabaseError) {
       console.warn(`[Blog] Database connection error for ${slug}`)
       // 返回特殊标记，让页面组件知道这是数据库错误
       // Next.js ISR 会在后台使用缓存的静态页面（如果存在）
       return { error: 'DATABASE_ERROR' as const }
     }
-    
+
     // 其他错误记录并返回 null
     console.error(`Error reading post ${slug}:`, error)
     return null
@@ -164,6 +167,7 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
     })
 
     return articles.map((article) => ({
+      id: article.id,
       slug: article.slug,
       title: article.title,
       description: article.description || '',
@@ -204,6 +208,7 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
     return articles
       .filter((article) => parseTags(article.tags).includes(tag))
       .map((article) => ({
+        id: article.id,
         slug: article.slug,
         title: article.title,
         description: article.description || '',

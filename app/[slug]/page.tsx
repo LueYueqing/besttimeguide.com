@@ -9,6 +9,7 @@ import { getPostBySlug, getAllPosts, type BlogPost } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ArticleViewTracker from '../../components/ArticleViewTracker'
+import EditArticleButton from '../../components/EditArticleButton'
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
@@ -164,6 +165,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <div className="min-h-screen bg-white">
       <Navigation />
       <ArticleViewTracker slug={slug} />
+      <EditArticleButton articleId={post.id} />
 
       {/* WikiHow Style Article Layout */}
       <article className="pt-16 pb-12">

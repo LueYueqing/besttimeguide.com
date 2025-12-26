@@ -5,10 +5,20 @@ import OpenAI from 'openai'
 
 const prisma = new PrismaClient()
 
-// 初始化 OpenAI 客户端
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-})
+// 初始化 AI 客户端（支持 DeepSeek 和 OpenAI）
+const getAIClient = () => {
+  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || ''
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? 'https://api.deepseek.com' // DeepSeek API 端点
+    : undefined // OpenAI 使用默认端点
+
+  return new OpenAI({
+    apiKey,
+    baseURL,
+  })
+}
+
+const aiClient = getAIClient()
 
 // 检查是否为管理员
 async function checkAdmin() {
@@ -109,10 +119,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 检查 OpenAI API Key
-    if (!process.env.OPENAI_API_KEY) {
+    // 检查 AI API Key
+    if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { success: false, error: 'OpenAI API key not configured' },
+        { success: false, error: 'AI API key not configured (DEEPSEEK_API_KEY or OPENAI_API_KEY)' },
         { status: 500 }
       )
     }
@@ -165,9 +175,10 @@ export async function POST(request: NextRequest) {
           },
         })
 
-        // 调用 OpenAI API 进行改写
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini', // 使用 GPT-4o-mini，性价比更高
+        // 调用 AI API 进行改写
+        const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+        const completion = await aiClient.chat.completions.create({
+          model, // DeepSeek 使用 'deepseek-chat'，OpenAI 使用 'gpt-4o-mini'
           messages: [
             {
               role: 'system',

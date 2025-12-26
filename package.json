@@ -60,5 +60,8 @@
     "tsx": "^4.7.0",
     "typescript": "^5",
     "xlsx": "^0.18.5"
+  },
+  "overrides": {
+    "nodemailer": "^6.9.15"
   }
 }

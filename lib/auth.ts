@@ -5,6 +5,14 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { PrismaClient } from '@prisma/client'
 import { processReferralReward } from './referral'
 
+// Helper to prevent database queries from hanging indefinitely
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 4000): Promise<T | null> => {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs))
+  ])
+}
+
 const REQUIRED_ENV_VARS: Record<string, string | undefined> = {
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -105,7 +113,7 @@ const createInstrumentedAdapter = () => {
         console.log(`[Auth][Adapter][${methodName}] start`, JSON.stringify(args, (_key, val) => (typeof val === 'bigint' ? val.toString() : val)))
         try {
           let result = await original(...args)
-          
+
           // 如果是 createUser，检查是否有邀请人（从 cookie 中读取）
           if (methodName === 'createUser' && result?.id) {
             try {
@@ -116,7 +124,7 @@ const createInstrumentedAdapter = () => {
               console.error(`[Auth][Adapter][createUser] Error processing referral:`, error)
             }
           }
-          
+
           console.log(`[Auth][Adapter][${methodName}] success`, JSON.stringify(result, (_key, val) => (typeof val === 'bigint' ? val.toString() : val)))
           return result
         } catch (error) {
@@ -159,73 +167,73 @@ export const authOptions: any = {
     // Development mode credentials provider (only enabled in development)
     ...(process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_LOGIN === 'true'
       ? [
-          CredentialsProvider({
-            id: 'dev-credentials',
-            name: 'Development Login',
-            credentials: {
-              email: { label: 'Email', type: 'email', placeholder: 'dev@besttimeguide.com' },
-              password: { label: 'Password', type: 'password', placeholder: 'dev123' },
-            },
-            async authorize(credentials) {
-              if (!credentials?.email || !credentials?.password) {
-                return null
-              }
+        CredentialsProvider({
+          id: 'dev-credentials',
+          name: 'Development Login',
+          credentials: {
+            email: { label: 'Email', type: 'email', placeholder: 'dev@besttimeguide.com' },
+            password: { label: 'Password', type: 'password', placeholder: 'dev123' },
+          },
+          async authorize(credentials) {
+            if (!credentials?.email || !credentials?.password) {
+              return null
+            }
 
-              // Only allow dev@besttimeguide.com with password 'dev123' in development
-              const DEV_EMAIL = 'dev@besttimeguide.com'
-              const DEV_PASSWORD = 'dev123'
+            // Only allow dev@besttimeguide.com with password 'dev123' in development
+            const DEV_EMAIL = 'dev@besttimeguide.com'
+            const DEV_PASSWORD = 'dev123'
 
-              if (credentials.email !== DEV_EMAIL || credentials.password !== DEV_PASSWORD) {
-                console.warn('[Auth][Dev] Invalid dev credentials attempt:', credentials.email)
-                return null
-              }
+            if (credentials.email !== DEV_EMAIL || credentials.password !== DEV_PASSWORD) {
+              console.warn('[Auth][Dev] Invalid dev credentials attempt:', credentials.email)
+              return null
+            }
 
-              try {
-                // Find or create dev user
-                let user = await prisma.user.findUnique({
-                  where: { email: DEV_EMAIL },
-                })
+            try {
+              // Find or create dev user
+              let user = await prisma.user.findUnique({
+                where: { email: DEV_EMAIL },
+              })
 
-                if (!user) {
-                  // Create dev user if doesn't exist
-                  user = await prisma.user.create({
-                    data: {
-                      email: DEV_EMAIL,
-                      name: 'Development User',
-                      emailVerified: new Date(),
-                      plan: 'FREE',
-                    },
-                  })
-                  console.log('[Auth][Dev] Created dev user:', user.id)
-                }
-
-                // Update login info
-                await prisma.user.update({
-                  where: { id: user.id },
+              if (!user) {
+                // Create dev user if doesn't exist
+                user = await prisma.user.create({
                   data: {
-                    lastLoginAt: new Date(),
-                    loginCount: { increment: 1 },
+                    email: DEV_EMAIL,
+                    name: 'Development User',
+                    emailVerified: new Date(),
+                    plan: 'FREE',
                   },
                 })
-
-                console.log('[Auth][Dev] Dev user logged in:', user.id, 'type:', typeof user.id)
-
-                // 确保返回的 id 是数字类型
-                const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-                
-                return {
-                  id: userId,
-                  email: user.email,
-                  name: user.name,
-                  image: user.image,
-                }
-              } catch (error) {
-                console.error('[Auth][Dev] Error in dev login:', error)
-                return null
+                console.log('[Auth][Dev] Created dev user:', user.id)
               }
-            },
-          }),
-        ]
+
+              // Update login info
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  lastLoginAt: new Date(),
+                  loginCount: { increment: 1 },
+                },
+              })
+
+              console.log('[Auth][Dev] Dev user logged in:', user.id, 'type:', typeof user.id)
+
+              // 确保返回的 id 是数字类型
+              const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
+
+              return {
+                id: userId,
+                email: user.email,
+                name: user.name,
+                image: user.image,
+              }
+            } catch (error) {
+              console.error('[Auth][Dev] Error in dev login:', error)
+              return null
+            }
+          },
+        }),
+      ]
       : []),
   ],
   callbacks: {
@@ -257,16 +265,17 @@ export const authOptions: any = {
             userId = userIdRaw
           }
         }
-        
+
         if (userId && !isNaN(userId)) {
           (session.user as any).id = userId
         } else if (session.user?.email) {
           // 如果无法从 token 获取数字 ID，尝试通过 email 查找用户
           try {
-            const dbUser = await prisma.user.findUnique({
+            const dbUser = await withTimeout(prisma.user.findUnique({
               where: { email: session.user.email },
               select: { id: true },
-            })
+            }), 3000)
+
             if (dbUser) {
               userId = typeof dbUser.id === 'string' ? parseInt(dbUser.id, 10) : dbUser.id
               if (!isNaN(userId)) {
@@ -286,7 +295,7 @@ export const authOptions: any = {
             })
           }
         }
-        
+
         // Fetch complete user information from database
         if (userId && !isNaN(userId) && userId > 0) {
           try {
@@ -295,8 +304,8 @@ export const authOptions: any = {
               userIdType: typeof userId,
               email: session.user?.email,
             })
-            
-            const dbUser = await prisma.user.findUnique({
+
+            const dbUser = await withTimeout(prisma.user.findUnique({
               where: { id: userId },
               include: {
                 subscriptions: {
@@ -311,10 +320,10 @@ export const authOptions: any = {
                   take: 1
                 }
               }
-            })
-            
+            }), 3000)
+
             if (!dbUser) {
-              console.warn('[Auth][Callback][session] User not found in database', {
+              console.warn('[Auth][Callback][session] User not found in database or query timed out', {
                 userId,
                 email: session.user?.email,
               })
@@ -362,18 +371,18 @@ export const authOptions: any = {
                           return 'FREE'
                         }
                       })()
-                      
+
                       const safeSubscription = Array.isArray(userByEmail.subscriptions)
                         ? userByEmail.subscriptions[0] ?? null
                         : null
-                      
+
                       const safeImage = userByEmail.image || (userByEmail as any).avatar || session.user.image || session.user.picture || null
-                      
-                      ;(session.user as any).plan = safePlan
-                      ;(session.user as any).isAdmin = Boolean(userByEmail.isAdmin)
-                      ;(session.user as any).subscription = safeSubscription
-                      ;(session.user as any).image = safeImage
-                      
+
+                        ; (session.user as any).plan = safePlan
+                        ; (session.user as any).isAdmin = Boolean(userByEmail.isAdmin)
+                        ; (session.user as any).subscription = safeSubscription
+                        ; (session.user as any).image = safeImage
+
                       console.log('[Auth][Callback][session] User found by email and hydrated', {
                         originalUserId: userId,
                         correctUserId: correctUserId,
@@ -419,10 +428,10 @@ export const authOptions: any = {
 
               const safeImage = dbUser.image || (dbUser as any).avatar || session.user.image || session.user.picture || null
 
-              ;(session.user as any).plan = safePlan
-              ;(session.user as any).isAdmin = Boolean(dbUser.isAdmin)
-              ;(session.user as any).subscription = safeSubscription
-              ;(session.user as any).image = safeImage
+                ; (session.user as any).plan = safePlan
+                ; (session.user as any).isAdmin = Boolean(dbUser.isAdmin)
+                ; (session.user as any).subscription = safeSubscription
+                ; (session.user as any).image = safeImage
 
               console.log('[Auth][Callback][session] user hydrated', {
                 userId,
@@ -434,7 +443,7 @@ export const authOptions: any = {
           } catch (error: any) {
             // 检查是否是数据库连接错误
             const isDbConnectionError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)
-            
+
             if (isDbConnectionError) {
               console.warn('[Auth][Callback][session] Database connection error, returning basic session', {
                 userId,
@@ -455,7 +464,7 @@ export const authOptions: any = {
             // 即使查询失败，也继续返回 session，避免完全阻止用户访问
             // 设置默认值，确保 session 可用
             if (!(session.user as any).plan) {
-              ;(session.user as any).plan = 'FREE'
+              ; (session.user as any).plan = 'FREE'
             }
           }
         } else {
@@ -466,7 +475,7 @@ export const authOptions: any = {
             email: session.user?.email,
           })
           if (!(session.user as any).plan) {
-            ;(session.user as any).plan = 'FREE'
+            ; (session.user as any).plan = 'FREE'
           }
         }
       }
@@ -507,7 +516,7 @@ export const authOptions: any = {
         email: user?.email,
         isNewUser,
       })
-      
+
       if (user?.email) {
         try {
           const dbUser = await prisma.user.findUnique({
@@ -516,11 +525,11 @@ export const authOptions: any = {
 
           if (dbUser) {
             const wasFirstLogin = dbUser.loginCount === 0
-            
+
             // 如果是新用户且还没有关联邀请人，尝试从 cookie 中读取并关联
             // 注意：这里无法直接访问 request，需要在 API 路由中处理
             // 我们会在用户首次登录时通过 API 处理邀请关联
-            
+
             // 更新登录信息
             await prisma.user.update({
               where: { email: user.email },

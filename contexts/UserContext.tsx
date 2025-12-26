@@ -37,7 +37,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     if (session?.user) {
       try {
-        const response = await fetch('/api/user/profile')
+        // Add 10s timeout to prevent infinite loading
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+        const response = await fetch('/api/user/profile', {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
         if (response.ok) {
           const userData = await response.json()
           if (userData.success && userData.user) {
@@ -56,7 +63,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             // 如果无法解析 JSON，使用状态码
             errorDetails = `HTTP ${response.status}`
           }
-          
+
           // 401 或 404 表示用户未授权或不存在，可能是数据库重置后需要重新登录
           if (response.status === 401 || response.status === 404) {
             console.warn('User profile not found or unauthorized. User may need to sign in again.', {
@@ -98,7 +105,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setLoading(true)
     } else if (status === 'authenticated' && session?.user) {
       refreshUser()
-      
+
       // 处理邀请关联（首次登录时）
       // 只在确实有 referral cookie 时才调用 API
       const associateReferral = async () => {
@@ -107,7 +114,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           const hasReferralCookie = document.cookie
             .split(';')
             .some(cookie => cookie.trim().startsWith('referral_ref='))
-          
+
           if (!hasReferralCookie) {
             // 没有 cookie，不需要调用 API
             return
@@ -116,9 +123,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           const response = await fetch('/api/referral/associate', {
             method: 'POST',
           })
-          
+
           const data = await response.json()
-          
+
           // 只在真正的系统错误时才记录（忽略预期的业务逻辑错误）
           // 预期的业务逻辑错误（400 状态码）不应该记录
           // 数据库连接错误（503）也应该静默处理，这是临时性问题
@@ -135,7 +142,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           console.error('Error associating referral:', error)
         }
       }
-      
+
       // 延迟执行，确保用户信息已加载
       setTimeout(associateReferral, 1000)
     } else {

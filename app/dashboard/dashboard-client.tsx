@@ -26,7 +26,6 @@ interface RecentArticle {
 
 export default function DashboardClient() {
   const { user, loading: userLoading } = useUser()
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<ArticleStats>({
     total: 0,

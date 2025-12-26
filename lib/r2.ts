@@ -130,10 +130,21 @@ export async function uploadImageToR2(
 
     await client.send(command)
 
-    // 生成公共访问 URL（如果配置了自定义域名）
-    const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL
-      ? `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${r2Path}`
-      : `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucketName}/${r2Path}`
+    // 生成公共访问 URL
+    // 如果配置了自定义域名（推荐），使用自定义域名
+    // 否则使用 R2 的默认公共访问 URL（需要配置 R2 公共访问）
+    let publicUrl: string
+    if (process.env.CLOUDFLARE_R2_PUBLIC_URL) {
+      // 使用自定义域名，路径不包含 bucket 名称
+      const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '') // 移除末尾的斜杠
+      publicUrl = `${baseUrl}/${r2Path}`
+    } else {
+      // 使用 R2 默认公共访问 URL（不推荐，建议配置自定义域名）
+      // 注意：R2 的默认公共访问 URL 格式为：https://pub-{hash}.r2.dev/{path}
+      // 但通常需要配置自定义域名才能正常访问
+      console.warn('[R2] CLOUDFLARE_R2_PUBLIC_URL not set, using default R2 URL (may not work without custom domain)')
+      publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Path}`
+    }
 
     console.log(`[R2] Uploaded successfully: ${publicUrl}`)
     return publicUrl

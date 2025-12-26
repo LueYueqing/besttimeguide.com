@@ -62,10 +62,6 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     hasNext: false,
     hasPrev: false,
   })
-  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
-  const [quickCreateTitles, setQuickCreateTitles] = useState('')
-  const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
-  const [quickCreateLoading, setQuickCreateLoading] = useState(false)
 
   useEffect(() => {
     setCurrentPage(1) // 切换筛选条件时重置到第一页

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import TurndownService from 'turndown'
 
 interface Category {
   id: number
@@ -38,6 +39,38 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
+  
+  // 初始化 Turndown 服务（HTML 转 Markdown）
+  const turndownServiceRef = useRef<TurndownService | null>(null)
+  
+  useEffect(() => {
+    if (!turndownServiceRef.current) {
+      const turndownService = new TurndownService({
+        headingStyle: 'atx', // 使用 # 格式的标题
+        codeBlockStyle: 'fenced', // 使用 ``` 格式的代码块
+        bulletListMarker: '-', // 使用 - 作为列表标记
+      })
+
+      // 配置图片规则，确保图片被正确转换
+      turndownService.addRule('images', {
+        filter: 'img',
+        replacement: (content, node) => {
+          const img = node as HTMLImageElement
+          const alt = img.alt || img.title || img.getAttribute('alt') || ''
+          const src = img.src || img.getAttribute('src') || ''
+          if (src) {
+            return `![${alt}](${src})`
+          }
+          return ''
+        },
+      })
+
+      // 移除 script 和 style 标签
+      turndownService.remove(['script', 'style', 'noscript'])
+
+      turndownServiceRef.current = turndownService
+    }
+  }, [])
   const [formData, setFormData] = useState({
     title: article?.title || '',
     slug: article?.slug || '',
@@ -295,9 +328,10 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             <textarea
               value={formData.sourceContent}
               onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
+              onPaste={handlePaste}
               rows={15}
               className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
-              placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容..."
+              placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容...（支持直接粘贴 HTML 内容，将自动转换为 Markdown）"
             />
             <div className="mt-1 flex items-center justify-between">
               <p className="text-xs text-neutral-500">

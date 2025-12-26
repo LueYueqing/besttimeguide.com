@@ -48,7 +48,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const toast = useToast()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // 从 URL 参数中读取初始筛选状态
   const getInitialFilter = (): 'all' | 'published' | 'draft' => {
     const filterParam = searchParams.get('filter')
@@ -57,25 +57,25 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     }
     return 'all'
   }
-  
+
   const getInitialCategory = (): string => {
     return searchParams.get('category') || 'all'
   }
-  
+
   const getInitialPage = (): number => {
     const pageParam = searchParams.get('page')
     return pageParam ? parseInt(pageParam, 10) : 1
   }
-  
+
   const getInitialSearch = (): string => {
     return searchParams.get('search') || searchParams.get('q') || ''
   }
-  
+
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>(getInitialFilter())
   const [categoryFilter, setCategoryFilter] = useState<string>(getInitialCategory())
   const [currentPage, setCurrentPage] = useState(getInitialPage())
   const [searchQuery, setSearchQuery] = useState<string>(getInitialSearch())
-  
+
   // 排序状态
   const getInitialSort = (): { field: 'publishedAt' | 'updatedAt' | null; order: 'asc' | 'desc' } => {
     const sortField = searchParams.get('sort')
@@ -123,7 +123,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     const newUrl = queryString ? `/dashboard/articles?${queryString}` : '/dashboard/articles'
     router.push(newUrl, { scroll: false })
   }
-  
+
   // 处理排序
   const handleSort = (field: 'publishedAt' | 'updatedAt') => {
     if (sortField === field) {
@@ -343,10 +343,14 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—'
     const date = new Date(dateString)
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleString('zh-CN', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     })
   }
 
@@ -359,401 +363,394 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         {/* 主内容区 */}
         <main className="flex-1 w-0 lg:ml-64">
           <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-neutral-900">文章管理</h1>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowQuickCreateModal(true)}
-                className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors font-medium flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                快捷文章
-              </button>
-              <Link
-                href="/dashboard/articles/new"
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-              >
-                + 新建文章
-              </Link>
-            </div>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'all'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-white text-neutral-600 hover:bg-neutral-50'
-                }`}
-              >
-                全部
-              </button>
-              <button
-                onClick={() => setFilter('published')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'published'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-white text-neutral-600 hover:bg-neutral-50'
-                }`}
-              >
-                已发布
-              </button>
-              <button
-                onClick={() => setFilter('draft')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'draft'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-white text-neutral-600 hover:bg-neutral-50'
-                }`}
-              >
-                草稿
-              </button>
-            </div>
-
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 bg-white border border-neutral-300 rounded-lg text-sm"
-            >
-              <option value="all">所有分类</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id.toString()}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-
-            {/* 搜索框 */}
-            <div className="flex-1 sm:max-w-md">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setCurrentPage(1) // 搜索时重置到第一页
-                    }
-                  }}
-                  placeholder="搜索文章标题、描述或内容..."
-                  className="w-full px-4 py-2 pl-10 bg-white border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                {searchQuery && (
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-3xl font-bold text-neutral-900">文章管理</h1>
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                    onClick={() => setShowQuickCreateModal(true)}
+                    className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors font-medium flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
+                    快捷文章
                   </button>
-                )}
+                  <Link
+                    href="/dashboard/articles/new"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    + 新建文章
+                  </Link>
+                </div>
+              </div>
+
+              {/* Filters and Search */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      }`}
+                  >
+                    全部
+                  </button>
+                  <button
+                    onClick={() => setFilter('published')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'published'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      }`}
+                  >
+                    已发布
+                  </button>
+                  <button
+                    onClick={() => setFilter('draft')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'draft'
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'bg-white text-neutral-600 hover:bg-neutral-50'
+                      }`}
+                  >
+                    草稿
+                  </button>
+                </div>
+
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="px-4 py-2 bg-white border border-neutral-300 rounded-lg text-sm"
+                >
+                  <option value="all">所有分类</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* 搜索框 */}
+                <div className="flex-1 sm:max-w-md">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setCurrentPage(1) // 搜索时重置到第一页
+                        }
+                      }}
+                      placeholder="搜索文章标题、描述或内容..."
+                      className="w-full px-4 py-2 pl-10 bg-white border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <svg
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Articles List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-neutral-600">加载中...</p>
-          </div>
-        ) : articles.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-neutral-600 mb-4">暂无文章</p>
-            <Link
-              href="/dashboard/articles/new"
-              className="text-primary-600 hover:text-primary-700 font-medium"
-            >
-              创建第一篇文章 →
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    标题
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    分类
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    AI 处理
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    <button
-                      onClick={() => handleSort('publishedAt')}
-                      className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
-                    >
-                      发布时间
-                      {sortField === 'publishedAt' && (
-                        <svg
-                          className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+            {/* Articles List */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p className="mt-4 text-neutral-600">加载中...</p>
+              </div>
+            ) : articles.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-12 text-center">
+                <p className="text-neutral-600 mb-4">暂无文章</p>
+                <Link
+                  href="/dashboard/articles/new"
+                  className="text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  创建第一篇文章 →
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <table className="min-w-full divide-y divide-neutral-200">
+                  <thead className="bg-neutral-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        标题
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        分类
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        状态
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        AI 处理
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('publishedAt')}
+                          className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    <button
-                      onClick={() => handleSort('updatedAt')}
-                      className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
-                    >
-                      更新时间
-                      {sortField === 'updatedAt' && (
-                        <svg
-                          className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-neutral-200">
-                {articles.map((article) => (
-                  <tr key={article.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm font-medium text-neutral-900">{article.title}</div>
-                          {article.description && (
-                            <div className="text-sm text-neutral-500 truncate max-w-md">
-                              {article.description}
-                            </div>
-                          )}
-                        </div>
-                        {article.featured && (
-                          <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
-                            精选
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-neutral-600">{article.category.name}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {article.published ? (
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-                          已发布
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs bg-neutral-100 text-neutral-800 rounded">
-                          草稿
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {article.aiRewriteStatus ? (
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                article.aiRewriteStatus === 'completed'
-                                  ? 'bg-green-100 text-green-800'
-                                  : article.aiRewriteStatus === 'processing'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : article.aiRewriteStatus === 'failed'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}
+                          发布时间
+                          {sortField === 'publishedAt' && (
+                            <svg
+                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              {article.aiRewriteStatus === 'pending'
-                                ? '待处理'
-                                : article.aiRewriteStatus === 'processing'
-                                ? '处理中'
-                                : article.aiRewriteStatus === 'completed'
-                                ? '已完成'
-                                : article.aiRewriteStatus === 'failed'
-                                ? '失败'
-                                : article.aiRewriteStatus}
-                            </span>
-                            {/* 重置按钮：只在失败状态时显示（无论是否在冷却期） */}
-                            {article.aiRewriteStatus === 'failed' && (
-                              <button
-                                onClick={() => handleResetCooldown(article.id)}
-                                className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
-                                title="重置冷却时间并将状态设置为待处理，允许立即重新处理"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                              </button>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          )}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        <button
+                          onClick={() => handleSort('updatedAt')}
+                          className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
+                        >
+                          更新时间
+                          {sortField === 'updatedAt' && (
+                            <svg
+                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          )}
+                        </button>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        操作
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-neutral-200">
+                    {articles.map((article) => (
+                      <tr key={article.id} className="hover:bg-neutral-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div>
+                              <div className="text-sm font-medium text-neutral-900">{article.title}</div>
+                              {article.description && (
+                                <div className="text-sm text-neutral-500 truncate max-w-md">
+                                  {article.description}
+                                </div>
+                              )}
+                            </div>
+                            {article.featured && (
+                              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                                精选
+                              </span>
                             )}
                           </div>
-                          {/* 显示处理时间：只在有 aiRewriteAt 时显示（即已开始处理、完成或失败） */}
-                          {article.aiRewriteAt && (
-                            <span className="text-xs text-neutral-500">
-                              {new Date(article.aiRewriteAt).toLocaleString('zh-CN', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                              {/* 只在失败状态且处于冷却期时显示"冷却中" */}
-                              {article.aiRewriteStatus === 'failed' && isInCooldown(article.aiRewriteAt) && (
-                                <span className="ml-1 text-orange-600">(冷却中)</span>
-                              )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-neutral-600">{article.category.name}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {article.published ? (
+                            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                              已发布
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs bg-neutral-100 text-neutral-800 rounded">
+                              草稿
                             </span>
                           )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-neutral-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                      {formatDate(article.publishedAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                      {formatDate(article.updatedAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-3">
-                        <Link
-                          href={`/dashboard/articles/${article.id}?${new URLSearchParams({
-                            ...(filter !== 'all' && { filter }),
-                            ...(categoryFilter !== 'all' && { category: categoryFilter }),
-                            ...(currentPage > 1 && { page: currentPage.toString() }),
-                          }).toString()}`}
-                          className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
-                          title="编辑文章"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </Link>
-                        {article.published && (
-                          <Link
-                            href={`/${article.slug}`}
-                            target="_blank"
-                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                            title="查看文章"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => handleDelete(article.id)}
-                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                          title="删除文章"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 分页组件 */}
-        {!loading && articles.length > 0 && pagination.totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow px-6 py-4">
-            <div className="text-sm text-neutral-600">
-              显示第 {(currentPage - 1) * pagination.limit + 1} - {Math.min(currentPage * pagination.limit, pagination.total)} 条，共 {pagination.total} 条
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={!pagination.hasPrev}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  pagination.hasPrev
-                    ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
-                    : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                }`}
-              >
-                上一页
-              </button>
-              
-              {/* 页码按钮 */}
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  let pageNum: number
-                  if (pagination.totalPages <= 5) {
-                    pageNum = i + 1
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1
-                  } else if (currentPage >= pagination.totalPages - 2) {
-                    pageNum = pagination.totalPages - 4 + i
-                  } else {
-                    pageNum = currentPage - 2 + i
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        currentPage === pageNum
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  )
-                })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {article.aiRewriteStatus ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded-full ${article.aiRewriteStatus === 'completed'
+                                      ? 'bg-green-100 text-green-800'
+                                      : article.aiRewriteStatus === 'processing'
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : article.aiRewriteStatus === 'failed'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-yellow-100 text-yellow-800'
+                                    }`}
+                                >
+                                  {article.aiRewriteStatus === 'pending'
+                                    ? '待处理'
+                                    : article.aiRewriteStatus === 'processing'
+                                      ? '处理中'
+                                      : article.aiRewriteStatus === 'completed'
+                                        ? '已完成'
+                                        : article.aiRewriteStatus === 'failed'
+                                          ? '失败'
+                                          : article.aiRewriteStatus}
+                                </span>
+                                {/* 重置按钮：只在失败状态时显示（无论是否在冷却期） */}
+                                {article.aiRewriteStatus === 'failed' && (
+                                  <button
+                                    onClick={() => handleResetCooldown(article.id)}
+                                    className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                                    title="重置冷却时间并将状态设置为待处理，允许立即重新处理"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                              {/* 显示处理时间：只在有 aiRewriteAt 时显示（即已开始处理、完成或失败） */}
+                              {article.aiRewriteAt && (
+                                <span className="text-xs text-neutral-500">
+                                  {new Date(article.aiRewriteAt).toLocaleString('zh-CN', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                  {/* 只在失败状态且处于冷却期时显示"冷却中" */}
+                                  {article.aiRewriteStatus === 'failed' && isInCooldown(article.aiRewriteAt) && (
+                                    <span className="ml-1 text-orange-600">(冷却中)</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-neutral-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                          {formatDate(article.publishedAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                          {formatDate(article.updatedAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-3">
+                            <Link
+                              href={`/dashboard/articles/${article.id}?${new URLSearchParams({
+                                ...(filter !== 'all' && { filter }),
+                                ...(categoryFilter !== 'all' && { category: categoryFilter }),
+                                ...(currentPage > 1 && { page: currentPage.toString() }),
+                              }).toString()}`}
+                              className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                              title="编辑文章"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </Link>
+                            {article.published && (
+                              <Link
+                                href={`/${article.slug}`}
+                                target="_blank"
+                                className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                title="查看文章"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </Link>
+                            )}
+                            <button
+                              onClick={() => handleDelete(article.id)}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              title="删除文章"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            )}
 
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={!pagination.hasNext}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  pagination.hasNext
-                    ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
-                    : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                }`}
-              >
-                下一页
-              </button>
-            </div>
-          </div>
-        )}
+            {/* 分页组件 */}
+            {!loading && articles.length > 0 && pagination.totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow px-6 py-4">
+                <div className="text-sm text-neutral-600">
+                  显示第 {(currentPage - 1) * pagination.limit + 1} - {Math.min(currentPage * pagination.limit, pagination.total)} 条，共 {pagination.total} 条
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!pagination.hasPrev}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasPrev
+                        ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                        : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                      }`}
+                  >
+                    上一页
+                  </button>
+
+                  {/* 页码按钮 */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum: number
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!pagination.hasNext}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pagination.hasNext
+                        ? 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                        : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                      }`}
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

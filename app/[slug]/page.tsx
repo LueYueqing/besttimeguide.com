@@ -85,7 +85,18 @@ function extractHeadings(content: string): Array<{ level: number; text: string; 
 
   while ((match = headingRegex.exec(content)) !== null) {
     const level = match[1].length
-    const text = match[2].trim()
+    let text = match[2].trim()
+
+    // 移除 TOC 文本中的 Markdown 格式
+    // 移除加粗/斜体 (**text**, __text__, *text*, _text_)
+    text = text.replace(/([*_]{1,3})(.*?)\1/g, '$2')
+    // 移除链接 [text](url)
+    text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // 移除行内代码 `text`
+    text = text.replace(/`([^`]+)`/g, '$1')
+    // 移除末尾的 # (标准 Markdown 标题可能以 # 结尾)
+    text = text.replace(/\s+#+$/, '')
+
     const id = text
       .toLowerCase()
       .replace(/[^\w\s-]/g, '')
@@ -102,7 +113,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params
   // 使用 unstable_cache 和 cache tag，便于精确控制缓存
   const postResult = await getPostBySlug(slug)
-  
+
   // 检查是否是数据库连接错误
   if (postResult && 'error' in postResult && postResult.error === 'DATABASE_ERROR') {
     // 数据库连接失败时，Next.js ISR 会自动使用之前生成的静态页面（如果存在）
@@ -112,12 +123,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     console.warn(`[ArticlePage] Database connection error for ${slug}, ISR will use cached page if available`)
     notFound() // 这会触发 Next.js 使用缓存的静态页面（如果存在）
   }
-  
+
   // 如果文章不存在
   if (!postResult || 'error' in postResult) {
     notFound()
   }
-  
+
   const post = postResult
 
   const allPosts = await getAllPosts()
@@ -313,11 +324,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                         <a
                           key={index}
                           href={`#${heading.id}`}
-                          className={`block text-sm hover:text-primary-600 transition-colors ${
-                            heading.level === 1 ? 'font-semibold text-neutral-900' :
-                            heading.level === 2 ? 'text-neutral-700 ml-4' :
-                            'text-neutral-600 ml-8'
-                          }`}
+                          className={`block text-sm hover:text-primary-600 transition-colors ${heading.level === 1 ? 'font-semibold text-neutral-900' :
+                              heading.level === 2 ? 'text-neutral-700 ml-4' :
+                                'text-neutral-600 ml-8'
+                            }`}
                         >
                           {heading.text}
                         </a>

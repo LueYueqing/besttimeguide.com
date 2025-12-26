@@ -97,6 +97,121 @@ function calculateReadingTime(content: string): number {
   return Math.ceil(words / wordsPerMinute)
 }
 
+// 图片信息接口
+interface ImageInfo {
+  markdown: string // 完整的 Markdown 图片语法
+  alt: string // alt 文本
+  url: string // 图片 URL
+  placeholder: string // 占位符，如 [IMAGE_1]
+}
+
+// 提取所有图片并记录信息
+function extractImages(content: string): { images: ImageInfo[]; processedContent: string } {
+  // Markdown 图片语法：![alt text](url) 或 ![alt text](url "title")
+  const imageRegex = /!\[([^\]]*)\]\(([^)]+)(?:\s+"[^"]*")?\)/g
+  const images: ImageInfo[] = []
+  let match
+  let imageIndex = 0
+
+  // 找到所有图片
+  const matches: Array<{ match: string; index: number; alt: string; url: string }> = []
+  while ((match = imageRegex.exec(content)) !== null) {
+    matches.push({
+      match: match[0],
+      index: match.index,
+      alt: match[1] || '',
+      url: match[2] || '',
+    })
+  }
+
+  // 按位置排序（从后往前替换，避免索引偏移）
+  matches.sort((a, b) => b.index - a.index)
+
+  // 创建处理后的内容
+  let processedContent = content
+
+  // 从后往前替换，避免索引偏移问题
+  for (const { match, alt, url } of matches) {
+    imageIndex++
+    const placeholder = `[IMAGE_${imageIndex}]`
+    
+    images.unshift({
+      // unshift 保持顺序（因为我们是倒序处理的）
+      markdown: match,
+      alt,
+      url,
+      placeholder,
+    })
+
+    // 替换图片为占位符
+    processedContent = processedContent.substring(0, processedContent.lastIndexOf(match)) +
+      placeholder +
+      processedContent.substring(processedContent.lastIndexOf(match) + match.length)
+  }
+
+  return { images, processedContent }
+}
+
+// 在改写后的内容中插入图片
+function insertImages(rewrittenContent: string, images: ImageInfo[]): string {
+  if (images.length === 0) {
+    return rewrittenContent
+  }
+
+  let result = rewrittenContent
+
+  // 策略1：查找占位符并替换
+  for (const image of images) {
+    if (result.includes(image.placeholder)) {
+      // 如果占位符还在，直接替换
+      result = result.replace(image.placeholder, image.markdown)
+    }
+  }
+
+  // 策略2：如果还有未插入的图片，尝试智能插入
+  const remainingImages = images.filter((img) => !result.includes(img.markdown))
+  
+  if (remainingImages.length > 0) {
+    // 按段落结构插入图片
+    const lines = result.split('\n')
+    const newLines: string[] = []
+    let imageIndex = 0
+
+    for (let i = 0; i < lines.length; i++) {
+      newLines.push(lines[i])
+
+      // 在 H2 或 H3 标题后插入图片（如果还有未插入的图片）
+      if (
+        imageIndex < remainingImages.length &&
+        (lines[i].startsWith('## ') || lines[i].startsWith('### ')) &&
+        i + 1 < lines.length &&
+        !lines[i + 1].trim().startsWith('![') // 确保下一行不是图片
+      ) {
+        // 在标题后插入一个空行和图片
+        newLines.push('')
+        newLines.push(remainingImages[imageIndex].markdown)
+        newLines.push('')
+        imageIndex++
+      }
+    }
+
+    // 如果还有未插入的图片，在文章末尾添加
+    if (imageIndex < remainingImages.length) {
+      newLines.push('')
+      newLines.push('---')
+      newLines.push('')
+      for (let i = imageIndex; i < remainingImages.length; i++) {
+        newLines.push(remainingImages[i].markdown)
+        newLines.push('')
+      }
+    }
+
+    result = newLines.join('\n')
+  }
+
+  return result
+}
+
 // GET - 获取待改写的文章列表
 export async function GET(request: NextRequest) {
   try {
@@ -210,6 +325,16 @@ export async function POST(request: NextRequest) {
           },
         })
 
+        // 预处理：提取图片
+        const sourceContent = article.sourceContent || ''
+        const { images, processedContent } = extractImages(sourceContent)
+
+        // 在提示词中添加图片占位符说明（如果有图片）
+        let enhancedPrompt = AI_REWRITE_PROMPT
+        if (images.length > 0) {
+          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${images.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
+        }
+
         // 调用 AI API 进行改写
         const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
         const completion = await aiClient.chat.completions.create({
@@ -217,21 +342,26 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: 'system',
-              content: AI_REWRITE_PROMPT,
+              content: enhancedPrompt,
             },
             {
               role: 'user',
-              content: article.sourceContent || '',
+              content: processedContent, // 使用处理后的内容（图片已替换为占位符）
             },
           ],
           temperature: 0.7,
           max_tokens: 4000, // 根据需求调整
         })
 
-        const rewrittenContent = completion.choices[0]?.message?.content || ''
+        let rewrittenContent = completion.choices[0]?.message?.content || ''
 
         if (!rewrittenContent) {
           throw new Error('AI returned empty content')
+        }
+
+        // 后处理：插入图片
+        if (images.length > 0) {
+          rewrittenContent = insertImages(rewrittenContent, images)
         }
 
         // 计算阅读时间

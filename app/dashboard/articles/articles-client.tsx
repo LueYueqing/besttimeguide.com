@@ -67,9 +67,14 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     return pageParam ? parseInt(pageParam, 10) : 1
   }
   
+  const getInitialSearch = (): string => {
+    return searchParams.get('search') || searchParams.get('q') || ''
+  }
+  
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>(getInitialFilter())
   const [categoryFilter, setCategoryFilter] = useState<string>(getInitialCategory())
   const [currentPage, setCurrentPage] = useState(getInitialPage())
+  const [searchQuery, setSearchQuery] = useState<string>(getInitialSearch())
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [quickCreateTitles, setQuickCreateTitles] = useState('')
   const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
@@ -101,16 +106,16 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   }
 
   useEffect(() => {
-    setCurrentPage(1) // 切换筛选条件时重置到第一页
-  }, [filter, categoryFilter])
+    setCurrentPage(1) // 切换筛选条件或搜索时重置到第一页
+  }, [filter, categoryFilter, searchQuery])
 
   useEffect(() => {
-    updateUrlParams(filter, categoryFilter, currentPage) // 更新 URL 参数
-  }, [filter, categoryFilter, currentPage])
+    updateUrlParams(filter, categoryFilter, currentPage, searchQuery) // 更新 URL 参数
+  }, [filter, categoryFilter, currentPage, searchQuery])
 
   useEffect(() => {
     fetchArticles()
-  }, [filter, categoryFilter, currentPage])
+  }, [filter, categoryFilter, currentPage, searchQuery])
 
   // 页面加载时，后台自动触发 AI 改写（不等待返回）
   useEffect(() => {
@@ -337,8 +342,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-4">
+          {/* Filters and Search */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFilter('all')}
@@ -384,6 +389,47 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                 </option>
               ))}
             </select>
+
+            {/* 搜索框 */}
+            <div className="flex-1 sm:max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setCurrentPage(1) // 搜索时重置到第一页
+                    }
+                  }}
+                  placeholder="搜索文章标题、描述或内容..."
+                  className="w-full px-4 py-2 pl-10 bg-white border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

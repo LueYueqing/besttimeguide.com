@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const published = searchParams.get('published')
     const categoryId = searchParams.get('categoryId')
+    const search = searchParams.get('search') || searchParams.get('q') // 支持 search 或 q 参数
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const skip = (page - 1) * limit
@@ -62,6 +63,15 @@ export async function GET(request: NextRequest) {
     }
     if (categoryId) {
       where.categoryId = parseInt(categoryId, 10)
+    }
+    // 搜索功能：搜索标题、描述、内容
+    if (search && search.trim()) {
+      const searchTerm = search.trim()
+      where.OR = [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+        { content: { contains: searchTerm, mode: 'insensitive' } },
+      ]
     }
 
     // 获取总数

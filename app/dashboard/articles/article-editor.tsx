@@ -54,7 +54,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       // 配置图片规则，确保图片被正确转换
       turndownService.addRule('images', {
         filter: 'img',
-        replacement: (content, node) => {
+        replacement: (content: string, node: any) => {
           const img = node as HTMLImageElement
           const alt = img.alt || img.title || img.getAttribute('alt') || ''
           const src = img.src || img.getAttribute('src') || ''
@@ -182,6 +182,61 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
     } finally {
       setAiRewriteLoading(false)
     }
+  }
+
+  // 处理粘贴事件：自动将 HTML 转换为 Markdown
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const clipboardData = e.clipboardData
+    
+    // 优先获取 HTML 格式，如果没有则获取纯文本
+    const htmlContent = clipboardData.getData('text/html')
+    const plainText = clipboardData.getData('text/plain')
+
+    // 检测是否包含 HTML 标签
+    if (htmlContent && (htmlContent.includes('<') && htmlContent.includes('>'))) {
+      e.preventDefault() // 阻止默认粘贴行为
+
+      if (turndownServiceRef.current) {
+        try {
+          // 转换 HTML 为 Markdown
+          const markdown = turndownServiceRef.current.turndown(htmlContent)
+          
+          // 获取当前光标位置
+          const textarea = e.currentTarget
+          const start = textarea.selectionStart
+          const end = textarea.selectionEnd
+          const currentValue = formData.sourceContent
+          
+          // 插入转换后的 Markdown 内容
+          const newValue =
+            currentValue.substring(0, start) +
+            markdown +
+            currentValue.substring(end)
+          
+          setFormData({ ...formData, sourceContent: newValue })
+          
+          // 设置光标位置到插入内容之后
+          setTimeout(() => {
+            const newCursorPos = start + markdown.length
+            textarea.setSelectionRange(newCursorPos, newCursorPos)
+            textarea.focus()
+          }, 0)
+        } catch (error) {
+          console.error('Error converting HTML to Markdown:', error)
+          // 如果转换失败，使用纯文本
+          const textarea = e.currentTarget
+          const start = textarea.selectionStart
+          const end = textarea.selectionEnd
+          const currentValue = formData.sourceContent
+          const newValue =
+            currentValue.substring(0, start) +
+            plainText +
+            currentValue.substring(end)
+          setFormData({ ...formData, sourceContent: newValue })
+        }
+      }
+    }
+    // 如果是纯文本，使用默认行为（不处理）
   }
 
   return (

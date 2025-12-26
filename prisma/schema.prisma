@@ -51,6 +51,7 @@ model User {
   referredRecords Referral[] @relation("ReferredReferrals") // 被邀请记录（作为被邀请人）
   apiKeys       ApiKey[]     // API 密钥
   articles      Article[]    @relation("ArticleAuthor") // 创建的文章
+  newsletterSubscriptions NewsletterSubscription[] @relation("NewsletterSubscriptions") // Newsletter 订阅
   
   @@map("users")
   @@index([referredBy])
@@ -253,6 +254,33 @@ model Article {
   @@index([featured])
 }
 
+// Newsletter 订阅表
+model NewsletterSubscription {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique // 订阅邮箱
+  status            NewsletterStatus @default(ACTIVE) // 订阅状态
+  source            String?   // 订阅来源（homepage, article, etc.）
+  userId            Int?      // 关联的用户ID（如果用户后来注册了）
+  user              User?     @relation("NewsletterSubscriptions", fields: [userId], references: [id], onDelete: SetNull)
+  
+  // 邮箱验证
+  verified          Boolean   @default(false) // 是否已验证邮箱
+  verificationToken String?   @unique // 验证令牌
+  
+  // 时间戳
+  subscribedAt      DateTime  @default(now()) // 订阅时间
+  unsubscribedAt    DateTime? // 取消订阅时间
+  verifiedAt        DateTime? // 验证时间
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("newsletter_subscriptions")
+  @@index([email])
+  @@index([status])
+  @@index([userId])
+  @@index([verified])
+}
+
 // ============================================
 // 枚举类型
 // ============================================
@@ -271,4 +299,12 @@ enum SubscriptionStatus {
   EXPIRED     // 已过期
   PAST_DUE    // 逾期
   TRIALING    // 试用中
+}
+
+// Newsletter 订阅状态枚举
+enum NewsletterStatus {
+  ACTIVE        // 活跃订阅
+  UNSUBSCRIBED  // 已取消订阅
+  BOUNCED       // 邮箱退回
+  INVALID       // 无效邮箱
 }

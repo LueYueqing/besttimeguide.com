@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getBuildTimeFormatted } from '@/lib/build-info'
+import NewsletterSubscription from './NewsletterSubscription'
 
 interface FooterProps {
   variant?: 'full' | 'simple'
@@ -76,32 +77,7 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
 
             {/* 右侧：邮件订阅 */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <h4 className="font-bold text-white">BestTimeGuide Newsletter</h4>
-              </div>
-              <p className="text-white/90 mb-4 text-sm">
-                Helpful guides delivered to your inbox every week!
-              </p>
-              <div className="space-y-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-2 rounded-lg text-neutral-900 bg-white border-none focus:outline-none focus:ring-2 focus:ring-white/50"
-                />
-                <button
-                  type="button"
-                  className="wikihow-btn-large"
-                  style={{ width: '100%' }}
-                >
-                  Sign me up!
-                </button>
-                <p className="text-white/70 text-xs mt-2">
-                  By signing up you are agreeing to receive emails according to our privacy policy.
-                </p>
-              </div>
+              <NewsletterSubscription source="footer" />
             </div>
           </div>
 

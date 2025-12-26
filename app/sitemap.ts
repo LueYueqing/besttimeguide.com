@@ -88,26 +88,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // 动态页面：从数据库获取博客文章
-  let blogPages: MetadataRoute.Sitemap = []
+  // 动态页面：从数据库获取文章
+  let articlePages: MetadataRoute.Sitemap = []
   try {
-    // 如果使用 Prisma，可以从数据库获取博客文章
-    // const posts = await prisma.post.findMany({
-    //   where: { published: true },
-    //   select: { slug: true, updatedAt: true },
-    // })
-    // blogPages = posts.map((post) => ({
-    //   url: `${baseUrl}/blog/${post.slug}`,
-    //   lastModified: post.updatedAt,
-    //   changeFrequency: 'weekly',
-    //   priority: 0.7,
-    // }))
+    // 从数据库获取已发布的文章
+    const { getAllPosts } = await import('@/lib/blog')
+    const posts = await getAllPosts()
+    articlePages = posts.map((post) => ({
+      url: `${baseUrl}/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: 'weekly' as const,
+      priority: post.featured ? 0.9 : 0.7,
+    }))
   } catch (error) {
     // 如果数据库未配置或查询失败，静默处理
-    console.warn('Failed to fetch blog posts for sitemap:', error)
+    console.warn('Failed to fetch articles for sitemap:', error)
   }
 
   // 合并所有页面
-  return [...staticPages, ...blogPages]
+  return [...staticPages, ...articlePages]
 }
 

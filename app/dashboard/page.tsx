@@ -5,7 +5,7 @@ import DashboardClient from './dashboard-client'
 
 export const metadata: Metadata = {
   title: 'Dashboard | besttimeguide.com',
-  description: 'Manage your QR codes, view analytics, and track performance.',
+  description: 'Manage your account and content.',
 }
 
 export default async function DashboardPage() {

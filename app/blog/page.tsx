@@ -61,7 +61,7 @@ export default async function BlogPage() {
               {featuredPosts.map((post) => (
                 <Link
                   key={post.slug}
-                  href={`/blog/${post.slug}`}
+                  href={`/${post.slug}`}
                   className="card p-6 hover:shadow-xl transition-all hover:-translate-y-1"
                 >
                   <div className="flex items-center gap-2 mb-3">
@@ -110,7 +110,7 @@ export default async function BlogPage() {
                   posts.map((post) => (
                     <Link
                       key={post.slug}
-                      href={`/blog/${post.slug}`}
+                      href={`/${post.slug}`}
                       className="card p-6 hover:shadow-lg transition-all block"
                     >
                       <div className="flex items-start justify-between mb-3">

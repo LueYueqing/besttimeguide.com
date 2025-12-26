@@ -262,7 +262,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         </Link>
                         {article.published && (
                           <Link
-                            href={`/blog/${article.slug}`}
+                            href={`/${article.slug}`}
                             target="_blank"
                             className="text-blue-600 hover:text-blue-900"
                           >

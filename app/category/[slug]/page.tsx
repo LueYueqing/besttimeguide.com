@@ -6,6 +6,7 @@ import Footer from '@/components/Footer'
 import { getPostsByCategory, getAllPosts, BlogPost } from '@/lib/blog'
 import { PrismaClient } from '@prisma/client'
 import { unstable_cache } from 'next/cache'
+import TagLink from './TagLink'
 
 const prisma = new PrismaClient()
 
@@ -318,14 +319,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   {post.tags.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
                       {post.tags.slice(0, 3).map((tag) => (
-                        <Link
-                          key={tag}
-                          href={`/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1 rounded hover:bg-primary-100 hover:text-primary-700 transition-colors"
-                        >
-                          {tag}
-                        </Link>
+                        <TagLink key={tag} tag={tag} />
                       ))}
                       {post.tags.length > 3 && (
                         <span className="text-xs text-neutral-500">+{post.tags.length - 3}</span>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TurndownService from 'turndown'
+import { useToast } from '@/components/Toast'
 
 interface Category {
   id: number
@@ -37,6 +38,7 @@ interface ArticleEditorProps {
 
 export default function ArticleEditor({ categories, article }: ArticleEditorProps) {
   const router = useRouter()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
   
@@ -133,14 +135,15 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       const data = await response.json()
 
       if (data.success) {
+        toast.success('文章保存成功')
         router.push('/dashboard/articles')
         router.refresh()
       } else {
-        alert('保存失败：' + data.error)
+        toast.error('保存失败：' + data.error)
       }
     } catch (error) {
       console.error('Error saving article:', error)
-      alert('保存失败')
+      toast.error('保存失败')
     } finally {
       setLoading(false)
     }
@@ -148,7 +151,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
 
   const handleAiRewrite = async () => {
     if (!article || !formData.sourceContent) {
-      alert('请先填写参考范本内容')
+      toast.warning('请先填写参考范本内容')
       return
     }
 
@@ -171,14 +174,14 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       const data = await response.json()
 
       if (data.success) {
-        alert('文章已标记为 AI 改写状态')
+        toast.success('文章已标记为 AI 改写状态')
         router.refresh()
       } else {
-        alert('操作失败：' + data.error)
+        toast.error('操作失败：' + data.error)
       }
     } catch (error) {
       console.error('Error marking AI rewrite:', error)
-      alert('操作失败')
+      toast.error('操作失败')
     } finally {
       setAiRewriteLoading(false)
     }

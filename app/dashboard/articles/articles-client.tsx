@@ -48,7 +48,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 10,
     total: 0,
     totalPages: 0,
     hasNext: false,
@@ -76,7 +76,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         params.append('categoryId', categoryFilter)
       }
       params.append('page', currentPage.toString())
-      params.append('limit', '20')
+      params.append('limit', '10')
 
       const response = await fetch(`/api/articles?${params.toString()}`)
       const data = await response.json()
@@ -315,7 +315,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         {!loading && articles.length > 0 && pagination.totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow px-6 py-4">
             <div className="text-sm text-neutral-600">
-              显示第 {(currentPage - 1) * 20 + 1} - {Math.min(currentPage * 20, pagination.total)} 条，共 {pagination.total} 条
+              显示第 {(currentPage - 1) * pagination.limit + 1} - {Math.min(currentPage * pagination.limit, pagination.total)} 条，共 {pagination.total} 条
             </div>
             <div className="flex items-center gap-2">
               <button

@@ -66,12 +66,19 @@ export default async function TagPage({ params }: TagPageProps) {
   
   let posts: BlogPost[] = []
   try {
-    // 获取所有文章，然后过滤出包含该标签的文章
-    const allPosts = await getAllPosts()
-    posts = allPosts.filter((post) => {
-      const postTagSlugs = post.tags.map((t) => t.toLowerCase().replace(/\s+/g, '-'))
-      return postTagSlugs.includes(tag)
-    })
+    // 使用 getPostsByTag 函数，它已经实现了正确的标签匹配逻辑
+    // 首先尝试使用原始标签名（可能包含空格）
+    posts = await getPostsByTag(tagName)
+    
+    // 如果没找到，尝试使用 slug 格式的标签
+    if (posts.length === 0) {
+      // 获取所有文章，然后过滤出包含该标签的文章
+      const allPosts = await getAllPosts()
+      posts = allPosts.filter((post) => {
+        const postTagSlugs = post.tags.map((t) => t.toLowerCase().replace(/\s+/g, '-'))
+        return postTagSlugs.includes(tag)
+      })
+    }
   } catch (error: any) {
     console.error(`Error fetching posts for tag ${tag}:`, error)
     const isDatabaseError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)

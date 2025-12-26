@@ -4,7 +4,7 @@ import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
   title: 'Terms of Service | besttimeguide.com',
-  description: 'Read the terms of service and user agreement for besttimeguide.com QR code generator. Understand your rights and responsibilities when using our service.',
+  description: 'Read the terms of service and user agreement for besttimeguide.com timing guides. Understand your rights and responsibilities when using our service.',
   keywords: 'terms of service, user agreement, terms and conditions, besttimeguide.com',
 }
 
@@ -53,15 +53,15 @@ export default function TermsPage() {
               <div className="card p-8">
                 <h2 className="text-2xl font-bold text-neutral-900 mb-6">Description of Service</h2>
                 <p className="text-neutral-600 mb-4">
-                  besttimeguide.com provides QR code generation services, including:
+                  besttimeguide.com provides comprehensive timing guides and advice, including:
                 </p>
                 <ul className="list-disc pl-6 text-neutral-600 space-y-2">
-                  <li>Static and dynamic QR code creation</li>
-                  <li>QR code customization with logos, colors, and designs</li>
-                  <li>Analytics and tracking for dynamic QR codes</li>
-                  <li>API access for developers</li>
-                  <li>Bulk QR code generation</li>
-                  <li>Multiple download formats (PNG, SVG, PDF)</li>
+                  <li>Free timing guides covering travel, social media, health, shopping, and lifestyle</li>
+                  <li>Data-driven recommendations based on search trends, price analysis, and seasonal patterns</li>
+                  <li>Expert advice and practical tips for optimal timing decisions</li>
+                  <li>Comprehensive FAQ sections and detailed explanations</li>
+                  <li>Regular content updates to reflect current trends and information</li>
+                  <li>Accessible, user-friendly format for easy navigation</li>
                 </ul>
               </div>
 
@@ -97,44 +97,42 @@ export default function TermsPage() {
                 </p>
                 <ul className="list-disc pl-6 text-neutral-600 mb-6 space-y-2">
                   <li>Illegal activities or content</li>
-                  <li>Spam, phishing, or malicious content</li>
+                  <li>Scraping or automated data collection without permission</li>
                   <li>Copyright or trademark infringement</li>
-                  <li>Adult or inappropriate content</li>
-                  <li>Malware, viruses, or harmful code</li>
-                  <li>Harassment, hate speech, or discrimination</li>
-                  <li>Unauthorized access to computer systems</li>
+                  <li>Misrepresenting our content as your own</li>
+                  <li>Using our guides to harm others or engage in fraudulent activities</li>
+                  <li>Attempting to hack, disrupt, or damage our website</li>
+                  <li>Unauthorized access to our systems or data</li>
                 </ul>
 
                 <h3 className="text-xl font-semibold text-neutral-800 mb-4">Content Responsibility</h3>
                 <p className="text-neutral-600">
-                  You are solely responsible for the content you encode in QR codes and any consequences 
-                  resulting from that content. We do not monitor or control user-generated content.
+                  While we strive to provide accurate and up-to-date information, you are responsible for verifying 
+                  information relevant to your specific situation. Our guides provide general advice and should not 
+                  replace professional consultation when making important decisions.
                 </p>
               </div>
 
-              {/* Subscription and Payment */}
+              {/* Free Service */}
               <div className="card p-8">
-                <h2 className="text-2xl font-bold text-neutral-900 mb-6">Subscription and Payment Terms</h2>
+                <h2 className="text-2xl font-bold text-neutral-900 mb-6">Free Service</h2>
                 
-                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Subscription Plans</h3>
-                <ul className="list-disc pl-6 text-neutral-600 mb-6 space-y-2">
-                  <li><strong>Free Plan:</strong> Limited features with no payment required</li>
-                  <li><strong>Professional Plan:</strong> $4.99/month with advanced features</li>
-                  <li><strong>Enterprise Plan:</strong> Custom pricing for organizations</li>
-                </ul>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-4">No Payment Required</h3>
+                <p className="text-neutral-600 mb-4">
+                  All our timing guides are provided completely free of charge. There are no subscriptions, 
+                  no hidden fees, and no payment required to access any of our content.
+                </p>
 
-                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Billing and Payments</h3>
-                <ul className="list-disc pl-6 text-neutral-600 mb-6 space-y-2">
-                  <li>Payments are processed securely through Stripe</li>
-                  <li>Subscriptions renew automatically unless cancelled</li>
-                  <li>Prices may change with 30 days notice</li>
-                  <li>No refunds except as stated in our refund policy</li>
-                </ul>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Service Availability</h3>
+                <p className="text-neutral-600 mb-4">
+                  We strive to keep our service available 24/7, but we cannot guarantee uninterrupted access. 
+                  Our guides may be updated, modified, or temporarily unavailable during maintenance periods.
+                </p>
 
-                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Refund Policy</h3>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Content Changes</h3>
                 <p className="text-neutral-600">
-                  We offer a 30-day money-back guarantee for new subscriptions. Contact us within 30 days 
-                  of your first payment for a full refund.
+                  We reserve the right to update, modify, or remove guides at any time to ensure accuracy and 
+                  relevance. We are not obligated to maintain specific guides or content indefinitely.
                 </p>
               </div>
 
@@ -154,10 +152,11 @@ export default function TermsPage() {
                   your content solely for providing our services.
                 </p>
 
-                <h3 className="text-xl font-semibold text-neutral-800 mb-4">QR Code Ownership</h3>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Guide Usage</h3>
                 <p className="text-neutral-600">
-                  You own the QR codes you generate. However, QR codes themselves are not subject to copyright 
-                  as they are functional rather than creative works.
+                  You may read, share, and cite our guides for personal or commercial use, provided you give 
+                  proper attribution. However, you may not republish our guides in their entirety or claim 
+                  them as your own original work.
                 </p>
               </div>
 

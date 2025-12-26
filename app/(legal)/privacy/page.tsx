@@ -4,7 +4,7 @@ import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | besttimeguide.com',
-  description: 'Learn how besttimeguide.com protects your privacy and handles your data. Read our comprehensive privacy policy for QR code generation services.',
+  description: 'Learn how besttimeguide.com protects your privacy and handles your data. Read our comprehensive privacy policy for timing guide services.',
   keywords: 'privacy policy, data protection, GDPR, privacy, besttimeguide.com',
 }
 
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
               <p className="text-neutral-600 leading-relaxed">
                 besttimeguide.com ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
                 explains how we collect, use, disclose, and safeguard your information when you visit our website 
-                and use our QR code generation services. Please read this privacy policy carefully.
+                and use our timing guide services. Please read this privacy policy carefully.
               </p>
             </div>
 
@@ -79,10 +79,10 @@ export default function PrivacyPage() {
                   <li>Device identifiers</li>
                 </ul>
 
-                <h3 className="text-xl font-semibold text-neutral-800 mb-4">QR Code Data</h3>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-4">Usage Data</h3>
                 <p className="text-neutral-600">
-                  For dynamic QR codes, we store the destination URLs and scan analytics. Static QR codes 
-                  are processed locally in your browser and are not stored on our servers.
+                  We may collect information about how you interact with our guides, including which guides you view, 
+                  search queries, and time spent on pages. This helps us improve our content and user experience.
                 </p>
               </div>
 
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
                   <li>Processing your transactions and managing your account</li>
                   <li>Sending you technical notices and support messages</li>
                   <li>Responding to your comments and questions</li>
-                  <li>Providing analytics and insights for your QR codes</li>
+                  <li>Providing analytics and insights about guide usage</li>
                   <li>Improving our services and developing new features</li>
                   <li>Detecting and preventing fraud or abuse</li>
                   <li>Complying with legal obligations</li>
@@ -118,10 +118,9 @@ export default function PrivacyPage() {
                   We may share your information with trusted third-party service providers who assist us in:
                 </p>
                 <ul className="list-disc pl-6 text-neutral-600 mb-6 space-y-2">
-                  <li>Payment processing (Stripe)</li>
-                  <li>Email communications (SendGrid)</li>
+                  <li>Email communications</li>
                   <li>Analytics and monitoring (Google Analytics)</li>
-                  <li>Cloud hosting and storage (AWS)</li>
+                  <li>Cloud hosting and storage</li>
                 </ul>
 
                 <h3 className="text-xl font-semibold text-neutral-800 mb-4">Legal Requirements</h3>

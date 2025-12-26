@@ -3,9 +3,9 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Cookies Policy',
-  description: 'Learn about how we use cookies and similar technologies to enhance your experience and protect your privacy.',
-  keywords: 'cookies policy, cookies, tracking, privacy',
+  title: 'Cookies Policy | besttimeguide.com',
+  description: 'Learn about how besttimeguide.com uses cookies and similar technologies to enhance your experience and protect your privacy.',
+  keywords: 'cookies policy, cookies, tracking, privacy, besttimeguide.com',
   alternates: {
     canonical: '/cookies',
   },
@@ -70,7 +70,7 @@ export default function CookiesPage() {
                   </p>
                   <div className="bg-neutral-50 p-4 rounded-lg">
                     <p className="text-sm text-neutral-600">
-                      <strong>Examples:</strong> Session management, user authentication, QR code generation preferences
+                      <strong>Examples:</strong> Session management, user preferences, website functionality
                     </p>
                   </div>
                 </div>
@@ -96,7 +96,7 @@ export default function CookiesPage() {
                   </p>
                   <div className="bg-neutral-50 p-4 rounded-lg">
                     <p className="text-sm text-neutral-600">
-                      <strong>Examples:</strong> Language preferences, theme selection, QR code design settings
+                      <strong>Examples:</strong> Language preferences, theme selection, reading preferences
                     </p>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ export default function CookiesPage() {
                     </tr>
                     <tr>
                       <td className="border border-neutral-200 px-4 py-3 font-mono">user_preferences</td>
-                      <td className="border border-neutral-200 px-4 py-3">Stores QR code design preferences</td>
+                      <td className="border border-neutral-200 px-4 py-3">Stores user preferences and settings</td>
                       <td className="border border-neutral-200 px-4 py-3">30 days</td>
                       <td className="border border-neutral-200 px-4 py-3"><span className="px-2 py-1 bg-success-100 text-success-800 rounded">Functional</span></td>
                     </tr>
@@ -187,13 +187,6 @@ export default function CookiesPage() {
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-neutral-900 mb-3">💳 Stripe</h3>
-                  <p className="text-neutral-700 mb-3">
-                    For payment processing, we use Stripe, which may set cookies to ensure secure transactions 
-                    and prevent fraud.
-                  </p>
-                </div>
 
                 <div>
                   <h3 className="text-lg font-semibold text-neutral-900 mb-3">☁️ Vercel</h3>

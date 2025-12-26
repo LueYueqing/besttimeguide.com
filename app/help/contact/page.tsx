@@ -95,7 +95,7 @@ export default function ContactPage() {
           </h1>
           
           <p className="hero-subtitle fade-in-up">
-            Have a question, need support, or want to share feedback? 
+            Have a question about our timing guides, need help finding information, or want to share feedback? 
             Our team is ready to assist you with any inquiries.
           </p>
         </div>
@@ -155,12 +155,12 @@ export default function ContactPage() {
                     className="form-select"
                   >
                     <option value="general">General Question</option>
-                    <option value="support">Technical Support</option>
-                    <option value="billing">Billing & Pricing</option>
-                    <option value="api">API & Integration</option>
-                    <option value="enterprise">Enterprise Sales</option>
-                    <option value="feedback">Feature Request</option>
-                    <option value="bug">Bug Report</option>
+                    <option value="content">Content Question</option>
+                    <option value="suggestion">Guide Suggestion</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="partnership">Partnership Inquiry</option>
+                    <option value="media">Media Inquiry</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
@@ -245,9 +245,9 @@ export default function ContactPage() {
                         📧
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg mb-2">Email Support</h3>
+                        <h3 className="font-bold text-lg mb-2">General Inquiries</h3>
                         <p className="text-neutral-600 mb-3">
-                          For general questions and support requests
+                          For questions about our guides and content
                         </p>
                         <a href="mailto:javajia@gmail.com" className="text-primary-600 hover:text-primary-700 font-semibold">
                           javajia@gmail.com
@@ -262,9 +262,9 @@ export default function ContactPage() {
                         💼
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg mb-2">Enterprise Sales</h3>
+                        <h3 className="font-bold text-lg mb-2">Partnership & Media</h3>
                         <p className="text-neutral-600 mb-3">
-                          For custom plans and enterprise solutions
+                          For partnership opportunities and media inquiries
                         </p>
                         <a href="mailto:javajia@gmail.com" className="text-primary-600 hover:text-primary-700 font-semibold">
                           javajia@gmail.com
@@ -279,9 +279,9 @@ export default function ContactPage() {
                         🔧
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg mb-2">API Support</h3>
+                        <h3 className="font-bold text-lg mb-2">Content Suggestions</h3>
                         <p className="text-neutral-600 mb-3">
-                          Technical questions about our API
+                          Suggest new timing guides or topics
                         </p>
                         <a href="mailto:javajia@gmail.com" className="text-primary-600 hover:text-primary-700 font-semibold">
                           javajia@gmail.com
@@ -310,7 +310,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <p className="text-sm text-neutral-600 mt-4">
-                  * Enterprise customers have 24/7 priority support access
+                  * We aim to respond to all inquiries within 24 hours
                 </p>
               </div>
 
@@ -322,13 +322,13 @@ export default function ContactPage() {
                     <span>❓</span>
                     <span>Frequently Asked Questions</span>
                   </a>
-                  <a href="/docs/api" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors">
+                  <a href="/" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors">
                     <span>📚</span>
-                    <span>API Documentation</span>
+                    <span>Browse All Guides</span>
                   </a>
-                  <a href="/tutorials" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors">
+                  <a href="/help/faq" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors">
                     <span>🎓</span>
-                    <span>Video Tutorials</span>
+                    <span>FAQ</span>
                   </a>
                   <a href="/help" className="flex items-center gap-3 text-neutral-700 hover:text-primary-600 transition-colors">
                     <span>🆘</span>
@@ -356,13 +356,13 @@ export default function ContactPage() {
               </div>
               <div className="card p-6">
                 <div className="text-3xl mb-3">🚀</div>
-                <h3 className="font-bold text-lg mb-2">Pro Users</h3>
-                <p className="text-neutral-600">Priority support within 12 hours</p>
+                <h3 className="font-bold text-lg mb-2">Content Questions</h3>
+                <p className="text-neutral-600">Response within 12 hours</p>
               </div>
               <div className="card p-6">
                 <div className="text-3xl mb-3">👔</div>
-                <h3 className="font-bold text-lg mb-2">Enterprise</h3>
-                <p className="text-neutral-600">Dedicated support within 4 hours</p>
+                <h3 className="font-bold text-lg mb-2">Partnership</h3>
+                <p className="text-neutral-600">Response within 4 hours</p>
               </div>
             </div>
           </div>

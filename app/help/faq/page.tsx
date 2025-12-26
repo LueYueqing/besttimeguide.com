@@ -5,8 +5,8 @@ import { Section, Container } from '@/components/Layout'
 
 export const metadata: Metadata = {
   title: 'FAQ - Frequently Asked Questions | besttimeguide.com',
-  description: 'Get answers to common questions about besttimeguide.com QR code generator, pricing, features, and technical support.',
-  keywords: 'FAQ, questions, QR code help, support, besttimeguide.com help',
+  description: 'Get answers to common questions about besttimeguide.com timing guides, how to use our guides, and find the best time for everything.',
+  keywords: 'FAQ, questions, timing guides, best time help, support, besttimeguide.com help',
 }
 
 export default function FAQPage() {
@@ -23,8 +23,8 @@ export default function FAQPage() {
           </h1>
           
           <p className="hero-subtitle fade-in-up">
-            Find answers to common questions about besttimeguide.com. 
-            Can't find what you're looking for? Contact our support team.
+            Find answers to common questions about our timing guides and how to use besttimeguide.com. 
+            Can't find what you're looking for? Contact our team.
           </p>
         </div>
       </section>
@@ -40,27 +40,22 @@ export default function FAQPage() {
                 <div className="card p-6">
                   <h3 className="font-bold text-lg mb-3">What is besttimeguide.com?</h3>
                   <p className="text-neutral-600">
-                    besttimeguide.com is a professional QR code generator that allows you to create, customize, and track QR codes. 
-                    We offer both static and dynamic QR codes with advanced analytics, custom branding, and API access.
+                    besttimeguide.com is the most trusted timing guide site on the internet. We provide free, comprehensive guides 
+                    that help you find the best time for everything - from travel and social media to health and shopping. 
+                    Our guides are data-driven, combining search trends, price analysis, seasonal patterns, and expert advice.
                   </p>
                 </div>
 
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What's the difference between static and dynamic QR codes?</h3>
+                  <h3 className="font-bold text-lg mb-3">What topics do you cover?</h3>
                   <div className="text-neutral-600">
-                    <p className="mb-3"><strong>Static QR codes:</strong></p>
+                    <p className="mb-3">We cover 5 main categories:</p>
                     <ul className="list-disc pl-6 mb-4">
-                      <li>Content is permanently encoded in the QR code</li>
-                      <li>Cannot be edited after creation</li>
-                      <li>No tracking or analytics</li>
-                      <li>Work forever, even if our service goes down</li>
-                    </ul>
-                    <p className="mb-3"><strong>Dynamic QR codes:</strong></p>
-                    <ul className="list-disc pl-6">
-                      <li>Content can be changed anytime without reprinting</li>
-                      <li>Detailed analytics and tracking</li>
-                      <li>Require an active subscription</li>
-                      <li>Perfect for marketing campaigns</li>
+                      <li><strong>Travel:</strong> Best time to visit countries, cities, and attractions</li>
+                      <li><strong>Social Media:</strong> Best time to post on Instagram, TikTok, Facebook, etc.</li>
+                      <li><strong>Health:</strong> Best time to take supplements, medications, and health tests</li>
+                      <li><strong>Shopping:</strong> Best time to buy cars, houses, plane tickets, and more</li>
+                      <li><strong>Lifestyle:</strong> Best time for exercise, gardening, diet, and daily activities</li>
                     </ul>
                   </div>
                 </div>
@@ -68,161 +63,106 @@ export default function FAQPage() {
                 <div className="card p-6">
                   <h3 className="font-bold text-lg mb-3">Do I need to register to use besttimeguide.com?</h3>
                   <p className="text-neutral-600">
-                    No! You can create and download static QR codes without any registration. 
-                    However, to access dynamic QR codes, analytics, and other premium features, you'll need to create an account.
+                    No! All our guides are completely free and accessible without registration. 
+                    You can browse, read, and use all our timing guides without creating an account.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Pricing & Plans */}
+            {/* Using Our Guides */}
             <div className="mb-16">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Pricing & Plans</h2>
+              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Using Our Guides</h2>
               <div className="space-y-6">
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Is there a free plan?</h3>
+                  <h3 className="font-bold text-lg mb-3">Are your guides really free?</h3>
                   <p className="text-neutral-600">
-                    Yes! Our free plan includes unlimited static QR codes, basic customization, and PNG downloads. 
-                    No credit card required, no time limits.
-                  </p>
-                </div>
-
-                <div className="card p-6 border-2 border-blue-200 bg-blue-50">
-                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                    <span>🎁</span>
-                    How does the referral program work?
-                  </h3>
-                  <div className="text-neutral-700">
-                    <p className="mb-3">
-                      Our referral program rewards you with <strong className="text-blue-600">3 days of Pro access</strong> for each friend you invite who successfully registers and logs in.
-                    </p>
-                    <div className="bg-white p-4 rounded-lg mt-3">
-                      <p className="font-semibold mb-2 text-sm">How it works:</p>
-                      <ol className="list-decimal pl-5 space-y-1 text-sm">
-                        <li>Share your unique invite link from your dashboard</li>
-                        <li>Your friend clicks the link and registers</li>
-                        <li>When they log in for the first time, you automatically get 3 days of Pro access</li>
-                        <li>Rewards stack - invite more friends to extend your trial!</li>
-                      </ol>
-                    </div>
-                    <p className="mt-3 text-sm">
-                      <strong>Benefits:</strong> Unlimited dynamic QR codes, advanced analytics, logo upload, and all Pro features during your trial period.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Can I cancel my subscription anytime?</h3>
-                  <p className="text-neutral-600">
-                    Absolutely! You can cancel your subscription at any time from your account settings. 
-                    Your account will remain active until the end of your current billing period.
+                    Yes! All our timing guides are completely free. No registration required, no credit card needed, 
+                    no hidden fees. We believe timing advice should be accessible to everyone.
                   </p>
                 </div>
 
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Do you offer refunds?</h3>
-                  <p className="text-neutral-600">
-                    We offer a 30-day money-back guarantee. If you're not satisfied with besttimeguide.com 
-                    within the first 30 days, contact us for a full refund.
+                  <h3 className="font-bold text-lg mb-3">How do you determine the "best time"?</h3>
+                  <p className="text-neutral-600 mb-3">
+                    Our recommendations are based on multiple data sources:
                   </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What happens if I downgrade my plan?</h3>
-                  <p className="text-neutral-600">
-                    Your existing QR codes will continue to work. However, you may lose access to certain features like 
-                    analytics, editing dynamic QR codes, or creating new dynamic codes until you upgrade again.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">How many times can I edit my dynamic QR codes?</h3>
-                  <p className="text-neutral-600">
-                    With a Professional or Enterprise plan, you can edit your dynamic QR codes as many times as you need. 
-                    There are no limits on the number of edits - change the destination URL, update the design, or modify 
-                    any settings whenever you want, without any restrictions.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">When can I start using premium features after subscribing?</h3>
-                  <p className="text-neutral-600">
-                    Your premium features are activated immediately after your payment is processed. This typically happens 
-                    within seconds, and you'll have instant access to all Pro features including dynamic QR codes, analytics, 
-                    logo upload, and API access. No waiting period required.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What currency do you charge in?</h3>
-                  <p className="text-neutral-600">
-                    All subscriptions are billed in US Dollars (USD), regardless of where your business is located. 
-                    Your bank or credit card company will handle the currency conversion if needed, and you'll see the 
-                    converted amount on your statement.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What payment methods do you accept?</h3>
-                  <p className="text-neutral-600">
-                    We accept all major credit cards and debit cards (Visa, Mastercard, American Express, Discover). 
-                    All payments are securely processed through Stripe, one of the world's most trusted payment processors. 
-                    Your payment information is encrypted and never stored on our servers.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Features & Technical */}
-            <div className="mb-16">
-              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Features & Technical</h2>
-              <div className="space-y-6">
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What file formats can I download?</h3>
-                  <div className="text-neutral-600">
-                    <p className="mb-3"><strong>Free users:</strong> PNG format</p>
-                    <p><strong>Pro users:</strong> PNG, SVG, and PDF formats in multiple resolutions</p>
-                  </div>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Can I add my logo to QR codes?</h3>
-                  <p className="text-neutral-600">
-                    Yes! Pro users can upload custom logos, adjust colors, change shapes, and add frames to create 
-                    branded QR codes that match their company identity.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Do you provide an API?</h3>
-                  <p className="text-neutral-600">
-                    Yes, we offer a comprehensive REST API for Pro users. You can programmatically create, 
-                    manage, and track QR codes. Full documentation is available in our developer portal.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">How accurate is the analytics data?</h3>
-                  <p className="text-neutral-600">
-                    Our analytics track every scan in real-time, including location (city/country), 
-                    device type, operating system, and timestamp. Data is updated within minutes of each scan.
-                  </p>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">What information do I need to create a QR code?</h3>
-                  <p className="text-neutral-600">
-                    Creating a QR code is simple! For static QR codes, you just need the content (URL, text, WiFi credentials, etc.). 
-                    For dynamic QR codes with custom design, you'll specify:
-                  </p>
-                  <ul className="list-disc pl-6 mt-3 text-neutral-600 space-y-1">
-                    <li>The QR code type (URL, text, WiFi, business card, etc.)</li>
-                    <li>Your content or destination URL</li>
-                    <li>Design preferences (colors, shape style, logo if desired)</li>
-                    <li>Frame and text options (optional)</li>
+                  <ul className="list-disc pl-6 text-neutral-600 space-y-2">
+                    <li>Search volume trends and user behavior data</li>
+                    <li>Historical price analysis and seasonal patterns</li>
+                    <li>Weather data and climate information</li>
+                    <li>Expert research and industry best practices</li>
+                    <li>User feedback and real-world experiences</li>
                   </ul>
-                  <p className="text-neutral-600 mt-3">
-                    Our intuitive interface guides you through each step, making it easy to create professional QR codes in minutes.
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">How often are guides updated?</h3>
+                  <p className="text-neutral-600">
+                    We regularly update our guides to reflect current trends, price changes, and new information. 
+                    Major updates are typically done annually, with minor updates as needed throughout the year.
+                  </p>
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">Can I suggest a new guide topic?</h3>
+                  <p className="text-neutral-600">
+                    Absolutely! We welcome suggestions for new timing guides. Use our contact form to suggest topics, 
+                    and we'll consider them for future content. Popular suggestions are prioritized.
+                  </p>
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">Can I share or cite your guides?</h3>
+                  <p className="text-neutral-600">
+                    Yes! You're welcome to share our guides and cite them in your own content. 
+                    We just ask that you provide proper attribution and link back to the original guide.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Guide Content */}
+            <div className="mb-16">
+              <h2 className="text-2xl font-bold text-neutral-900 mb-8">Guide Content</h2>
+              <div className="space-y-6">
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">What information is included in each guide?</h3>
+                  <p className="text-neutral-600 mb-3">
+                    Each guide typically includes:
+                  </p>
+                  <ul className="list-disc pl-6 text-neutral-600 space-y-1">
+                    <li>Specific best time recommendations (month, season, or time of day)</li>
+                    <li>Data-driven analysis and reasoning</li>
+                    <li>Price trends and cost considerations (where applicable)</li>
+                    <li>Weather and seasonal factors</li>
+                    <li>Practical tips and considerations</li>
+                    <li>FAQ section addressing common questions</li>
+                  </ul>
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">Are your recommendations guaranteed to work?</h3>
+                  <p className="text-neutral-600">
+                    While we base our recommendations on extensive data and research, results can vary based on individual 
+                    circumstances, location, and other factors. Our guides provide general guidance, but you should always 
+                    consider your specific situation and consult with professionals when making important decisions.
+                  </p>
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">Do you cover international destinations and topics?</h3>
+                  <p className="text-neutral-600">
+                    Yes! We cover destinations and topics from around the world. Our travel guides include countries and cities 
+                    globally, and our other guides consider international perspectives where relevant.
+                  </p>
+                </div>
+
+                <div className="card p-6">
+                  <h3 className="font-bold text-lg mb-3">How do I search for a specific guide?</h3>
+                  <p className="text-neutral-600">
+                    You can search using our search bar at the top of the page, browse by category, or use the URL format: 
+                    besttimeguide.com/best-time-to-[topic]. For example: besttimeguide.com/best-time-to-visit-japan
                   </p>
                 </div>
               </div>
@@ -250,31 +190,31 @@ export default function FAQPage() {
               </div>
             </div>
 
-            {/* Comparison with Competitors */}
+            {/* Why Choose Us */}
             <div className="mb-16">
               <h2 className="text-2xl font-bold text-neutral-900 mb-8">Why Choose besttimeguide.com?</h2>
               <div className="space-y-6">
                 <div className="card p-6 border-2 border-primary-200">
                   <h3 className="font-bold text-lg mb-3">What makes besttimeguide.com special?</h3>
                   <div className="text-neutral-600">
-                    <p className="mb-3">We focus on delivering exceptional value and user experience:</p>
+                    <p className="mb-3">We focus on delivering comprehensive, reliable timing advice:</p>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <p className="font-semibold text-primary-600 mb-2">💰 Best Value</p>
+                        <p className="font-semibold text-primary-600 mb-2">📊 Data-Driven</p>
                         <ul className="list-disc pl-4 text-sm space-y-1">
-                          <li>Professional features at $4.99/month</li>
-                          <li>Unlimited dynamic QR codes</li>
-                          <li>No hidden fees or limits</li>
-                          <li>Transparent pricing</li>
+                          <li>Based on real search trends and data</li>
+                          <li>Price analysis and seasonal patterns</li>
+                          <li>Expert research and verification</li>
+                          <li>Regularly updated information</li>
                         </ul>
                       </div>
                       <div>
-                        <p className="font-semibold text-success-600 mb-2">🚀 User Experience</p>
+                        <p className="font-semibold text-success-600 mb-2">🆓 Completely Free</p>
                         <ul className="list-disc pl-4 text-sm space-y-1">
-                          <li>No registration for free features</li>
-                          <li>Instant QR code generation</li>
-                          <li>Mobile-optimized interface</li>
-                          <li>Lightning-fast performance</li>
+                          <li>No registration required</li>
+                          <li>No hidden fees or subscriptions</li>
+                          <li>All guides accessible to everyone</li>
+                          <li>No credit card needed</li>
                         </ul>
                       </div>
                     </div>
@@ -284,24 +224,24 @@ export default function FAQPage() {
                 <div className="card p-6 border-2 border-accent-200">
                   <h3 className="font-bold text-lg mb-3">How do we ensure quality and reliability?</h3>
                   <div className="text-neutral-600">
-                    <p className="mb-3">Built with modern technology and best practices:</p>
+                    <p className="mb-3">Our guides are created with thorough research and best practices:</p>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <p className="font-semibold text-accent-600 mb-2">⚡ Modern Technology</p>
+                        <p className="font-semibold text-accent-600 mb-2">🔍 Comprehensive Research</p>
                         <ul className="list-disc pl-4 text-sm space-y-1">
-                          <li>Next.js 15 + React 19</li>
-                          <li>Enterprise-grade infrastructure</li>
-                          <li>99.9% uptime guarantee</li>
-                          <li>Global CDN delivery</li>
+                          <li>Multiple data sources verified</li>
+                          <li>Expert analysis and insights</li>
+                          <li>Real-world testing and validation</li>
+                          <li>Regular content updates</li>
                         </ul>
                       </div>
                       <div>
-                        <p className="font-semibold text-info-600 mb-2">🔒 Security & Privacy</p>
+                        <p className="font-semibold text-info-600 mb-2">📚 Wide Coverage</p>
                         <ul className="list-disc pl-4 text-sm space-y-1">
-                          <li>GDPR compliant</li>
-                          <li>SSL encryption</li>
-                          <li>No data selling</li>
-                          <li>Regular security audits</li>
+                          <li>500+ timing guides</li>
+                          <li>5 core categories</li>
+                          <li>International coverage</li>
+                          <li>Diverse topics and scenarios</li>
                         </ul>
                       </div>
                     </div>
@@ -313,30 +253,22 @@ export default function FAQPage() {
                   <div className="text-neutral-600">
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="text-center">
-                        <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">💰</div>
-                        <h4 className="font-semibold mb-2">Best Value</h4>
-                        <p className="text-sm">7x cheaper than QR.io with same features</p>
+                        <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">📊</div>
+                        <h4 className="font-semibold mb-2">Data-Driven</h4>
+                        <p className="text-sm">Real data, not just opinions</p>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 bg-accent-100 text-accent-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">🚀</div>
-                        <h4 className="font-semibold mb-2">Modern Tech</h4>
-                        <p className="text-sm">Next.js 15 + React 19 for lightning speed</p>
+                        <div className="w-12 h-12 bg-accent-100 text-accent-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">🆓</div>
+                        <h4 className="font-semibold mb-2">100% Free</h4>
+                        <p className="text-sm">All guides accessible to everyone</p>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 bg-success-100 text-success-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">∞</div>
-                        <h4 className="font-semibold mb-2">Unlimited</h4>
-                        <p className="text-sm">No limits on dynamic QR codes</p>
+                        <div className="w-12 h-12 bg-success-100 text-success-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">🌍</div>
+                        <h4 className="font-semibold mb-2">Comprehensive</h4>
+                        <p className="text-sm">500+ guides covering all aspects</p>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Can I migrate from other QR code services?</h3>
-                  <p className="text-neutral-600">
-                    Yes! We offer free migration assistance for Pro users. Our team can help you transfer your 
-                    QR codes and data from QR.io, TQRCG, QRFY, or any other service. Contact support to get started.
-                  </p>
                 </div>
               </div>
             </div>
@@ -346,18 +278,18 @@ export default function FAQPage() {
               <h2 className="text-2xl font-bold text-neutral-900 mb-8">Support</h2>
               <div className="space-y-6">
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">How can I contact support?</h3>
+                  <h3 className="font-bold text-lg mb-3">How can I contact you?</h3>
                   <p className="text-neutral-600">
-                    Free users can access our help center and community forum. Pro users get priority email support 
-                    with response within 24 hours. Enterprise customers have access to phone support and dedicated account managers.
+                    You can reach us through our contact form, email, or by browsing our FAQ. 
+                    We aim to respond to all inquiries within 24 hours.
                   </p>
                 </div>
 
                 <div className="card p-6">
-                  <h3 className="font-bold text-lg mb-3">Do you offer training or onboarding?</h3>
+                  <h3 className="font-bold text-lg mb-3">Can I report an error or outdated information?</h3>
                   <p className="text-neutral-600">
-                    We provide comprehensive tutorials, video guides, and documentation. Enterprise customers 
-                    receive personalized onboarding and training sessions.
+                    Absolutely! If you find any errors or outdated information in our guides, please contact us. 
+                    We appreciate feedback and regularly update our content based on user input and new data.
                   </p>
                 </div>
               </div>
@@ -370,16 +302,16 @@ export default function FAQPage() {
                   Still have questions?
                 </h2>
                 <p className="text-primary-700 mb-6">
-                  Our support team is here to help. Get in touch and we'll respond within 24 hours.
+                  Our team is here to help. Get in touch and we'll respond within 24 hours.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <a href="/help/contact" className="btn btn-primary">
                     <span>📧</span>
-                    Contact Support
+                    Contact Us
                   </a>
                   <a href="/" className="btn btn-secondary">
-                    <span>🎯</span>
-                    Try QR Generator
+                    <span>🔍</span>
+                    Browse Guides
                   </a>
                 </div>
               </div>

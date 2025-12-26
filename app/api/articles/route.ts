@@ -52,6 +52,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const published = searchParams.get('published')
     const categoryId = searchParams.get('categoryId')
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const skip = (page - 1) * limit
 
     const where: any = {}
     if (published !== null) {
@@ -61,6 +64,10 @@ export async function GET(request: NextRequest) {
       where.categoryId = parseInt(categoryId, 10)
     }
 
+    // 获取总数
+    const total = await prisma.article.count({ where })
+
+    // 获取分页数据
     const articles = await prisma.article.findMany({
       where,
       include: {
@@ -76,9 +83,24 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      skip,
+      take: limit,
     })
 
-    return NextResponse.json({ success: true, articles })
+    const totalPages = Math.ceil(total / limit)
+
+    return NextResponse.json({
+      success: true,
+      articles,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    })
   } catch (error) {
     console.error('Error fetching articles:', error)
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })

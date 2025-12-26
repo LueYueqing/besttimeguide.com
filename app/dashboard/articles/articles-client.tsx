@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@/contexts/UserContext'
+import SidebarNavigation from '../components/SidebarNavigation'
 
 interface Category {
   id: number
@@ -38,6 +40,7 @@ interface ArticlesClientProps {
 
 export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const router = useRouter()
+  const { user } = useUser()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
@@ -108,7 +111,13 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex">
+        {/* 左侧导航栏 */}
+        <SidebarNavigation user={user || {}} />
+
+        {/* 主内容区 */}
+        <main className="flex-1 w-0 lg:ml-64">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -283,6 +292,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
             </table>
           </div>
         )}
+          </div>
+        </main>
       </div>
     </div>
   )

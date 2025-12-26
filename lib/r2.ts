@@ -1,6 +1,9 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { Readable } from 'stream'
 
+// 优先使用 CDN_BASE_URL，如果未设置则回退到 CLOUDFLARE_R2_PUBLIC_URL
+const R2_PUBLIC_URL = process.env.CDN_BASE_URL || process.env.CLOUDFLARE_R2_PUBLIC_URL
+
 // 初始化 R2 客户端
 const getR2Client = () => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
@@ -73,7 +76,7 @@ function generateR2Path(fileName: string): string {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   const datePath = `${year}-${month}-${day}`
-  
+
   return `article/${datePath}/${fileName}`
 }
 
@@ -100,9 +103,8 @@ async function downloadImage(url: string): Promise<Buffer> {
 
 // 检查图片 URL 是否已经是 R2 URL
 function isR2Url(url: string): boolean {
-  const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL
-  if (r2PublicUrl) {
-    const baseUrl = r2PublicUrl.replace(/\/$/, '')
+  if (R2_PUBLIC_URL) {
+    const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
     return url.startsWith(baseUrl) || url.includes('/article/')
   }
   // 检查是否是 R2 默认 URL 格式
@@ -119,26 +121,26 @@ export async function uploadImageToR2(
     // 如果图片 URL 已经是 R2 URL，检查是否需要转换为 CDN 链接
     if (isR2Url(imageUrl)) {
       // 如果已经使用了自定义 CDN 域名，直接返回
-      if (process.env.CLOUDFLARE_R2_PUBLIC_URL) {
-        const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '')
+      if (R2_PUBLIC_URL) {
+        const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
         if (imageUrl.startsWith(baseUrl)) {
           console.log(`[R2] Image ${index + 1} is already using CDN: ${imageUrl}`)
           return imageUrl
         }
       }
-      
+
       // 如果是 R2 原始链接，需要转换为 CDN 链接
       // 从原始链接中提取路径：https://{accountId}.r2.cloudflarestorage.com/{path}
       // 或：https://pub-{hash}.r2.dev/{path}
       const r2PathMatch = imageUrl.match(/\.r2\.(cloudflarestorage\.com|dev)\/(.+)$/)
-      if (r2PathMatch && process.env.CLOUDFLARE_R2_PUBLIC_URL) {
+      if (r2PathMatch && R2_PUBLIC_URL) {
         const r2Path = r2PathMatch[2]
-        const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '')
+        const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
         const cdnUrl = `${baseUrl}/${r2Path}`
         console.log(`[R2] Image ${index + 1} converted from R2 URL to CDN: ${imageUrl} -> ${cdnUrl}`)
         return cdnUrl
       }
-      
+
       // 如果无法转换，返回原 URL
       console.log(`[R2] Image ${index + 1} is already in R2 but cannot convert to CDN: ${imageUrl}`)
       return imageUrl
@@ -173,15 +175,15 @@ export async function uploadImageToR2(
     // 如果配置了自定义域名（推荐），使用自定义域名
     // 否则使用 R2 的默认公共访问 URL（需要配置 R2 公共访问）
     let publicUrl: string
-    if (process.env.CLOUDFLARE_R2_PUBLIC_URL) {
+    if (R2_PUBLIC_URL) {
       // 使用自定义域名，路径不包含 bucket 名称
-      const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '') // 移除末尾的斜杠
+      const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '') // 移除末尾的斜杠
       publicUrl = `${baseUrl}/${r2Path}`
     } else {
       // 使用 R2 默认公共访问 URL（不推荐，建议配置自定义域名）
       // 注意：R2 的默认公共访问 URL 格式为：https://pub-{hash}.r2.dev/{path}
       // 但通常需要配置自定义域名才能正常访问
-      console.warn('[R2] CLOUDFLARE_R2_PUBLIC_URL not set, using default R2 URL (may not work without custom domain)')
+      console.warn('[R2] CUSTOM_DOMAIN/CDN_BASE_URL not set, using default R2 URL (may not work without custom domain)')
       publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Path}`
     }
 
@@ -242,14 +244,15 @@ export async function uploadImagesToR2(
   for (let i = 0; i < images.length; i++) {
     const { url, alt } = images[i]
     try {
-      // 如果图片已经是 R2 URL，直接使用，不重复上传
-      if (isR2Url(url)) {
-        skippedCount++
-        urlMap.set(url, url)
-        continue
-      }
+      // 这里的逻辑已更新：
+      // 即使图片已经是 R2 URL，也需要调用 uploadImageToR2
+      // 因为 uploadImageToR2 内部包含了将 R2 原始链接转换为 CDN 链接的逻辑
+      // 如果我们在这里跳过，就会导致已经是 R2 格式但未转换为 CDN 格式的链接被直接保留
 
       const newUrl = await uploadImageToR2(url, alt, i)
+
+      // 统计逻辑：如果 URL 变了（说明被转换或新上传了），或者是新上传的
+      // 这里简化统计，不再区分跳过还是上传，统一视为处理成功
       uploadedCount++
       urlMap.set(url, newUrl)
     } catch (error) {
@@ -265,4 +268,3 @@ export async function uploadImagesToR2(
 
   return urlMap
 }
-

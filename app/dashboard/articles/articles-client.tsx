@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
+import { useToast } from '@/components/Toast'
 import SidebarNavigation from '../components/SidebarNavigation'
 
 interface Category {
@@ -49,6 +50,10 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
+  const [quickCreateTitles, setQuickCreateTitles] = useState('')
+  const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
+  const [quickCreateLoading, setQuickCreateLoading] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -57,6 +62,10 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     hasNext: false,
     hasPrev: false,
   })
+  const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
+  const [quickCreateTitles, setQuickCreateTitles] = useState('')
+  const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
+  const [quickCreateLoading, setQuickCreateLoading] = useState(false)
 
   useEffect(() => {
     setCurrentPage(1) // 切换筛选条件时重置到第一页
@@ -194,6 +203,61 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     return hoursSinceLastProcess < 24
   }
 
+  // 处理快捷创建文章
+  const handleQuickCreate = async () => {
+    if (!quickCreateTitles.trim()) {
+      toast.warning('请输入至少一个文章标题')
+      return
+    }
+
+    if (!quickCreateCategory) {
+      toast.warning('请选择一个分类')
+      return
+    }
+
+    // 解析标题（支持换行或逗号分隔）
+    const titles = quickCreateTitles
+      .split(/[\n,，]/)
+      .map((title) => title.trim())
+      .filter((title) => title.length > 0)
+
+    if (titles.length === 0) {
+      toast.warning('请输入至少一个有效的文章标题')
+      return
+    }
+
+    setQuickCreateLoading(true)
+    try {
+      const response = await fetch('/api/articles/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          titles,
+          categoryId: parseInt(quickCreateCategory, 10),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(`成功创建 ${data.created} 篇文章`)
+        setShowQuickCreateModal(false)
+        setQuickCreateTitles('')
+        setQuickCreateCategory('')
+        fetchArticles() // 刷新列表
+      } else {
+        toast.error('创建失败：' + data.error)
+      }
+    } catch (error) {
+      console.error('Error creating articles:', error)
+      toast.error('创建失败')
+    } finally {
+      setQuickCreateLoading(false)
+    }
+  }
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—'
     const date = new Date(dateString)
@@ -217,12 +281,23 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-neutral-900">文章管理</h1>
-            <Link
-              href="/dashboard/articles/new"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-            >
-              + 新建文章
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowQuickCreateModal(true)}
+                className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                快捷文章
+              </button>
+              <Link
+                href="/dashboard/articles/new"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
+                + 新建文章
+              </Link>
+            </div>
           </div>
 
           {/* Filters */}
@@ -521,6 +596,107 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
           </div>
         </main>
       </div>
+
+      {/* 快捷创建文章弹窗 */}
+      {showQuickCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowQuickCreateModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* 头部 */}
+            <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">快捷创建文章</h2>
+              <button
+                onClick={() => setShowQuickCreateModal(false)}
+                className="text-neutral-400 hover:text-neutral-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 内容 */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  文章标题 <span className="text-neutral-500">(每行一个或逗号分隔)</span>
+                </label>
+                <textarea
+                  value={quickCreateTitles}
+                  onChange={(e) => setQuickCreateTitles(e.target.value)}
+                  placeholder={`请输入文章标题，每行一个或使用逗号分隔
+例如：
+Best Time to Visit Japan
+Best Time to Visit Korea
+Best Time to Visit Thailand`}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                  rows={8}
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  已输入 {quickCreateTitles.split(/[\n,，]/).filter(t => t.trim().length > 0).length} 个标题
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  分类 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={quickCreateCategory}
+                  onChange={(e) => setQuickCreateCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">请选择分类</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p className="text-sm text-blue-800">
+                  <strong>提示：</strong>提交后将自动创建多篇文章，系统会自动生成 slug。创建的文章将作为草稿保存，您可以在编辑页面完善内容。
+                </p>
+              </div>
+            </div>
+
+            {/* 底部按钮 */}
+            <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowQuickCreateModal(false)
+                  setQuickCreateTitles('')
+                  setQuickCreateCategory('')
+                }}
+                className="px-4 py-2 text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors font-medium"
+                disabled={quickCreateLoading}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleQuickCreate}
+                disabled={quickCreateLoading || !quickCreateTitles.trim() || !quickCreateCategory}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {quickCreateLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    创建中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    创建文章
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

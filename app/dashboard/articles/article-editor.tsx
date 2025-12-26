@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TurndownService from 'turndown'
 import { useToast } from '@/components/Toast'
@@ -38,6 +38,7 @@ interface ArticleEditorProps {
 
 export default function ArticleEditor({ categories, article }: ArticleEditorProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
@@ -136,7 +137,18 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
 
       if (data.success) {
         toast.success('文章保存成功')
-        router.push('/dashboard/articles')
+        // 构建返回 URL，保留筛选参数
+        const returnParams = new URLSearchParams()
+        const filter = searchParams.get('filter')
+        const category = searchParams.get('category')
+        const page = searchParams.get('page')
+        if (filter) returnParams.set('filter', filter)
+        if (category) returnParams.set('category', category)
+        if (page) returnParams.set('page', page)
+        const returnUrl = returnParams.toString() 
+          ? `/dashboard/articles?${returnParams.toString()}`
+          : '/dashboard/articles'
+        router.push(returnUrl)
         router.refresh()
       } else {
         toast.error('保存失败：' + data.error)

@@ -284,6 +284,7 @@ export async function PATCH(
     }
 
     // 将 aiRewriteAt 设置为 24 小时前，绕过冷却期
+    // 同时将 aiRewriteStatus 设置为 'pending'，使文章进入待处理队列
     const cooldownHours = 24
     const resetTime = new Date()
     resetTime.setHours(resetTime.getHours() - cooldownHours - 1) // 设置为 25 小时前，确保绕过 24 小时限制
@@ -292,6 +293,7 @@ export async function PATCH(
       where: { id: articleId },
       data: {
         aiRewriteAt: resetTime,
+        aiRewriteStatus: 'pending', // 设置为待处理状态
       },
       include: {
         category: true,
@@ -305,10 +307,23 @@ export async function PATCH(
       },
     })
 
+    // 触发页面重新生成（主动清除缓存）
+    try {
+      const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+      await fetch(revalidateUrl, { method: 'POST' })
+
+      const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+      await fetch(tagUrl, { method: 'POST' })
+
+      console.log(`[Article Cooldown Reset] Revalidated page: /${article.slug}`)
+    } catch (revalidateError) {
+      console.error('[Article Cooldown Reset] Error revalidating page:', revalidateError)
+    }
+
     return NextResponse.json({
       success: true,
       article,
-      message: 'AI rewrite cooldown reset successfully',
+      message: 'AI rewrite cooldown reset and status set to pending successfully',
     })
   } catch (error: any) {
     console.error('Error resetting cooldown:', error)

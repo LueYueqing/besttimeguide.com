@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { useToast } from '@/components/Toast'
 import SidebarNavigation from '../components/SidebarNavigation'
@@ -43,13 +43,33 @@ interface ArticlesClientProps {
 
 export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useUser()
   const toast = useToast()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [currentPage, setCurrentPage] = useState(1)
+  
+  // 从 URL 参数中读取初始筛选状态
+  const getInitialFilter = (): 'all' | 'published' | 'draft' => {
+    const filterParam = searchParams.get('filter')
+    if (filterParam === 'published' || filterParam === 'draft') {
+      return filterParam
+    }
+    return 'all'
+  }
+  
+  const getInitialCategory = (): string => {
+    return searchParams.get('category') || 'all'
+  }
+  
+  const getInitialPage = (): number => {
+    const pageParam = searchParams.get('page')
+    return pageParam ? parseInt(pageParam, 10) : 1
+  }
+  
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>(getInitialFilter())
+  const [categoryFilter, setCategoryFilter] = useState<string>(getInitialCategory())
+  const [currentPage, setCurrentPage] = useState(getInitialPage())
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [quickCreateTitles, setQuickCreateTitles] = useState('')
   const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
@@ -63,9 +83,30 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     hasPrev: false,
   })
 
+  // 更新 URL 参数
+  const updateUrlParams = (newFilter: 'all' | 'published' | 'draft', newCategory: string, newPage: number) => {
+    const params = new URLSearchParams()
+    if (newFilter !== 'all') {
+      params.set('filter', newFilter)
+    }
+    if (newCategory !== 'all') {
+      params.set('category', newCategory)
+    }
+    if (newPage > 1) {
+      params.set('page', newPage.toString())
+    }
+    const queryString = params.toString()
+    const newUrl = queryString ? `/dashboard/articles?${queryString}` : '/dashboard/articles'
+    router.push(newUrl, { scroll: false })
+  }
+
   useEffect(() => {
     setCurrentPage(1) // 切换筛选条件时重置到第一页
   }, [filter, categoryFilter])
+
+  useEffect(() => {
+    updateUrlParams(filter, categoryFilter, currentPage) // 更新 URL 参数
+  }, [filter, categoryFilter, currentPage])
 
   useEffect(() => {
     fetchArticles()
@@ -163,7 +204,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   }
 
   const handleResetCooldown = async (id: number) => {
-    if (!confirm('确定要重置这篇文章的 AI 改写冷却时间吗？这将允许立即重新处理。')) {
+    if (!confirm('确定要重置这篇文章的 AI 改写冷却时间吗？这将重置冷却时间并将文章状态设置为"待处理"，允许立即重新处理。')) {
       return
     }
 
@@ -179,7 +220,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       const data = await response.json()
 
       if (data.success) {
-        toast.success('冷却时间已重置，可以立即重新处理')
+        toast.success('冷却时间已重置，文章已设置为待处理状态')
         fetchArticles() // 刷新列表
       } else {
         toast.error('重置失败：' + data.error)
@@ -449,14 +490,16 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 ? '失败'
                                 : article.aiRewriteStatus}
                             </span>
-                            {/* 如果在冷却期内，显示重置按钮 */}
-                            {article.aiRewriteAt && isInCooldown(article.aiRewriteAt) && (
+                            {/* 如果在冷却期内或状态为 failed，显示重置按钮 */}
+                            {article.aiRewriteAt && (isInCooldown(article.aiRewriteAt) || article.aiRewriteStatus === 'failed') && (
                               <button
                                 onClick={() => handleResetCooldown(article.id)}
-                                className="px-2 py-0.5 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
-                                title="重置冷却时间，允许立即重新处理"
+                                className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                                title="重置冷却时间并将状态设置为待处理，允许立即重新处理"
                               >
-                                重置
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
                               </button>
                             )}
                           </div>
@@ -487,7 +530,11 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-3">
                         <Link
-                          href={`/dashboard/articles/${article.id}`}
+                          href={`/dashboard/articles/${article.id}?${new URLSearchParams({
+                            ...(filter !== 'all' && { filter }),
+                            ...(categoryFilter !== 'all' && { category: categoryFilter }),
+                            ...(currentPage > 1 && { page: currentPage.toString() }),
+                          }).toString()}`}
                           className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
                           title="编辑文章"
                         >

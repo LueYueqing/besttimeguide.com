@@ -116,9 +116,31 @@ export async function uploadImageToR2(
   index: number
 ): Promise<string> {
   try {
-    // 如果图片 URL 已经是 R2 URL，直接返回，不重复上传
+    // 如果图片 URL 已经是 R2 URL，检查是否需要转换为 CDN 链接
     if (isR2Url(imageUrl)) {
-      console.log(`[R2] Image ${index + 1} is already in R2: ${imageUrl}`)
+      // 如果已经使用了自定义 CDN 域名，直接返回
+      if (process.env.CLOUDFLARE_R2_PUBLIC_URL) {
+        const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '')
+        if (imageUrl.startsWith(baseUrl)) {
+          console.log(`[R2] Image ${index + 1} is already using CDN: ${imageUrl}`)
+          return imageUrl
+        }
+      }
+      
+      // 如果是 R2 原始链接，需要转换为 CDN 链接
+      // 从原始链接中提取路径：https://{accountId}.r2.cloudflarestorage.com/{path}
+      // 或：https://pub-{hash}.r2.dev/{path}
+      const r2PathMatch = imageUrl.match(/\.r2\.(cloudflarestorage\.com|dev)\/(.+)$/)
+      if (r2PathMatch && process.env.CLOUDFLARE_R2_PUBLIC_URL) {
+        const r2Path = r2PathMatch[2]
+        const baseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL.replace(/\/$/, '')
+        const cdnUrl = `${baseUrl}/${r2Path}`
+        console.log(`[R2] Image ${index + 1} converted from R2 URL to CDN: ${imageUrl} -> ${cdnUrl}`)
+        return cdnUrl
+      }
+      
+      // 如果无法转换，返回原 URL
+      console.log(`[R2] Image ${index + 1} is already in R2 but cannot convert to CDN: ${imageUrl}`)
       return imageUrl
     }
 

@@ -428,7 +428,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   }
 
   return (
-    <DashboardLayout title="文章管理">
+    <DashboardLayout title="文章管理" isFullWidth={true}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">

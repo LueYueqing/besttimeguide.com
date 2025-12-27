@@ -110,7 +110,7 @@ export default function AnalyticsClient() {
     })) || []
 
   return (
-    <DashboardLayout title="数据分析">
+    <DashboardLayout title="数据分析" isFullWidth={true}>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-neutral-900">数据统计</h1>
         <div className="flex gap-2">
@@ -119,8 +119,8 @@ export default function AnalyticsClient() {
               key={range}
               onClick={() => setTimeRange(range as any)}
               className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${timeRange === range
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50'
+                ? 'bg-primary-600 text-white'
+                : 'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50'
                 }`}
             >
               {range === '7d' ? '7天' : range === '30d' ? '30天' : '90天'}

@@ -10,9 +10,10 @@ interface DashboardLayoutProps {
     children: ReactNode
     title?: string
     subtitle?: string
+    isFullWidth?: boolean
 }
 
-export default function DashboardLayout({ children, title, subtitle }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, subtitle, isFullWidth = false }: DashboardLayoutProps) {
     const { user, signOut } = useUser()
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
     const [showUserMenu, setShowUserMenu] = useState(false)
@@ -152,7 +153,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
 
                 {/* Content Area */}
                 <main className="flex-1 w-0 min-w-0 lg:ml-64 overflow-x-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className={`${isFullWidth ? 'max-w-none' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
                         {children}
                     </div>
                 </main>
@@ -160,3 +161,4 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
         </div>
     )
 }
+

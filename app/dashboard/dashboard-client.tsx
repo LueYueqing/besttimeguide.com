@@ -168,7 +168,7 @@ export default function DashboardClient() {
 
   // 管理员视图
   return (
-    <DashboardLayout title="管理仪表板">
+    <DashboardLayout title="管理仪表板" isFullWidth={true}>
       {/* 页面标题 */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-neutral-900">管理仪表板</h1>

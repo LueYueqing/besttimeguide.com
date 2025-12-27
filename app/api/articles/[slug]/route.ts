@@ -174,18 +174,18 @@ export async function PUT(
         // 从 Markdown 内容中提取第一张图片 URL
         const imageRegex = /!\[.*?\]\((.*?)\)/g
         const matches = Array.from(content.matchAll(imageRegex))
-        
+
         if (matches.length > 0) {
           const firstImageUrl = matches[0][1]
-          
+
           // 检查是否是有效的 URL
           if (firstImageUrl && (firstImageUrl.startsWith('http://') || firstImageUrl.startsWith('https://'))) {
             try {
               console.log(`[Article Update] Generating cover image from: ${firstImageUrl}`)
-              
+
               // 下载图片
               const imageBuffer = await downloadImage(firstImageUrl)
-              
+
               // 使用 sharp 调整为 375x200
               const resizedBuffer = await sharp(imageBuffer)
                 .resize(375, 200, {
@@ -194,14 +194,14 @@ export async function PUT(
                 })
                 .jpeg({ quality: 85 })
                 .toBuffer()
-              
+
               // 生成文件名
               const articleSlug = slug || existing.slug
               const fileName = `${articleSlug}-cover-375x200.jpg`
-              
+
               // 上传到 R2
               coverImageUrl = await uploadBufferToR2(resizedBuffer, fileName, 'image/jpeg')
-              
+
               console.log(`[Article Update] Cover image uploaded: ${coverImageUrl}`)
             } catch (error) {
               console.error('[Article Update] Error generating cover image:', error)
@@ -277,7 +277,7 @@ export async function PUT(
         // 如果 slug 改变了，需要清除旧 slug 的缓存
         if (slug && slug !== existing.slug) {
           console.log(`[Article Update] Slug changed from ${existing.slug} to ${slug}, clearing old cache`)
-          
+
           // 直接调用 revalidateTag 清除旧 slug 的缓存（更可靠）
           try {
             revalidateTag(`article-${existing.slug}`)
@@ -287,25 +287,25 @@ export async function PUT(
             console.warn(`[Article Update] Error clearing old slug cache:`, error)
           }
         }
-        
+
         // 直接调用 revalidateTag 清除缓存（比 HTTP 调用更可靠、更快）
         revalidateTag(`article-${article.slug}`)
         revalidatePath(`/${article.slug}`, 'page')
         revalidatePath(`/${article.slug}`, 'layout')
-        
+
         // 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
         revalidateTag('all-posts')
-        
+
         // 同时通过 HTTP 调用作为备用（确保 CDN 等也能刷新）
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
         const secret = process.env.REVALIDATE_SECRET || ''
-        
+
         // 异步调用 HTTP revalidate（不等待，作为备用）
         Promise.all([
-          fetch(`${baseUrl}/api/revalidate?path=/${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => {}),
-          fetch(`${baseUrl}/api/revalidate?tag=article-${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => {}),
-          fetch(`${baseUrl}/api/revalidate?tag=all-posts&secret=${secret}`, { method: 'POST' }).catch(() => {}),
-        ]).catch(() => {})
+          fetch(`${baseUrl}/api/revalidate?path=/${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => { }),
+          fetch(`${baseUrl}/api/revalidate?tag=article-${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => { }),
+          fetch(`${baseUrl}/api/revalidate?tag=all-posts&secret=${secret}`, { method: 'POST' }).catch(() => { }),
+        ]).catch(() => { })
 
         console.log(`[Article Update] Revalidated page: /${article.slug}`)
       } catch (revalidateError) {
@@ -375,7 +375,10 @@ export async function PATCH(
       where: { id: articleId },
       data: {
         aiRewriteAt: resetTime,
-        aiRewriteStatus: 'pending', // 设置为待处理状态
+        aiRewriteStatus: 'pending',
+        content: '',
+        coverImage: null,
+        published: false,
       },
       include: {
         category: true,

@@ -271,17 +271,35 @@ export async function PUT(
     // 触发页面重新生成（如果文章已发布）
     if (article.published) {
       try {
-        // 方法1: 通过路径重新验证
-        const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        const secret = process.env.REVALIDATE_SECRET || ''
+        
+        // 如果 slug 改变了，需要清除旧 slug 的缓存
+        if (slug && slug !== existing.slug) {
+          console.log(`[Article Update] Slug changed from ${existing.slug} to ${slug}, clearing old cache`)
+          
+          // 清除旧 slug 的缓存
+          const oldPathUrl = `${baseUrl}/api/revalidate?path=/${existing.slug}&secret=${secret}`
+          await fetch(oldPathUrl, { method: 'POST' }).catch(() => {})
+          
+          const oldTagUrl = `${baseUrl}/api/revalidate?tag=article-${existing.slug}&secret=${secret}`
+          await fetch(oldTagUrl, { method: 'POST' }).catch(() => {})
+        }
+        
+        // 方法1: 通过路径重新验证（新 slug）
+        const revalidateUrl = `${baseUrl}/api/revalidate?path=/${article.slug}&secret=${secret}`
         await fetch(revalidateUrl, { method: 'POST' })
 
-        // 方法2: 通过 cache tag 重新验证（更精确）
-        const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
+        // 方法2: 通过 cache tag 重新验证（更精确，新 slug）
+        const tagUrl = `${baseUrl}/api/revalidate?tag=article-${article.slug}&secret=${secret}`
         await fetch(tagUrl, { method: 'POST' })
 
         // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
-        const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
+        const allPostsUrl = `${baseUrl}/api/revalidate?tag=all-posts&secret=${secret}`
         await fetch(allPostsUrl, { method: 'POST' })
+
+        // 等待一小段时间，确保缓存刷新完成
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         console.log(`[Article Update] Revalidated page: /${article.slug}`)
       } catch (revalidateError) {

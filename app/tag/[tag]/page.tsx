@@ -170,7 +170,6 @@ export default async function TagPage({ params }: TagPageProps) {
                         <Link
                           key={postTag}
                           href={`/tag/${postTag.toLowerCase().replace(/\s+/g, '-')}`}
-                          onClick={(e) => e.stopPropagation()}
                           className={`text-xs px-2 py-1 rounded hover:underline ${
                             postTag.toLowerCase().replace(/\s+/g, '-') === tag
                               ? 'bg-primary-100 text-primary-700'

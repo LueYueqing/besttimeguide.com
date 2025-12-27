@@ -199,18 +199,33 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
 }
 
 async function processArticles() {
-  const articles = await prisma.article.findMany({
+  // 1. 优先寻找已经出字但待补图的“半成品”（阶段 2）
+  let topArticle: any = await prisma.article.findFirst({
     where: {
-      OR: [
-        { aiRewriteStatus: 'pending' },
-        { aiRewriteStatus: 'failed' }
-      ]
+      aiRewriteStatus: { in: ['pending', 'failed'] },
+      content: { not: '' }
     },
     include: { category: true },
-    take: 1
+    orderBy: { aiRewriteAt: 'desc' }
   })
 
-  for (const article of articles) {
+  // 2. 如果没有半成品，再捡起从未处理过的新文章（阶段 1）
+  if (!topArticle) {
+    topArticle = await prisma.article.findFirst({
+      where: {
+        aiRewriteStatus: { in: ['pending', 'failed'] },
+        content: ''
+      },
+      include: { category: true },
+      orderBy: { createdAt: 'asc' }
+    })
+  }
+
+  if (!topArticle) return
+
+  const articles = [topArticle]
+  for (const item of articles) {
+    const article = item as any
     try {
       const hasContent = (article.content && article.content.length > 50)
       const hasPlaceholders = (article.content && article.content.includes('IMAGE_PLACEHOLDER_'))

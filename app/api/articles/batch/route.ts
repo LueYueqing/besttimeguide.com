@@ -34,25 +34,6 @@ function generateSlug(title: string): string {
     .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
 }
 
-// 确保slug唯一
-async function ensureUniqueSlug(baseSlug: string): Promise<string> {
-  let slug = baseSlug
-  let counter = 1
-
-  while (true) {
-    const existing = await prisma.article.findUnique({
-      where: { slug },
-    })
-
-    if (!existing) {
-      return slug
-    }
-
-    slug = `${baseSlug}-${counter}`
-    counter++
-  }
-}
-
 // POST - 批量创建文章
 export async function POST(request: NextRequest) {
   try {
@@ -100,6 +81,7 @@ export async function POST(request: NextRequest) {
     })
     const virtualUserIds = virtualUsers.map(u => u.id)
 
+    const usedSlugsInBatch = new Set<string>()
     const results = []
     const errors = []
 
@@ -113,9 +95,32 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // 生成唯一的slug
-        const baseSlug = generateSlug(title)
-        const slug = await ensureUniqueSlug(baseSlug)
+        // 生成 slug 并检查唯一性
+        const slug = generateSlug(title)
+
+        if (!slug) {
+          errors.push({ index: i, title, error: 'Could not generate a valid URL slug from this title' })
+          continue
+        }
+
+        // 检查本次批量中是否重复
+        if (usedSlugsInBatch.has(slug)) {
+          errors.push({ index: i, title, error: 'Duplicate title/slug in this batch' })
+          continue
+        }
+
+        // 检查数据库中是否已存在
+        const existing = await prisma.article.findUnique({
+          where: { slug },
+        })
+
+        if (existing) {
+          errors.push({ index: i, title, error: `Article with slug "${slug}" already exists` })
+          continue
+        }
+
+        // 记录已使用的 slug
+        usedSlugsInBatch.add(slug)
 
         // 随机选择一个作者
         const authorId = virtualUserIds.length > 0

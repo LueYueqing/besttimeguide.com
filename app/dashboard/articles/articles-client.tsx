@@ -405,16 +405,6 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
       const data = await response.json()
 
-      if (data.success) {
-        toast.success(`成功创建 ${data.created} 篇文章`)
-        setShowQuickCreateModal(false)
-        setQuickCreateTitles('')
-        setQuickCreateCategory('')
-        setQuickCreateMode('manual')
-        fetchArticles() // 刷新列表
-      } else {
-        toast.error('创建失败：' + data.error)
-      }
     } catch (error) {
       console.error('Error creating articles:', error)
       toast.error('创建失败')
@@ -698,8 +688,8 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                   <div className="text-sm font-medium text-neutral-900 truncate">{article.title}</div>
                                   {article.articleMode && (
                                     <span className={`px-1.5 py-0.5 text-xs rounded flex-shrink-0 ${article.articleMode === 'ai-generate' ? 'bg-purple-100 text-purple-800' :
-                                        article.articleMode === 'ai-rewrite' ? 'bg-blue-100 text-blue-800' :
-                                          'bg-gray-100 text-gray-800'
+                                      article.articleMode === 'ai-rewrite' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-gray-100 text-gray-800'
                                       }`}>
                                       {article.articleMode === 'ai-generate' ? 'AI生成' :
                                         article.articleMode === 'ai-rewrite' ? 'AI改写' :

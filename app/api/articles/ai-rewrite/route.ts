@@ -5,6 +5,9 @@ import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
 
+// Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
+export const maxDuration = 60
+
 const prisma = new PrismaClient()
 
 // 初始化 AI 客户端
@@ -48,79 +51,43 @@ Generate a comprehensive, high-quality article based on the following title and 
 ### Content Quality
 1. Write in fluent, natural American English
 2. Follow Google's E-E-A-T principles (Experience, Expertise, Authoritativeness, Trustworthiness)
-3. Provide practical, actionable information
-4. Use clear, engaging writing style
+3. Maintain a professional yet engaging tone
+4. Ensure factual accuracy (based on year 2024/2025 information)
 
 ### SEO Optimization
-1. The H1 heading must naturally include the main keyword from the title
-2. Answer the core question within the first 120 words
-3. Use clear H2/H3 structure to cover subtopics
-4. Naturally incorporate related keywords and synonyms
-5. Ensure content is comprehensive and valuable
+1. Use a clear heading structure (H1, H2, H3)
+2. Include the title naturally in the first paragraph
+3. Use bullet points and numbered lists for readability
+4. Add a "Conclusion" section at the end
 
-### Structure Requirements
-1. Start with an engaging introduction (2-3 paragraphs)
-2. Use H2 headings for main sections
-3. Use H3 headings for subsections
-4. Include practical tips, examples, or recommendations
-5. End with a concise conclusion
+### Image Integration
+1. **Critically Important**: Insert image placeholders in the following format:
+   ![Alt Text describing the image](IMAGE_PLACEHOLDER_n(search keywords))
+   where 'n' is the image index (starting from 1) and 'keywords' are specific search terms for Pixabay/Pexels.
+2. Insert 3-5 images throughout the article at relevant positions.
+3. Keywords in placeholders should be descriptive and related to the specific section (e.g., "tokyo street at night", "traditional japanese breakfast").
 
-### Image Requirements
-- Include 3-5 relevant images throughout the article
-- Use descriptive alt text for each image
-- For each image, provide 3 closely related search keywords (nouns) to help find the best image
-- Format: Use Markdown image syntax: ![alt text](IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3)), ![alt text](IMAGE_PLACEHOLDER_2(keyword4, keyword5, keyword6)), etc.
-- Place images at appropriate points in the content (after relevant paragraphs)
+## Structure
+- Introduction (Engaging opening)
+- Section 1 (Core information)
+- Section 2 (Deep dive or practical tips)
+- Section 3 (Additional context or related advice)
+- FAQ (3-5 common questions)
+- Conclusion
 
-### Output Format
-- Use Markdown format
-- Output ONLY the article content (no explanations or meta-commentary)
-- Include image placeholders in the format: IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3), etc.
-- Each image placeholder MUST include 3 nouns as keywords in the parentheses
+Respond only with the Markdown content of the article.`
 
-## Example Image Placeholder Usage
-\`\`\`markdown
-![Beautiful sunset over mountains](IMAGE_PLACEHOLDER_1(sunset, mountains, nature))
-
-The best time to visit depends on several factors...
-
-![Travel guide map](IMAGE_PLACEHOLDER_2(map, travel, guide))
-\`\`\`
-`
-
-/**
- * 提取文章中的图片，并移除相关标签
- */
-function extractImages(content: string) {
-  const images: Array<{ alt: string; url: string }> = []
-  const processedContent = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-    images.push({ alt, url })
-    return ''
-  })
-  return { images, processedContent }
+function refineKeywords(keywords: string): string {
+  if (!keywords) return ''
+  return keywords
+    .replace(/best time to visit/gi, '')
+    .replace(/the /gi, '')
+    .replace(/a /gi, '')
+    .replace(/guide/gi, '')
+    .replace(/visit/gi, '')
+    .trim()
 }
 
-/**
- * 在文章中插入图片
- */
-function insertImages(content: string, images: Array<{ alt: string; url: string }>) {
-  if (images.length === 0) return content
-  const paragraphs = content.split('\n\n')
-  const interval = Math.max(1, Math.floor(paragraphs.length / (images.length + 1)))
-
-  let insertedCount = 0
-  for (let i = 1; i <= images.length; i++) {
-    const index = i * interval + insertedCount
-    if (index < paragraphs.length) {
-      const img = images[i - 1]
-      paragraphs.splice(index, 0, `![${img.alt}](${img.url})`)
-      insertedCount++
-    }
-  }
-  return paragraphs.join('\n\n')
-}
-
-// 从 Pixabay 搜索 (第一顺位)
 async function searchImageFromPixabay(keywords: string): Promise<string | null> {
   const apiKey = process.env.PIXABAY_API_KEY
   if (!apiKey) {
@@ -128,7 +95,7 @@ async function searchImageFromPixabay(keywords: string): Promise<string | null> 
     return null
   }
   try {
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keywords)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=3`
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keywords)}&image_type=photo&orientation=horizontal&per_page=3&safesearch=true`
     console.log(`[Pixabay 请求] URL: ${url}`)
     const response = await fetch(url)
     if (!response.ok) {
@@ -143,61 +110,36 @@ async function searchImageFromPixabay(keywords: string): Promise<string | null> 
   return null
 }
 
-// 从 Pexels 搜索
 async function searchImageFromPexels(keywords: string): Promise<string | null> {
   const apiKey = process.env.PEXELS_API_KEY
-  if (!apiKey) {
-    console.warn('[图片搜索] 跳过 Pexels: 未设置 PEXELS_API_KEY')
-    return null
-  }
+  if (!apiKey) return null
   try {
     const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
-    console.log(`[Pexels 请求] URL: ${url}`)
     const response = await fetch(url, { headers: { 'Authorization': apiKey } })
-    if (!response.ok) {
-      console.warn(`[Pexels 错误] 状态码: ${response.status}`)
-      return null
+    if (response.ok) {
+      const data = await response.json()
+      return data.photos?.[0]?.src?.large || null
     }
-    const data = await response.json()
-    return data.photos?.[0]?.src?.large || null
-  } catch (error) {
-    console.error('[Pexels 搜索异常]:', error)
+  } catch (err) {
+    console.error('[Pexels 搜索异常]:', err)
   }
   return null
 }
 
-// 从 Unsplash 搜索
 async function searchImageFromUnsplash(keywords: string): Promise<string | null> {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
-  if (!accessKey) {
-    console.warn('[图片搜索] 跳过 Unsplash: 未设置 UNSPLASH_ACCESS_KEY')
-    return null
-  }
+  if (!accessKey) return null
   try {
-    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&page=1&per_page=1&orientation=landscape`
-    console.log(`[Unsplash 请求] URL: ${url}`)
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
     const response = await fetch(url, { headers: { 'Authorization': `Client-ID ${accessKey}` } })
-    if (!response.ok) {
-      console.warn(`[Unsplash 错误] 状态码: ${response.status}`)
-      return null
+    if (response.ok) {
+      const data = await response.json()
+      return data.results?.[0]?.urls?.regular || null
     }
-    const data = await response.json()
-    return data.results?.[0]?.urls?.regular || null
-  } catch (error) {
-    console.error('[Unsplash 搜索异常]:', error)
+  } catch (err) {
+    console.error('[Unsplash 搜索异常]:', err)
   }
   return null
-}
-
-function refineKeywords(keywords: string): string {
-  const stopWords = /\b(best time to|visit|how to|guide|updated|everything|tips|things to do in|travel|the|a|an)\b/gi;
-  return keywords
-    .replace(/!\[([^\]]*)\]/g, '$1')
-    .replace(/[#*`_]/g, '')
-    .replace(/[.,!?;:]/g, ' ')
-    .replace(stopWords, '')
-    .replace(/\s+/g, ' ')
-    .trim()
 }
 
 async function searchImage(keywords: string, altText: string, articleTitle: string): Promise<string | null> {
@@ -216,9 +158,7 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
   for (const query of searchSequences) {
     const trimmed = query.trim()
     if (!trimmed || trimmed.length < 3) continue
-    console.log(`[图片搜索] 尝试关键词: "${trimmed}"`)
 
-    // 按顺序尝试: Pixabay -> Pexels -> Unsplash
     const pixUrl = await searchImageFromPixabay(trimmed)
     if (pixUrl) return pixUrl
     const pexUrl = await searchImageFromPexels(trimmed)
@@ -263,19 +203,15 @@ async function processArticles() {
       let generatedContent = completion.choices[0]?.message?.content || ''
       if (!generatedContent) throw new Error('AI 生成内容为空')
 
-      const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)(?:\(([^)]+)\))?/g
+      const imagePlaceholderRegex = /!\[([^\]]*)\]\(IMAGE_PLACEHOLDER_(\d+)\(([^)]+)\)\)/g
       let match
       const placeholders: Array<{ index: number; altText: string; keywords: string; fullMatch: string }> = []
 
       while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
-        const placeholderIndex = parseInt(match[1], 10)
-        const keywords = match[2] || ''
-        const textBefore = generatedContent.substring(Math.max(0, match.index - 100), match.index)
-        const altMatch = textBefore.match(/!\[([^\]]*)\]\s*$/)
         placeholders.push({
-          index: placeholderIndex,
-          altText: altMatch ? altMatch[1] : `Image ${placeholderIndex}`,
-          keywords,
+          altText: match[1],
+          index: parseInt(match[2], 10),
+          keywords: match[3],
           fullMatch: match[0]
         })
       }
@@ -283,20 +219,23 @@ async function processArticles() {
       console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
       let successCount = 0
       for (const placeholder of placeholders) {
-        const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
-        if (imageUrl) {
-          const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
-          if (r2Url) {
-            console.log(`[图片处理] 占位符 ${placeholder.index} 已替换为 R2 URL: ${r2Url}`)
-            generatedContent = generatedContent.replace(placeholder.fullMatch, r2Url)
-            successCount++
+        try {
+          const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
+          if (imageUrl) {
+            const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+            if (r2Url) {
+              generatedContent = generatedContent.replace(placeholder.fullMatch, `![${placeholder.altText}](${r2Url})`)
+              successCount++
+            }
           }
+        } catch (err) {
+          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err)
         }
       }
 
-      if (placeholders.length > 0 && successCount === 0) throw new Error('未能匹配到任何相关图片')
-
-      generatedContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+(?:\([^)]*\))?/g, '')
+      if (placeholders.length > 0 && successCount === 0) {
+        throw new Error('未能匹配到任何相关图片')
+      }
 
       let coverImageUrl = article.coverImage
       const firstImageMatch = generatedContent.match(/!\[([^\]]*)\]\(([^)]+)\)/)
@@ -342,8 +281,9 @@ export async function GET() {
     const adminId = await checkAdmin()
     if (!adminId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
-    processArticles()
-    return NextResponse.json({ success: true, message: 'Processing started' })
+    // 在 Vercel 环境下，必须 await 异步任务，否则函数响应后会被立即冻结
+    await processArticles()
+    return NextResponse.json({ success: true, message: 'Processing completed' })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }

@@ -5,6 +5,9 @@ import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
 
+// Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
+export const maxDuration = 60
+
 const prisma = new PrismaClient()
 
 // 初始化 AI 客户端（支持 DeepSeek 和 OpenAI）
@@ -66,28 +69,21 @@ Generate a comprehensive, high-quality article based on the following title and 
 5. End with a concise conclusion
 
 ### Image Requirements
-- Include 3-5 relevant images throughout the article
-- Use descriptive alt text for each image
-- For each image, provide 3 closely related search keywords (nouns) to help find the best image
-- Format: Use Markdown image syntax: ![alt text](IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3)), ![alt text](IMAGE_PLACEHOLDER_2(keyword4, keyword5, keyword6)), etc.
-- Place images at appropriate points in the content (after relevant paragraphs)
+1. **Critically Important**: Insert image placeholders in the following format:
+   ![Alt Text describing the image](IMAGE_PLACEHOLDER_n(search keywords))
+   where 'n' is the image index (starting from 1) and 'keywords' are specific search terms for Pixabay/Pexels.
+2. Insert 3-5 images throughout the article at relevant positions.
+3. Keywords in placeholders should be descriptive and related to the specific section (e.g., "tokyo street at night", "traditional japanese breakfast").
 
-### Output Format
-- Use Markdown format
-- Output ONLY the article content (no explanations or meta-commentary)
-- Include image placeholders in the format: IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3), etc.
-- Each image placeholder MUST include 3 nouns as keywords in the parentheses
+## Structure
+- Introduction (Engaging opening)
+- Section 1 (Core information)
+- Section 2 (Deep dive or practical tips)
+- Section 3 (Additional context or related advice)
+- FAQ (3-5 common questions)
+- Conclusion
 
-## Example Image Placeholder Usage
-\`\`\`markdown
-![Beautiful sunset over mountains](IMAGE_PLACEHOLDER_1(sunset, mountains, nature))
-
-The best time to visit depends on several factors...
-
-![Travel guide map](IMAGE_PLACEHOLDER_2(map, travel, guide))
-\`\`\`
-
-Now generate the article based on the title: "{title}"`
+Respond only with the Markdown content of the article.`
 
 // 从 Pixabay 搜索 (第一顺位)
 async function searchImageFromPixabay(keywords: string): Promise<string | null> {
@@ -242,19 +238,15 @@ export async function POST(request: NextRequest) {
       let generatedContent = completion.choices[0]?.message?.content || ''
       if (!generatedContent) throw new Error('AI 生成内容为空')
 
-      const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)(?:\(([^)]+)\))?/g
+      const imagePlaceholderRegex = /!\[([^\]]*)\]\(IMAGE_PLACEHOLDER_(\d+)\(([^)]+)\)\)/g
       let match
       const placeholders: Array<{ index: number; altText: string; keywords: string; fullMatch: string }> = []
 
       while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
-        const placeholderIndex = parseInt(match[1], 10)
-        const keywords = match[2] || ''
-        const textBefore = generatedContent.substring(Math.max(0, match.index - 100), match.index)
-        const altMatch = textBefore.match(/!\[([^\]]*)\]\s*$/)
         placeholders.push({
-          index: placeholderIndex,
-          altText: altMatch ? altMatch[1] : `Image ${placeholderIndex}`,
-          keywords,
+          altText: match[1],
+          index: parseInt(match[2], 10),
+          keywords: match[3],
           fullMatch: match[0]
         })
       }
@@ -268,7 +260,7 @@ export async function POST(request: NextRequest) {
             const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
             if (r2Url) {
               console.log(`[图片处理] 占位符 ${placeholder.index} 已替换为 R2 URL: ${r2Url}`)
-              generatedContent = generatedContent.replace(placeholder.fullMatch, r2Url)
+              generatedContent = generatedContent.replace(placeholder.fullMatch, `![${placeholder.altText}](${r2Url})`)
               successImageCount++
             }
           }
@@ -281,7 +273,6 @@ export async function POST(request: NextRequest) {
         throw new Error('未能匹配到任何相关图片')
       }
 
-      generatedContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+(?:\([^)]*\))?/g, '')
       const readingTime = calculateReadingTime(generatedContent)
 
       let coverImageUrl = article.coverImage

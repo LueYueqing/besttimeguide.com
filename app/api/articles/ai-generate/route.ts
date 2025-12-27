@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
-import { uploadBufferToR2, downloadImage, uploadImageToR2 } from '@/lib/r2'
+import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
 
 const prisma = new PrismaClient()
@@ -11,8 +11,8 @@ const prisma = new PrismaClient()
 const getAIClient = () => {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || ''
   const baseURL = process.env.DEEPSEEK_API_KEY
-    ? 'https://api.deepseek.com' // DeepSeek API 端点
-    : undefined // OpenAI 使用默认端点
+    ? 'https://api.deepseek.com'
+    : undefined
 
   return new OpenAI({
     apiKey,
@@ -25,31 +25,16 @@ const aiClient = getAIClient()
 // 检查是否为管理员
 async function checkAdmin() {
   const session = await auth()
-  if (!session?.user?.id) {
-    return null
-  }
-
+  if (!session?.user?.id) return null
   const userId = typeof session.user.id === 'string' ? parseInt(session.user.id, 10) : session.user.id
-  if (isNaN(userId)) {
-    return null
-  }
-
+  if (isNaN(userId)) return null
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { isAdmin: true },
   })
-
   return user?.isAdmin ? userId : null
 }
 
-// 计算阅读时间
-function calculateReadingTime(content: string): number {
-  const wordsPerMinute = 200
-  const words = content.split(/\s+/).length
-  return Math.ceil(words / wordsPerMinute)
-}
-
-// AI 生成提示词模板
 const AI_GENERATE_PROMPT = `You are a professional content writer and SEO expert.
 Generate a comprehensive, high-quality article based on the following title and category.
 
@@ -83,320 +68,240 @@ Generate a comprehensive, high-quality article based on the following title and 
 ### Image Requirements
 - Include 3-5 relevant images throughout the article
 - Use descriptive alt text for each image
-- Images should be relevant to the content section
-- Format: Use Markdown image syntax: ![alt text](IMAGE_PLACEHOLDER_1), ![alt text](IMAGE_PLACEHOLDER_2), etc.
+- For each image, provide 3 closely related search keywords (nouns) to help find the best image
+- Format: Use Markdown image syntax: ![alt text](IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3)), ![alt text](IMAGE_PLACEHOLDER_2(keyword4, keyword5, keyword6)), etc.
 - Place images at appropriate points in the content (after relevant paragraphs)
 
 ### Output Format
 - Use Markdown format
 - Output ONLY the article content (no explanations or meta-commentary)
-- Include image placeholders in the format: IMAGE_PLACEHOLDER_1, IMAGE_PLACEHOLDER_2, etc.
-- Each image placeholder should have descriptive alt text
+- Include image placeholders in the format: IMAGE_PLACEHOLDER_1(keyword1, keyword2, keyword3), etc.
+- Each image placeholder MUST include 3 nouns as keywords in the parentheses
 
 ## Example Image Placeholder Usage
 \`\`\`markdown
-![Beautiful sunset over mountains](IMAGE_PLACEHOLDER_1)
+![Beautiful sunset over mountains](IMAGE_PLACEHOLDER_1(sunset, mountains, nature))
 
 The best time to visit depends on several factors...
 
-![Travel guide map](IMAGE_PLACEHOLDER_2)
+![Travel guide map](IMAGE_PLACEHOLDER_2(map, travel, guide))
 \`\`\`
 
 Now generate the article based on the title: "{title}"`
 
-// 从 Unsplash 搜索并下载图片
-async function searchImageFromUnsplash(keywords: string): Promise<string | null> {
-  const accessKey = process.env.UNSPLASH_ACCESS_KEY
-  if (!accessKey) {
-    console.log('[AI Generate] Unsplash API key not configured, skipping image search')
+// 从 Pixabay 搜索 (第一顺位)
+async function searchImageFromPixabay(keywords: string): Promise<string | null> {
+  const apiKey = process.env.PIXABAY_API_KEY
+  if (!apiKey) {
+    console.warn('[图片搜索] 跳过 Pixabay: 未设置 PIXABAY_API_KEY')
     return null
   }
-
   try {
-    const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&page=1&per_page=1&orientation=landscape`
-    const response = await fetch(searchUrl, {
-      headers: {
-        'Authorization': `Client-ID ${accessKey}`,
-      },
-    })
-
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keywords)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=3`
+    console.log(`[Pixabay 请求] URL: ${url}`)
+    const response = await fetch(url)
     if (!response.ok) {
-      throw new Error(`Unsplash API error: ${response.status}`)
+      console.warn(`[Pixabay 错误] 状态码: ${response.status}`)
+      return null
     }
-
     const data = await response.json()
-    if (data.results && data.results.length > 0) {
-      return data.results[0].urls.regular // 或 full, raw
-    }
+    return data.hits?.[0]?.largeImageURL || null
   } catch (error) {
-    console.error('[AI Generate] Unsplash search failed:', error)
+    console.error('[Pixabay 搜索异常]:', error)
   }
-
   return null
 }
 
-// 从 Pexels 搜索并下载图片
+// 从 Pexels 搜索
 async function searchImageFromPexels(keywords: string): Promise<string | null> {
   const apiKey = process.env.PEXELS_API_KEY
   if (!apiKey) {
-    console.log('[AI Generate] Pexels API key not configured, skipping image search')
+    console.warn('[图片搜索] 跳过 Pexels: 未设置 PEXELS_API_KEY')
     return null
   }
-
   try {
-    const searchUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
-    const response = await fetch(searchUrl, {
-      headers: {
-        'Authorization': apiKey, // Pexels API 直接使用 API key，不需要 Bearer 前缀
-      },
-    })
-
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
+    console.log(`[Pexels 请求] URL: ${url}`)
+    const response = await fetch(url, { headers: { 'Authorization': apiKey } })
     if (!response.ok) {
-      throw new Error(`Pexels API error: ${response.status}`)
+      console.warn(`[Pexels 错误] 状态码: ${response.status}`)
+      return null
     }
-
     const data = await response.json()
-    if (data.photos && data.photos.length > 0) {
-      return data.photos[0].src.large // 或 original, large2x
-    }
+    return data.photos?.[0]?.src?.large || null
   } catch (error) {
-    console.error('[AI Generate] Pexels search failed:', error)
+    console.error('[Pexels 搜索异常]:', error)
   }
-
   return null
 }
 
-// 清洗和精炼关键词
+// 从 Unsplash 搜索
+async function searchImageFromUnsplash(keywords: string): Promise<string | null> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY
+  if (!accessKey) {
+    console.warn('[图片搜索] 跳过 Unsplash: 未设置 UNSPLASH_ACCESS_KEY')
+    return null
+  }
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&page=1&per_page=1&orientation=landscape`
+    console.log(`[Unsplash 请求] URL: ${url}`)
+    const response = await fetch(url, { headers: { 'Authorization': `Client-ID ${accessKey}` } })
+    if (!response.ok) {
+      console.warn(`[Unsplash 错误] 状态码: ${response.status}`)
+      return null
+    }
+    const data = await response.json()
+    return data.results?.[0]?.urls?.regular || null
+  } catch (error) {
+    console.error('[Unsplash 搜索异常]:', error)
+  }
+  return null
+}
+
 function refineKeywords(keywords: string): string {
+  const stopWords = /\b(best time to|visit|how to|guide|updated|everything|tips|things to do in|travel|the|a|an)\b/gi;
   return keywords
-    .replace(/!\[([^\]]*)\]/g, '$1') // 移除 Markdown 图片语法
-    .replace(/[#*`_]/g, '') // 移除 Markdown 符号
-    .replace(/[.,!?;:]/g, ' ') // 移除标点
-    .replace(/\s+/g, ' ') // 压缩空格
+    .replace(/!\[([^\]]*)\]/g, '$1')
+    .replace(/[#*`_]/g, '')
+    .replace(/[.,!?;:]/g, ' ')
+    .replace(stopWords, '')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
-// 搜索图片（带回退逻辑）
 async function searchImage(keywords: string, altText: string, articleTitle: string): Promise<string | null> {
-  const cleanAlt = refineKeywords(altText)
-  const cleanTitle = refineKeywords(articleTitle)
+  const cleanKeywords = refineKeywords(keywords)
+  const isGenericAlt = /^image\s?\d+$/i.test(altText.trim())
+  const cleanAlt = isGenericAlt ? '' : refineKeywords(altText)
+  const titleWords = refineKeywords(articleTitle).split(' ').slice(0, 4).join(' ')
 
-  // 搜索尝试序列：
-  // 1. altText + title (最精确)
-  // 2. 仅 altText
-  // 3. title + altText 的前几个词
-  // 4. 仅 title
   const searchSequences = [
-    `${cleanAlt} ${cleanTitle}`.substring(0, 80),
-    cleanAlt.substring(0, 80),
-    `${cleanTitle} ${cleanAlt.split(' ').slice(0, 3).join(' ')}`.substring(0, 80),
-    cleanTitle.substring(0, 80)
+    cleanKeywords,
+    cleanAlt,
+    `${cleanKeywords} ${titleWords}`.trim(),
+    titleWords
   ]
 
   for (const query of searchSequences) {
-    if (!query || query.length < 3) continue
+    const trimmed = query.trim()
+    if (!trimmed || trimmed.length < 3) continue
+    console.log(`[图片搜索] 尝试关键词: "${trimmed}"`)
 
-    console.log(`[AI Processor] Trying image search with: "${query}"`)
-
-    // 先尝试 Unsplash
-    const unsplashUrl = await searchImageFromUnsplash(query)
-    if (unsplashUrl) return unsplashUrl
-
-    // 如果 Unsplash 失败，尝试 Pexels
-    const pexelsUrl = await searchImageFromPexels(query)
-    if (pexelsUrl) return pexelsUrl
+    // 按顺序尝试: Pixabay -> Pexels -> Unsplash
+    const pixUrl = await searchImageFromPixabay(trimmed)
+    if (pixUrl) return pixUrl
+    const pexUrl = await searchImageFromPexels(trimmed)
+    if (pexUrl) return pexUrl
+    const unsUrl = await searchImageFromUnsplash(trimmed)
+    if (unsUrl) return unsUrl
   }
-
   return null
 }
 
-// POST - 生成文章
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const words = content.split(/\s+/).length
+  return Math.ceil(words / wordsPerMinute)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const adminId = await checkAdmin()
-    if (!adminId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!adminId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
-    // 检查 AI API Key
-    if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: 'AI API key not configured (DEEPSEEK_API_KEY or OPENAI_API_KEY)' },
-        { status: 500 }
-      )
-    }
+    const { articleId, customPrompt } = await request.json()
+    if (!articleId) return NextResponse.json({ success: false, error: 'articleId required' }, { status: 400 })
 
-    const body = await request.json()
-    const articleId = body.articleId ? parseInt(body.articleId, 10) : null
-    const customPrompt = body.customPrompt || null
-
-    if (!articleId) {
-      return NextResponse.json({ success: false, error: 'articleId is required' }, { status: 400 })
-    }
-
-    // 获取文章
     const article = await prisma.article.findUnique({
       where: { id: articleId },
-      include: {
-        category: true,
-      },
+      include: { category: true },
     })
+    if (!article) return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
 
-    if (!article) {
-      return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
-    }
-
-    // 检查文章模式
-    if (article.articleMode !== 'ai-generate') {
-      return NextResponse.json(
-        { success: false, error: 'Article mode must be ai-generate' },
-        { status: 400 }
-      )
-    }
-
-    // 更新状态为 processing
     await prisma.article.update({
       where: { id: articleId },
-      data: {
-        aiRewriteStatus: 'processing',
-      },
+      data: { aiRewriteStatus: 'processing', aiRewriteAt: new Date() },
     })
 
     try {
-      // 构建提示词
       const basePrompt = customPrompt || AI_GENERATE_PROMPT
-      const prompt = basePrompt
-        .replace('{title}', article.title)
-        .replace('{categoryName}', article.category.name)
-
-      console.log(`[AI Generate] Generating article for: ${article.title}`)
-
-      // 调用 AI API 生成内容
+      const prompt = basePrompt.replace('{title}', article.title).replace('{categoryName}', article.category.name)
       const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+
+      console.log(`[AI 处理] 模式: 手动生成, 模型: ${model}, 标题: ${article.title}`)
+
       const completion = await aiClient.chat.completions.create({
         model,
         messages: [
-          {
-            role: 'system',
-            content: prompt,
-          },
-          {
-            role: 'user',
-            content: `Generate a comprehensive article about: ${article.title}`,
-          },
+          { role: 'system', content: prompt },
+          { role: 'user', content: `Generate a comprehensive article about: ${article.title}` },
         ],
         temperature: 0.7,
-        max_tokens: 4000,
       })
 
       let generatedContent = completion.choices[0]?.message?.content || ''
+      if (!generatedContent) throw new Error('AI 生成内容为空')
 
-      if (!generatedContent) {
-        throw new Error('AI returned empty content')
-      }
-
-      console.log(`[AI Generate] Content generated, length: ${generatedContent.length}`)
-
-      // 解析图片占位符
-      const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)/g
-      const placeholders: Array<{ index: number; altText: string; context: string }> = []
+      const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)(?:\(([^)]+)\))?/g
       let match
+      const placeholders: Array<{ index: number; altText: string; keywords: string; fullMatch: string }> = []
 
-      // 提取所有占位符及其上下文
       while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
         const placeholderIndex = parseInt(match[1], 10)
-        const beforeMatch = generatedContent.substring(Math.max(0, match.index - 100), match.index)
-        const afterMatch = generatedContent.substring(match.index + match[0].length, Math.min(generatedContent.length, match.index + match[0].length + 100))
-
-        // 尝试从 Markdown 图片语法中提取 alt text
-        const imageSyntaxMatch = generatedContent.substring(Math.max(0, match.index - 50), match.index + match[0].length + 50).match(/!\[([^\]]*)\]/)
-        const altText = imageSyntaxMatch ? imageSyntaxMatch[1] : `Image ${placeholderIndex}`
-
+        const keywords = match[2] || ''
+        const textBefore = generatedContent.substring(Math.max(0, match.index - 100), match.index)
+        const altMatch = textBefore.match(/!\[([^\]]*)\]\s*$/)
         placeholders.push({
           index: placeholderIndex,
-          altText: altText || `Image ${placeholderIndex}`,
-          context: `${beforeMatch}...${afterMatch}`,
+          altText: altMatch ? altMatch[1] : `Image ${placeholderIndex}`,
+          keywords,
+          fullMatch: match[0]
         })
       }
 
-      console.log(`[AI Generate] Found ${placeholders.length} image placeholders`)
-
-      // 为每个占位符搜索并下载图片
-      const imageUrlMap = new Map<string, string>()
+      console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
+      let successImageCount = 0
       for (const placeholder of placeholders) {
         try {
-          // 构建搜索关键词（使用 alt text 和上下文）
-          console.log(`[AI Generate] Searching image for placeholder ${placeholder.index}: ${placeholder.altText}`)
-
-          const imageUrl = await searchImage('', placeholder.altText, article.title)
-
+          const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
           if (imageUrl) {
-            // 使用 uploadImageToR2 上传单个图片
-            console.log(`[AI Generate] Uploading image to R2: ${imageUrl}`)
-
-            const r2Url = await uploadImageToR2(
-              imageUrl,
-              placeholder.altText,
-              placeholder.index - 1, // 索引从0开始
-              article.slug
-            )
-
+            const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
             if (r2Url) {
-              imageUrlMap.set(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
-              console.log(`[AI Generate] Image ${placeholder.index} uploaded to R2: ${r2Url}`)
+              console.log(`[图片处理] 占位符 ${placeholder.index} 已替换为 R2 URL: ${r2Url}`)
+              generatedContent = generatedContent.replace(placeholder.fullMatch, r2Url)
+              successImageCount++
             }
-          } else {
-            console.log(`[AI Generate] No image found for placeholder ${placeholder.index}`)
           }
-        } catch (error) {
-          console.error(`[AI Generate] Error processing image placeholder ${placeholder.index}:`, error)
-          // 继续处理其他图片
+        } catch (err) {
+          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err)
         }
       }
 
-      // 替换占位符为实际 URL
-      for (const [placeholder, url] of imageUrlMap.entries()) {
-        generatedContent = generatedContent.replace(placeholder, url)
+      if (placeholders.length > 0 && successImageCount === 0) {
+        throw new Error('未能匹配到任何相关图片')
       }
 
-      // 移除未找到图片的占位符（保留 Markdown 语法但移除占位符）
-      generatedContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+/g, '')
-
-      // 计算阅读时间
+      generatedContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+(?:\([^)]*\))?/g, '')
       const readingTime = calculateReadingTime(generatedContent)
 
-      // 生成封面图（从第一张图片）
       let coverImageUrl = article.coverImage
       const firstImageMatch = generatedContent.match(/!\[([^\]]*)\]\(([^)]+)\)/)
       if (firstImageMatch && firstImageMatch[2]) {
         try {
-          const firstImageUrl = firstImageMatch[2]
-          console.log(`[AI Generate] Generating cover image from: ${firstImageUrl}`)
-
-          const response = await fetch(firstImageUrl)
+          const response = await fetch(firstImageMatch[2])
           if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer()
-            const inputBuffer = Buffer.from(arrayBuffer)
-
-            // 调整为 375x200
-            const coverBuffer = await sharp(inputBuffer)
-              .resize(375, 200, {
-                fit: 'cover',
-                position: 'center',
-              })
+            const buffer = Buffer.from(await response.arrayBuffer())
+            const coverBuffer = await sharp(buffer)
+              .resize(375, 200, { fit: 'cover', position: 'center' })
               .jpeg({ quality: 85 })
               .toBuffer()
-
-            const coverFileName = `${article.slug}-cover-375x200.jpg`
-            coverImageUrl = await uploadBufferToR2(coverBuffer, coverFileName, 'image/jpeg')
-            console.log(`[AI Generate] Cover image generated: ${coverImageUrl}`)
+            coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
           }
-        } catch (error) {
-          console.error('[AI Generate] Failed to generate cover image:', error)
+        } catch (err) {
+          console.error('[AI 生成] 封面图处理失败:', err)
         }
       }
 
-      // 更新文章
       const updatedArticle = await prisma.article.update({
         where: { id: articleId },
         data: {
@@ -405,50 +310,23 @@ export async function POST(request: NextRequest) {
           readingTime,
           aiRewriteStatus: 'completed',
           aiRewriteAt: new Date(),
+          published: successImageCount > 0,
+          publishedAt: successImageCount > 0 ? new Date() : undefined,
         },
-        include: {
-          category: true,
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
+        include: { category: true },
       })
 
-      console.log(`[AI Generate] Article generated successfully: ${article.title}`)
-
-      return NextResponse.json({
-        success: true,
-        article: updatedArticle,
-      })
+      return NextResponse.json({ success: true, article: updatedArticle })
     } catch (error: any) {
-      console.error('[AI Generate] Error generating article:', error)
-
-      // 更新状态为失败
+      console.error('[AI 生成] 生成流程失败:', error)
       await prisma.article.update({
         where: { id: articleId },
-        data: {
-          aiRewriteStatus: 'failed',
-        },
+        data: { aiRewriteStatus: 'failed' },
       })
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message || 'Failed to generate article',
-        },
-        { status: 500 }
-      )
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
   } catch (error: any) {
-    console.error('[AI Generate] Unexpected error:', error)
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('[AI 生成] 接口异常:', error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
-

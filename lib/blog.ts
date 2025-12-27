@@ -90,8 +90,11 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 // 根据slug获取单篇文章
 export async function getPostBySlug(slug: string): Promise<BlogPost | null | { error: 'DATABASE_ERROR' }> {
   try {
+    console.log(`[getPostBySlug] Fetching article: ${slug}`)
+
     const getCachedArticle = unstable_cache(
       async () => {
+        console.log(`[getPostBySlug] Cache MISS for: ${slug}`)
         return await prisma.article.findUnique({
           where: { slug },
           include: {
@@ -108,8 +111,18 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
 
     const article = await getCachedArticle()
 
-    if (!article || !article.published || (article.publishedAt && new Date(article.publishedAt) > new Date())) {
+    console.log(`[getPostBySlug] Article found: ${!!article}, published: ${article?.published}`)
+
+    if (!article || !article.published) {
+      console.log(`[getPostBySlug] Article not accessible: ${slug}`)
       return null
+    }
+
+    // 只在文章未发布时检查发布时间是否在未来（用于定时发布）
+    // 已发布的文章不应该因为 publishedAt 在未来而被隐藏
+    if (article.publishedAt && new Date(article.publishedAt) > new Date()) {
+      console.log(`[getPostBySlug] Article published but publishedAt is in the future: ${slug}, this should not happen`)
+      // 注意：这里不返回 null，允许访问
     }
 
     return {

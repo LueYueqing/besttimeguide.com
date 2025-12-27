@@ -212,100 +212,128 @@ async function processArticles() {
 
   for (const article of articles) {
     try {
-      console.log(`[AI 处理] 模式: 自动改写, 模型: ${process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'}, 标题: ${article.title}`)
+      const hasContent = (article.content && article.content.length > 50)
+      const hasPlaceholders = (article.content && article.content.includes('IMAGE_PLACEHOLDER_'))
 
-      await prisma.article.update({
-        where: { id: article.id },
-        data: { aiRewriteStatus: 'processing', aiRewriteAt: new Date() }
-      })
+      if (!hasContent) {
+        console.log(`[AI 流水线 - 阶段 1/2] 正在生成文本: ${article.title}`)
+        await prisma.article.update({
+          where: { id: article.id },
+          data: { aiRewriteStatus: 'processing', aiRewriteAt: new Date() }
+        })
 
-      const prompt = AI_GENERATE_PROMPT.replace('{title}', article.title).replace('{categoryName}', article.category.name)
-      const completion = await aiClient.chat.completions.create({
-        model: process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: `Generate a comprehensive article about: ${article.title}` }
-        ],
-        temperature: 0.7,
-      })
+        const prompt = AI_GENERATE_PROMPT.replace('{title}', article.title).replace('{categoryName}', article.category.name)
+        const completion = await aiClient.chat.completions.create({
+          model: process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: prompt },
+            { role: 'user', content: `Generate a comprehensive article about: ${article.title}` }
+          ],
+          temperature: 0.7,
+        })
 
-      let generatedContent = completion.choices[0]?.message?.content || ''
-      if (!generatedContent) throw new Error('AI 生成内容为空')
+        const generatedContent = completion.choices[0]?.message?.content || ''
+        if (!generatedContent) throw new Error('AI 生成内容为空')
 
-      const imagePlaceholderRegex = /!\[([^\]]*)\]\(IMAGE_PLACEHOLDER_(\d+)\(([^)]+)\)\)/g
-      let match
-      const placeholders: Array<{ index: number; altText: string; keywords: string; fullMatch: string }> = []
+        await prisma.article.update({
+          where: { id: article.id },
+          data: {
+            content: generatedContent,
+            aiRewriteStatus: 'pending',
+            aiRewriteAt: new Date()
+          }
+        })
+        console.log(`[AI 流水线] 文本阶段完成: ${article.title}`)
+        continue
+      }
 
-      while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
-        placeholders.push({
-          altText: match[1],
-          index: parseInt(match[2], 10),
-          keywords: match[3],
-          fullMatch: match[0]
+      if (hasPlaceholders) {
+        console.log(`[AI 流水线 - 阶段 2/2] 正在补全图片: ${article.title}`)
+        await prisma.article.update({
+          where: { id: article.id },
+          data: { aiRewriteStatus: 'processing' }
+        })
+
+        let currentContent = article.content || ''
+        const imagePlaceholderRegex = /!\[([^\]]*)\]\(IMAGE_PLACEHOLDER_(\d+)\(([^)]+)\)\)/g
+        let match
+        const placeholders: Array<{ index: number; altText: string; keywords: string; fullMatch: string }> = []
+
+        while ((match = imagePlaceholderRegex.exec(currentContent)) !== null) {
+          placeholders.push({
+            altText: match[1],
+            index: parseInt(match[2], 10),
+            keywords: match[3],
+            fullMatch: match[0]
+          })
+        }
+
+        const imagePromises = placeholders.map(async (placeholder) => {
+          try {
+            const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
+            if (imageUrl) {
+              const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+              if (r2Url) {
+                return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
+              }
+            }
+          } catch (err: any) {
+            console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err.message)
+          }
+          return { success: false }
+        })
+
+        const imageResults = await Promise.all(imagePromises)
+        let successCount = 0
+
+        for (const res of imageResults) {
+          if (res.success && res.fullMatch && res.r2Url) {
+            currentContent = currentContent.replace(res.fullMatch, `![${res.altText}](${res.r2Url})`)
+            successCount++
+          }
+        }
+
+        if (placeholders.length > 0 && successCount === 0) {
+          console.warn(`[图片补全] 文章 ${article.title} 未能匹配图片，将清理占位符`)
+          currentContent = currentContent.replace(/!\[[^\]]*\]\(IMAGE_PLACEHOLDER_[^)]+\)\)/g, '')
+        }
+
+        let coverImageUrl = article.coverImage
+        const firstImageMatch = currentContent.match(/!\[([^\]]*)\]\(([^)]+)\)/)
+        if (firstImageMatch && firstImageMatch[2]) {
+          try {
+            const response = await fetch(firstImageMatch[2])
+            if (response.ok) {
+              const buffer = Buffer.from(await response.arrayBuffer())
+              const coverBuffer = await sharp(buffer)
+                .resize(375, 200, { fit: 'cover', position: 'center' })
+                .jpeg({ quality: 85 })
+                .toBuffer()
+              coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+            }
+          } catch (err) {
+            console.error('[AI 改写] 封面图处理失败:', err)
+          }
+        }
+
+        await prisma.article.update({
+          where: { id: article.id },
+          data: {
+            content: currentContent,
+            coverImage: coverImageUrl,
+            aiRewriteStatus: 'completed',
+            aiRewriteAt: new Date(),
+            published: true,
+            publishedAt: await getNextPublishedAt()
+          }
+        })
+        console.log(`[AI 流水线] 全阶段完成: ${article.title}`)
+      } else {
+        await prisma.article.update({
+          where: { id: article.id },
+          data: { aiRewriteStatus: 'completed' }
         })
       }
-
-      console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
-
-      // 并行处理所有图片，显著加快速度
-      const imagePromises = placeholders.map(async (placeholder) => {
-        try {
-          const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
-          if (imageUrl) {
-            const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
-            if (r2Url) {
-              return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
-            }
-          }
-        } catch (err: any) {
-          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err.message)
-        }
-        return { success: false }
-      })
-
-      const imageResults = await Promise.all(imagePromises)
-      let successCount = 0
-
-      for (const res of imageResults) {
-        if (res.success && res.fullMatch && res.r2Url) {
-          generatedContent = generatedContent.replace(res.fullMatch, `![${res.altText}](${res.r2Url})`)
-          successCount++
-        }
-      }
-
-      if (placeholders.length > 0 && successCount === 0) {
-        throw new Error('未能匹配到任何相关图片')
-      }
-
-      let coverImageUrl = article.coverImage
-      const firstImageMatch = generatedContent.match(/!\[([^\]]*)\]\(([^)]+)\)/)
-      if (firstImageMatch && firstImageMatch[2]) {
-        try {
-          const response = await fetch(firstImageMatch[2])
-          if (response.ok) {
-            const buffer = Buffer.from(await response.arrayBuffer())
-            const coverBuffer = await sharp(buffer)
-              .resize(375, 200, { fit: 'cover', position: 'center' })
-              .jpeg({ quality: 85 })
-              .toBuffer()
-            coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
-          }
-        } catch (err) {
-          console.error('[AI 改写] 封面图处理失败:', err)
-        }
-      }
-
-      await prisma.article.update({
-        where: { id: article.id },
-        data: {
-          content: generatedContent,
-          coverImage: coverImageUrl,
-          aiRewriteStatus: 'completed',
-          aiRewriteAt: new Date(),
-          published: successCount > 0,
-          publishedAt: successCount > 0 ? await getNextPublishedAt() : undefined
-        }
-      })
     } catch (error: any) {
       console.error(`[AI 处理失败] 标题: ${article.title}, 错误:`, error.message)
       await prisma.article.update({

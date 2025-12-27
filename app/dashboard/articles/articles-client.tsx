@@ -78,15 +78,15 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const [searchQuery, setSearchQuery] = useState<string>(getInitialSearch())
 
   // 排序状态
-  const getInitialSort = (): { field: 'publishedAt' | 'updatedAt' | null; order: 'asc' | 'desc' } => {
+  const getInitialSort = (): { field: 'publishedAt' | 'updatedAt' | 'viewCount' | null; order: 'asc' | 'desc' } => {
     const sortField = searchParams.get('sort')
     const sortOrder = searchParams.get('order') as 'asc' | 'desc' | null
-    if (sortField === 'publishedAt' || sortField === 'updatedAt') {
-      return { field: sortField, order: sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'desc' }
+    if (sortField === 'publishedAt' || sortField === 'updatedAt' || sortField === 'viewCount') {
+      return { field: sortField as 'publishedAt' | 'updatedAt' | 'viewCount', order: sortOrder === 'asc' || sortOrder === 'desc' ? sortOrder : 'desc' }
     }
     return { field: null, order: 'desc' }
   }
-  const [sortField, setSortField] = useState<'publishedAt' | 'updatedAt' | null>(getInitialSort().field)
+  const [sortField, setSortField] = useState<'publishedAt' | 'updatedAt' | 'viewCount' | null>(getInitialSort().field)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(getInitialSort().order)
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [quickCreateTitles, setQuickCreateTitles] = useState('')
@@ -102,7 +102,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   })
 
   // 更新 URL 参数
-  const updateUrlParams = (newFilter: 'all' | 'published' | 'draft', newCategory: string, newPage: number, newSearch: string, newSortField: 'publishedAt' | 'updatedAt' | null, newSortOrder: 'asc' | 'desc') => {
+  const updateUrlParams = (newFilter: 'all' | 'published' | 'draft', newCategory: string, newPage: number, newSearch: string, newSortField: 'publishedAt' | 'updatedAt' | 'viewCount' | null, newSortOrder: 'asc' | 'desc') => {
     const params = new URLSearchParams()
     if (newFilter !== 'all') {
       params.set('filter', newFilter)
@@ -126,7 +126,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   }
 
   // 处理排序
-  const handleSort = (field: 'publishedAt' | 'updatedAt') => {
+  const handleSort = (field: 'publishedAt' | 'updatedAt' | 'viewCount') => {
     if (sortField === field) {
       // 如果点击同一列，切换排序顺序
       const newOrder = sortOrder === 'asc' ? 'desc' : 'asc'
@@ -583,8 +583,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                 </Link>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-neutral-200">
+              <div className="bg-white rounded-lg shadow overflow-visible">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
@@ -600,7 +601,22 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         AI 处理
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                        浏览量
+                        <button
+                          onClick={() => handleSort('viewCount')}
+                          className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
+                        >
+                          浏览量
+                          {sortField === 'viewCount' && (
+                            <svg
+                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          )}
+                        </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                         <button
@@ -645,7 +661,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   </thead>
                   <tbody className="bg-white divide-y divide-neutral-200">
                     {articles.map((article) => (
-                      <tr key={article.id} className="hover:bg-neutral-50">
+                      <tr key={article.id} className="hover:bg-neutral-50 relative">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div>
@@ -743,16 +759,17 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                           {formatDate(article.updatedAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end gap-3">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative z-10">
+                          <div className="flex items-center justify-end gap-3 relative z-10">
                             <Link
                               href={`/dashboard/articles/${article.id}?${new URLSearchParams({
                                 ...(filter !== 'all' && { filter }),
                                 ...(categoryFilter !== 'all' && { category: categoryFilter }),
                                 ...(currentPage > 1 && { page: currentPage.toString() }),
                               }).toString()}`}
-                              className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                              className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors relative z-10"
                               title="编辑文章"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -763,8 +780,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 <Link
                                   href={`/${article.slug}`}
                                   target="_blank"
-                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors relative z-10"
                                   title="查看文章"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -772,8 +790,11 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                   </svg>
                                 </Link>
                                 <button
-                                  onClick={() => handleRevalidateCache(article.slug, article.title)}
-                                  className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRevalidateCache(article.slug, article.title)
+                                  }}
+                                  className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors relative z-10"
                                   title="刷新缓存"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -783,8 +804,11 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                               </>
                             )}
                             <button
-                              onClick={() => handleDelete(article.id)}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(article.id)
+                              }}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors relative z-10"
                               title="删除文章"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -797,6 +821,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
 

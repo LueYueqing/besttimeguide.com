@@ -127,6 +127,7 @@ export async function PUT(
       published,
       publishedAt,
       sourceContent,
+      articleMode,
     } = body
 
     // 检查文章是否存在
@@ -230,6 +231,7 @@ export async function PUT(
     if (tags !== undefined) updateData.tags = tagsJson
     if (featured !== undefined) updateData.featured = featured
     if (sourceContent !== undefined) updateData.sourceContent = sourceContent || null
+    if (articleMode !== undefined) updateData.articleMode = articleMode
     // 如果生成了新的封面图，更新它
     if (coverImageUrl && coverImageUrl !== existing.coverImage) {
       updateData.coverImage = coverImageUrl

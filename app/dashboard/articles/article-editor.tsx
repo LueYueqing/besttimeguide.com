@@ -31,6 +31,7 @@ interface Article {
   sourceContent: string | null
   aiRewriteStatus: string | null
   aiRewriteAt: string | null
+  articleMode: string | null
   coverImage: string | null
 }
 
@@ -45,7 +46,9 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [aiRewriteLoading, setAiRewriteLoading] = useState(false)
+  const [aiGenerateLoading, setAiGenerateLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write')
+  const [customPrompt, setCustomPrompt] = useState('') // 临时自定义提示词
 
   // 初始化 Turndown 服务（HTML 转 Markdown）
   const turndownServiceRef = useRef<TurndownService | null>(null)
@@ -95,6 +98,7 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       : '',
     sourceContent: article?.sourceContent || '',
     coverImage: article?.coverImage || '',
+    articleMode: article?.articleMode || 'manual',
   })
 
   // 上传图片函数
@@ -174,6 +178,8 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
         categoryId: parseInt(formData.categoryId, 10),
         tags: tagsArray,
         publishedAt: formData.publishedAt || null,
+        // 对于 AI 生成模式，如果没有内容，允许保存空内容
+        content: formData.articleMode === 'ai-generate' && !formData.content ? '' : formData.content,
       }
 
       const url = article ? `/api/articles/${article.id}` : '/api/articles'
@@ -250,6 +256,131 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
       toast.error('操作失败')
     } finally {
       setAiRewriteLoading(false)
+    }
+  }
+
+  const handleAiGenerate = async () => {
+    if (!formData.title || !formData.categoryId) {
+      toast.warning('请先填写标题和分类')
+      return
+    }
+
+    // 如果文章还未创建，先保存
+    if (!article) {
+      setLoading(true)
+      try {
+        const tagsArray = formData.tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter((t) => t.length > 0)
+
+        const payload = {
+          ...formData,
+          categoryId: parseInt(formData.categoryId, 10),
+          tags: tagsArray,
+          publishedAt: formData.publishedAt || null,
+          content: '', // AI 生成模式，内容为空
+        }
+
+        const response = await fetch('/api/articles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          // 保存成功后，使用新创建的文章ID进行生成
+          const newArticleId = data.article.id
+          
+          if (!confirm('文章已创建，确定要使用 AI 生成文章内容吗？这将根据标题和分类生成完整的文章（包括配图）。')) {
+            setLoading(false)
+            router.push(`/dashboard/articles/${newArticleId}`)
+            return
+          }
+
+          setAiGenerateLoading(true)
+          try {
+            const generateResponse = await fetch('/api/articles/ai-generate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                articleId: newArticleId,
+                customPrompt: customPrompt.trim() || undefined,
+              }),
+            })
+
+            const generateData = await generateResponse.json()
+
+            if (generateData.success) {
+              toast.success('文章生成成功！')
+              router.push(`/dashboard/articles/${newArticleId}`)
+              router.refresh()
+            } else {
+              toast.error('生成失败：' + (generateData.error || 'Unknown error'))
+              router.push(`/dashboard/articles/${newArticleId}`)
+            }
+          } catch (error) {
+            console.error('Error generating article:', error)
+            toast.error('生成失败')
+            router.push(`/dashboard/articles/${newArticleId}`)
+          } finally {
+            setAiGenerateLoading(false)
+            setLoading(false)
+          }
+        } else {
+          toast.error('保存失败：' + data.error)
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error saving article:', error)
+        toast.error('保存失败')
+        setLoading(false)
+      }
+      return
+    }
+
+    if (!confirm('确定要使用 AI 生成文章内容吗？这将根据标题和分类生成完整的文章（包括配图）。')) {
+      return
+    }
+
+    setAiGenerateLoading(true)
+    try {
+      const response = await fetch('/api/articles/ai-generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          articleId: article.id,
+          customPrompt: customPrompt.trim() || undefined,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('文章生成成功！')
+        // 更新表单数据
+        setFormData(prev => ({
+          ...prev,
+          content: data.article.content || prev.content,
+          coverImage: data.article.coverImage || prev.coverImage,
+        }))
+        router.refresh()
+      } else {
+        toast.error('生成失败：' + (data.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error generating article:', error)
+      toast.error('生成失败')
+    } finally {
+      setAiGenerateLoading(false)
     }
   }
 
@@ -420,6 +551,28 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             />
           </div>
 
+          {/* Article Mode Selection */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              文章创建模式
+            </label>
+            <select
+              value={formData.articleMode}
+              onChange={(e) => setFormData({ ...formData, articleMode: e.target.value })}
+              disabled={!!article} // 编辑时不可修改
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-neutral-100 disabled:cursor-not-allowed"
+            >
+              <option value="manual">手动编辑</option>
+              <option value="ai-rewrite">AI 改写（从参考内容）</option>
+              <option value="ai-generate">AI 生成（从标题）</option>
+            </select>
+            <p className="mt-1 text-xs text-neutral-500">
+              {formData.articleMode === 'ai-generate' && '选择此模式后，只需填写标题和分类，然后点击"AI 生成"按钮即可生成完整文章'}
+              {formData.articleMode === 'ai-rewrite' && '选择此模式后，需要填写参考内容，然后使用 AI 改写功能'}
+              {formData.articleMode === 'manual' && '手动编辑文章内容'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -451,6 +604,65 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
               />
             </div>
           </div>
+
+          {/* AI Generate Section */}
+          {formData.articleMode === 'ai-generate' && (
+            <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-blue-900">AI 生成模式</h3>
+                {article && article.aiRewriteStatus && (
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                    article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                    article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {article.aiRewriteStatus === 'pending' ? '待生成' :
+                     article.aiRewriteStatus === 'processing' ? '生成中' :
+                     article.aiRewriteStatus === 'completed' ? '已完成' :
+                     article.aiRewriteStatus === 'failed' ? '生成失败' : article.aiRewriteStatus}
+                  </span>
+                )}
+              </div>
+              
+              <p className="text-sm text-blue-800 mb-4">
+                填写标题和分类后，点击下方按钮即可使用 AI 生成完整的文章内容（包括配图）。
+              </p>
+
+              <details className="mb-4">
+                <summary className="cursor-pointer text-sm text-blue-700 hover:text-blue-900">
+                  高级选项（自定义提示词）
+                </summary>
+                <div className="mt-2">
+                  <textarea
+                    value={customPrompt}
+                    onChange={(e) => setCustomPrompt(e.target.value)}
+                    placeholder="留空则使用默认提示词模板"
+                    rows={3}
+                    className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <p className="mt-1 text-xs text-blue-600">
+                    此提示词仅用于本次生成，不会保存到数据库
+                  </p>
+                </div>
+              </details>
+
+              <button
+                type="button"
+                onClick={handleAiGenerate}
+                disabled={!formData.title || !formData.categoryId || aiGenerateLoading || (article?.aiRewriteStatus === 'processing')}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {aiGenerateLoading ? '生成中...' : article?.aiRewriteStatus === 'processing' ? '正在生成...' : '生成文章内容'}
+              </button>
+
+              {article?.aiRewriteAt && (
+                <p className="mt-2 text-xs text-blue-600">
+                  生成时间: {new Date(article.aiRewriteAt).toLocaleString('zh-CN')}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Thumbnail */}
           <div>
@@ -489,128 +701,112 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
             </div>
           </div>
 
-          {/* Source Content (Reference Template) */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-neutral-700">
-                参考范本（原文）
-              </label>
-              {article && (
-                <button
-                  type="button"
-                  onClick={handleAiRewrite}
-                  disabled={aiRewriteLoading || !formData.sourceContent}
-                  className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {aiRewriteLoading ? (
-                    <>
-                      <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                      <span>处理中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      <span>标记为 AI 改写</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            <textarea
-              value={formData.sourceContent}
-              onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
-              onPaste={(e) => handlePaste(e, 'sourceContent')}
-              rows={15}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
-              placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容...（支持直接粘贴 HTML 内容，将自动转换为 Markdown）"
-            />
-            <div className="mt-1 flex items-center justify-between">
-              <p className="text-xs text-neutral-500">
-                参考范本/原文内容，将用于 AI 生成正式文章内容。此字段为可选。
-              </p>
-              {article?.aiRewriteStatus && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500">AI 改写状态：</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                    article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {article.aiRewriteStatus === 'pending' ? '待处理' :
-                      article.aiRewriteStatus === 'processing' ? '处理中' :
-                        article.aiRewriteStatus === 'completed' ? '已完成' :
-                          article.aiRewriteStatus === 'failed' ? '失败' : article.aiRewriteStatus}
-                  </span>
-                  {article.aiRewriteAt && (
-                    <span className="text-xs text-neutral-400">
-                      {new Date(article.aiRewriteAt).toLocaleString('zh-CN')}
+          {/* Source Content (Reference Template) - Only for AI Rewrite mode */}
+          {formData.articleMode === 'ai-rewrite' && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-700">
+                  参考范本（原文） <span className="text-red-500">*</span>
+                </label>
+                {article && (
+                  <button
+                    type="button"
+                    onClick={handleAiRewrite}
+                    disabled={aiRewriteLoading || !formData.sourceContent}
+                    className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {aiRewriteLoading ? (
+                      <>
+                        <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                        <span>处理中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>标记为 AI 改写</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={formData.sourceContent}
+                onChange={(e) => setFormData({ ...formData, sourceContent: e.target.value })}
+                onPaste={(e) => handlePaste(e, 'sourceContent')}
+                rows={15}
+                required={formData.articleMode === 'ai-rewrite'}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+                placeholder="在这里输入参考范本或原文，可用于 AI 生成正式文章内容...（支持直接粘贴 HTML 内容，将自动转换为 Markdown）"
+              />
+              <div className="mt-1 flex items-center justify-between">
+                <p className="text-xs text-neutral-500">
+                  参考范本/原文内容，将用于 AI 生成正式文章内容。
+                </p>
+                {article?.aiRewriteStatus && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-neutral-500">AI 改写状态：</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${article.aiRewriteStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                      article.aiRewriteStatus === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        article.aiRewriteStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {article.aiRewriteStatus === 'pending' ? '待处理' :
+                        article.aiRewriteStatus === 'processing' ? '处理中' :
+                          article.aiRewriteStatus === 'completed' ? '已完成' :
+                            article.aiRewriteStatus === 'failed' ? '失败' : article.aiRewriteStatus}
                     </span>
-                  )}
+                    {article.aiRewriteAt && (
+                      <span className="text-xs text-neutral-400">
+                        {new Date(article.aiRewriteAt).toLocaleString('zh-CN')}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Content - For Manual and AI Generate modes */}
+          {(formData.articleMode === 'manual' || formData.articleMode === 'ai-generate') && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-700">
+                  文章内容 {formData.articleMode === 'manual' && <span className="text-red-500">*</span>}
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(activeTab === 'write' ? 'preview' : 'write')}
+                    className="px-3 py-1 text-sm bg-neutral-200 text-neutral-700 rounded hover:bg-neutral-300 transition-colors"
+                  >
+                    {activeTab === 'write' ? '预览' : '编辑'}
+                  </button>
+                </div>
+              </div>
+              {activeTab === 'write' ? (
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onPaste={(e) => handlePaste(e, 'content')}
+                  rows={20}
+                  required={formData.articleMode === 'manual'}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+                  placeholder="使用 Markdown 格式编写文章内容...（支持直接粘贴 HTML 内容，将自动转换为 Markdown）"
+                />
+              ) : (
+                <div className="w-full px-4 py-2 border border-neutral-300 rounded-lg bg-white min-h-[500px] prose max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{formData.content || '*暂无内容*'}</ReactMarkdown>
                 </div>
               )}
+              <p className="mt-1 text-xs text-neutral-500">
+                {formData.articleMode === 'ai-generate' 
+                  ? 'AI 生成模式：内容将由 AI 自动生成，生成后可以在此编辑。'
+                  : '使用 Markdown 格式编写文章内容'}
+              </p>
             </div>
-          </div>
-
-          {/* Content */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-neutral-700">
-                内容 (Markdown) <span className="text-red-500">*</span>
-              </label>
-              <div className="flex bg-neutral-100 rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('write')}
-                  className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'write'
-                    ? 'bg-white text-primary-600 shadow-sm font-medium'
-                    : 'text-neutral-500 hover:text-neutral-700'
-                    }`}
-                >
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('preview')}
-                  className={`px-3 py-1 text-sm rounded-md transition-all ${activeTab === 'preview'
-                    ? 'bg-white text-primary-600 shadow-sm font-medium'
-                    : 'text-neutral-500 hover:text-neutral-700'
-                    }`}
-                >
-                  预览
-                </button>
-              </div>
-            </div>
-
-            {activeTab === 'write' ? (
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                required
-                onPaste={(e) => handlePaste(e, 'content')}
-                rows={20}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
-                placeholder="# 标题&#10;&#10;文章内容使用 Markdown 格式..."
-              />
-            ) : (
-              <div className="w-full px-4 py-4 border border-neutral-300 rounded-lg bg-neutral-50 min-h-[500px] max-h-[800px] overflow-y-auto prose prose-sm max-w-none">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    img: ({ node, ...props }) => (
-                      <img {...props} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '400px' }} />
-                    )
-                  }}
-                >
-                  {formData.content || '*暂无内容*'}
-                </ReactMarkdown>
-              </div>
-            )}
-            <p className="mt-1 text-xs text-neutral-500">
-              支持 Markdown 格式。阅读时间将自动计算。
-            </p>
-          </div>
+          )}
 
           {/* SEO */}
           <div className="border-t pt-6">

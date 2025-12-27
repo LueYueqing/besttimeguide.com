@@ -35,6 +35,7 @@ interface Article {
   updatedAt: string
   aiRewriteStatus: string | null
   aiRewriteAt: string | null
+  articleMode: string | null
   viewCount: number
   coverImage: string | null
 }
@@ -690,18 +691,31 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                         <td className="px-3 py-2">
                           <div className="flex items-start gap-2 min-w-0">
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-neutral-900 truncate">{article.title}</div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div className="text-sm font-medium text-neutral-900 truncate">{article.title}</div>
+                                {article.articleMode && (
+                                  <span className={`px-1.5 py-0.5 text-xs rounded flex-shrink-0 ${
+                                    article.articleMode === 'ai-generate' ? 'bg-purple-100 text-purple-800' :
+                                    article.articleMode === 'ai-rewrite' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {article.articleMode === 'ai-generate' ? 'AI生成' :
+                                     article.articleMode === 'ai-rewrite' ? 'AI改写' :
+                                     '手动'}
+                                  </span>
+                                )}
+                                {article.featured && (
+                                  <span className="px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded flex-shrink-0">
+                                    精选
+                                  </span>
+                                )}
+                              </div>
                               {article.description && (
                                 <div className="text-xs text-neutral-500 truncate max-w-[200px] mt-0.5">
                                   {article.description}
                                 </div>
                               )}
                             </div>
-                            {article.featured && (
-                              <span className="px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded flex-shrink-0">
-                                精选
-                              </span>
-                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">

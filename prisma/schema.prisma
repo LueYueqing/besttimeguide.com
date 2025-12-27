@@ -246,6 +246,7 @@ model Article {
   sourceContent   String?   @db.Text // 参考范本/原文（用于 AI 生成正式内容）
   aiRewriteStatus String? // AI 改写状态：pending, processing, completed, failed
   aiRewriteAt     DateTime? // AI 改写时间
+  articleMode     String?   @default("manual") // 文章创建模式：manual, ai-rewrite, ai-generate
   coverImage      String?   // 封面图 URL (375x250)
 
   // 时间戳

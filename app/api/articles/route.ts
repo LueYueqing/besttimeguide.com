@@ -142,12 +142,21 @@ export async function POST(request: NextRequest) {
       published,
       publishedAt,
       sourceContent,
+      articleMode,
     } = body
 
     // 验证必填字段
-    if (!title || !content || !categoryId) {
+    if (!title || !categoryId) {
       return NextResponse.json(
-        { success: false, error: 'Title, content, and category are required' },
+        { success: false, error: 'Title and category are required' },
+        { status: 400 }
+      )
+    }
+
+    // 对于非 AI 生成模式，content 是必需的
+    if (articleMode !== 'ai-generate' && !content) {
+      return NextResponse.json(
+        { success: false, error: 'Content is required for non-AI-generate mode' },
         { status: 400 }
       )
     }
@@ -173,11 +182,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Category not found' }, { status: 400 })
     }
 
-    // 计算阅读时间
-    const readingTime = calculateReadingTime(content)
+    // 计算阅读时间（如果有内容）
+    const readingTime = content ? calculateReadingTime(content) : null
 
     // 处理tags（转换为JSON字符串）
     const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : null
+
+    // 设置 AI 生成状态（如果是 AI 生成模式且没有内容）
+    const aiRewriteStatus = articleMode === 'ai-generate' && !content ? 'pending' : null
 
     // 创建文章
     const article = await prisma.article.create({
@@ -185,7 +197,7 @@ export async function POST(request: NextRequest) {
         title,
         slug: articleSlug,
         description: description || null,
-        content,
+        content: content || '', // AI 生成模式时可以为空
         categoryId: parseInt(categoryId, 10),
         authorId: adminId,
         metaTitle: metaTitle || null,
@@ -197,6 +209,8 @@ export async function POST(request: NextRequest) {
         publishedAt: published && publishedAt ? new Date(publishedAt) : published ? new Date() : null,
         readingTime,
         sourceContent: sourceContent || null,
+        articleMode: articleMode || 'manual',
+        aiRewriteStatus,
       },
       include: {
         category: true,

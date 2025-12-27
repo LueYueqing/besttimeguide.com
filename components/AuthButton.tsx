@@ -24,25 +24,8 @@ export default function AuthButton() {
     return (
       <Link
         href="/auth/signin"
-        className="inline-flex items-center justify-center text-sm transition-colors"
-        style={{
-          boxSizing: 'border-box',
-          background: '#FABC3B',
-          display: 'inline-flex',
-          border: 'none',
-          color: '#000',
-          padding: '0.44em',
-          fontWeight: 'bold',
-          borderRadius: '4px',
-          marginTop: '0px',
-          lineHeight: '21px',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#eab308'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#FABC3B'
-        }}
+        className="inline-flex items-center justify-center text-sm font-bold text-black bg-wikihow-yellow-400 border-none rounded-wikihow-button hover:bg-wikihow-yellow-500 transition-all duration-200 cursor-pointer px-4 py-2"
+        style={{ lineHeight: '21px' }}
       >
         <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
           <path
@@ -163,4 +146,3 @@ export default function AuthButton() {
     </div>
   )
 }
-

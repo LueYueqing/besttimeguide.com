@@ -3,6 +3,12 @@ import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { getPostsByCategory } from '@/lib/blog'
+import { 
+  getBestPostsForCurrentSeason, 
+  getBestPostsForCurrentMonth, 
+  getBestPostsForCurrentWeek,
+  getCurrentTimeInfo 
+} from '@/lib/time-based-posts'
 
 export const metadata: Metadata = {
   title: 'BestTimeGuide - Find the Best Time for Everything',
@@ -67,11 +73,17 @@ const browseCategories = [
 
 export default async function HomePage() {
   // 从数据库获取各分类的文章
-  const [travelPosts, socialMediaPosts, healthPosts] = await Promise.all([
+  const [travelPosts, socialMediaPosts, healthPosts, seasonPosts, monthPosts, weekPosts] = await Promise.all([
     getPostsByCategory('travel').then((posts) => posts.slice(0, 4)),
     getPostsByCategory('social-media').then((posts) => posts.slice(0, 4)),
     getPostsByCategory('health').then((posts) => posts.slice(0, 4)),
+    getBestPostsForCurrentSeason(4),
+    getBestPostsForCurrentMonth(4),
+    getBestPostsForCurrentWeek(4),
   ])
+  
+  // 获取当前时间信息
+  const timeInfo = getCurrentTimeInfo()
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -151,6 +163,114 @@ export default async function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* Time-Based Best Guides Section */}
+        <section className="mb-12">
+          <h2 className="wikihow-heading wikihow-heading-h2 mb-6">Best Time for Right Now</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Season Section */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="wikihow-heading wikihow-heading-h3 text-green-800">
+                  {timeInfo.seasonName}最佳
+                </h3>
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              {seasonPosts.length > 0 ? (
+                <div className="space-y-3">
+                  {seasonPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/${post.slug}`}
+                      className="block bg-white rounded-lg p-3 hover:shadow-md hover:border-green-400 border border-transparent transition-all"
+                    >
+                      <h4 className="wikihow-link-standard font-semibold text-sm line-clamp-2 group-hover:text-green-700">
+                        {post.title}
+                      </h4>
+                      <p className="wikihow-text-small text-neutral-600 mt-1 line-clamp-2">
+                        {post.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="wikihow-text-small text-neutral-600 italic">
+                  暂无{timeInfo.seasonName}推荐内容
+                </p>
+              )}
+            </div>
+
+            {/* Month Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border-2 border-blue-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="wikihow-heading wikihow-heading-h3 text-blue-800">
+                  {timeInfo.monthName}最佳
+                </h3>
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              {monthPosts.length > 0 ? (
+                <div className="space-y-3">
+                  {monthPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/${post.slug}`}
+                      className="block bg-white rounded-lg p-3 hover:shadow-md hover:border-blue-400 border border-transparent transition-all"
+                    >
+                      <h4 className="wikihow-link-standard font-semibold text-sm line-clamp-2 group-hover:text-blue-700">
+                        {post.title}
+                      </h4>
+                      <p className="wikihow-text-small text-neutral-600 mt-1 line-clamp-2">
+                        {post.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="wikihow-text-small text-neutral-600 italic">
+                  暂无{timeInfo.monthName}推荐内容
+                </p>
+              )}
+            </div>
+
+            {/* Week Section */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-2 border-purple-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="wikihow-heading wikihow-heading-h3 text-purple-800">
+                  本周最佳
+                </h3>
+                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              {weekPosts.length > 0 ? (
+                <div className="space-y-3">
+                  {weekPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/${post.slug}`}
+                      className="block bg-white rounded-lg p-3 hover:shadow-md hover:border-purple-400 border border-transparent transition-all"
+                    >
+                      <h4 className="wikihow-link-standard font-semibold text-sm line-clamp-2 group-hover:text-purple-700">
+                        {post.title}
+                      </h4>
+                      <p className="wikihow-text-small text-neutral-600 mt-1 line-clamp-2">
+                        {post.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="wikihow-text-small text-neutral-600 italic">
+                  暂无本周推荐内容
+                </p>
+              )}
+            </div>
           </div>
         </section>
 

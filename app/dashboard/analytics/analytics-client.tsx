@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import DashboardLayout from '../components/DashboardLayout'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { getChartColor, getAxisConfig, getGridConfig, getTooltipConfig, getPrimaryLineConfig } from '@/lib/chart-colors'
 
 interface DashboardStats {
   total: number
@@ -170,28 +171,14 @@ export default function AnalyticsClient() {
           {/* 时间趋势图表 */}
           <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-8">
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">访问趋势</h2>
-            <div className="h-[300px] w-full">
+          <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="scans"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', r: 4, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
-                  />
+                  <CartesianGrid {...getGridConfig()} />
+                  <XAxis dataKey="date" {...getAxisConfig()} />
+                  <YAxis {...getAxisConfig()} />
+                  <Tooltip {...getTooltipConfig()} />
+                  <Line {...getPrimaryLineConfig()} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -216,7 +203,7 @@ export default function AnalyticsClient() {
                         paddingAngle={5}
                       >
                         {analyticsData.deviceAnalysis.osDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
+                          <Cell key={`cell-${index}`} fill={getChartColor(index)} />
                         ))}
                       </Pie>
                       <Tooltip />

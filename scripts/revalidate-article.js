@@ -18,20 +18,7 @@ const secret = process.env.REVALIDATE_SECRET || ''
 
 async function revalidateArticle() {
   try {
-    // 方法1: 通过路径重新验证
-    const pathUrl = `${baseUrl}/api/revalidate?path=/${slug}&secret=${secret}`
-    console.log(`[Revalidate] 正在重新验证路径: /${slug}`)
-    
-    const pathResponse = await fetch(pathUrl, { method: 'POST' })
-    const pathData = await pathResponse.json()
-    
-    if (pathResponse.ok) {
-      console.log('✅ 路径重新验证成功:', pathData)
-    } else {
-      console.error('❌ 路径重新验证失败:', pathData)
-    }
-
-    // 方法2: 通过 cache tag 重新验证
+    // 方法1: 通过 cache tag 重新验证（最可靠，优先使用）
     const tagUrl = `${baseUrl}/api/revalidate?tag=article-${slug}&secret=${secret}`
     console.log(`[Revalidate] 正在重新验证标签: article-${slug}`)
     
@@ -42,6 +29,19 @@ async function revalidateArticle() {
       console.log('✅ 标签重新验证成功:', tagData)
     } else {
       console.error('❌ 标签重新验证失败:', tagData)
+    }
+
+    // 方法2: 通过路径重新验证（作为备用，可能对动态路由不立即生效）
+    const pathUrl = `${baseUrl}/api/revalidate?path=/${slug}&secret=${secret}`
+    console.log(`[Revalidate] 正在重新验证路径: /${slug}`)
+    
+    const pathResponse = await fetch(pathUrl, { method: 'POST' })
+    const pathData = await pathResponse.json()
+    
+    if (pathResponse.ok) {
+      console.log('✅ 路径重新验证成功:', pathData)
+    } else {
+      console.warn('⚠️  路径重新验证失败（对动态路由可能不立即生效）:', pathData)
     }
 
     // 方法3: 重新验证所有文章列表
@@ -58,6 +58,7 @@ async function revalidateArticle() {
     }
 
     console.log('\n✨ 重新验证完成！请稍等几秒钟后刷新页面。')
+    console.log('💡 提示: 标签重新验证（tag）比路径重新验证（path）更可靠，特别是对于动态路由。')
   } catch (error) {
     console.error('❌ 重新验证过程中出错:', error)
     process.exit(1)

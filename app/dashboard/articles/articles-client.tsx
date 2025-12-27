@@ -277,6 +277,83 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     }
   }
 
+  // 刷新单个文章的缓存
+  const handleRevalidateCache = async (slug: string, title: string) => {
+    try {
+      // 优先使用 tag 重新验证（更可靠）
+      const tagUrl = `/api/revalidate?tag=article-${slug}`
+      const tagResponse = await fetch(tagUrl, { method: 'POST' })
+      const tagData = await tagResponse.json()
+
+      // 同时清除路径缓存（作为备用）
+      const pathUrl = `/api/revalidate?path=/${slug}`
+      await fetch(pathUrl, { method: 'POST' })
+
+      if (tagResponse.ok) {
+        toast.success(`"${title}" 的缓存已刷新`)
+      } else {
+        toast.warning(`"${title}" 的缓存刷新可能未完全生效`)
+      }
+    } catch (error) {
+      console.error('Error revalidating cache:', error)
+      toast.error('刷新缓存失败')
+    }
+  }
+
+  // 批量刷新当前页所有已发布文章的缓存
+  const handleBatchRevalidateCache = async () => {
+    const publishedArticles = articles.filter((article) => article.published)
+    
+    if (publishedArticles.length === 0) {
+      toast.warning('当前页面没有已发布的文章')
+      return
+    }
+
+    if (!confirm(`确定要刷新当前页面 ${publishedArticles.length} 篇已发布文章的缓存吗？`)) {
+      return
+    }
+
+    try {
+      let successCount = 0
+      let failCount = 0
+
+      // 并行刷新所有文章的缓存
+      const promises = publishedArticles.map(async (article) => {
+        try {
+          // 优先使用 tag 重新验证
+          const tagUrl = `/api/revalidate?tag=article-${article.slug}`
+          const tagResponse = await fetch(tagUrl, { method: 'POST' })
+          
+          // 同时清除路径缓存
+          await fetch(`/api/revalidate?path=/${article.slug}`, { method: 'POST' })
+          
+          if (tagResponse.ok) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (error) {
+          console.error(`Error revalidating cache for ${article.slug}:`, error)
+          failCount++
+        }
+      })
+
+      await Promise.all(promises)
+
+      // 清除所有文章列表缓存
+      await fetch('/api/revalidate?tag=all-posts', { method: 'POST' })
+
+      if (failCount === 0) {
+        toast.success(`成功刷新 ${successCount} 篇文章的缓存`)
+      } else {
+        toast.warning(`刷新完成：成功 ${successCount} 篇，失败 ${failCount} 篇`)
+      }
+    } catch (error) {
+      console.error('Error batch revalidating cache:', error)
+      toast.error('批量刷新缓存失败')
+    }
+  }
+
   // 检查文章是否在冷却期内（24小时内处理过）
   const isInCooldown = (aiRewriteAt: string | null): boolean => {
     if (!aiRewriteAt) return false
@@ -389,7 +466,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
               {/* Filters and Search */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
@@ -417,6 +494,20 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   >
                     草稿
                   </button>
+                  
+                  {/* 批量刷新缓存按钮 */}
+                  {articles.some((article) => article.published) && (
+                    <button
+                      onClick={handleBatchRevalidateCache}
+                      className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium flex items-center gap-2"
+                      title="刷新当前页面所有已发布文章的缓存"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      刷新缓存
+                    </button>
+                  )}
                 </div>
 
                 <select
@@ -668,17 +759,28 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                               </svg>
                             </Link>
                             {article.published && (
-                              <Link
-                                href={`/${article.slug}`}
-                                target="_blank"
-                                className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                title="查看文章"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </Link>
+                              <>
+                                <Link
+                                  href={`/${article.slug}`}
+                                  target="_blank"
+                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                  title="查看文章"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                </Link>
+                                <button
+                                  onClick={() => handleRevalidateCache(article.slug, article.title)}
+                                  className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                  title="刷新缓存"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                </button>
+                              </>
                             )}
                             <button
                               onClick={() => handleDelete(article.id)}

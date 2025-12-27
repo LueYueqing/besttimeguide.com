@@ -22,3 +22,5 @@ CREATE INDEX "article_feedbacks_createdAt_idx" ON "article_feedbacks"("createdAt
 -- AddForeignKey
 ALTER TABLE "article_feedbacks" ADD CONSTRAINT "article_feedbacks_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "articles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+
+

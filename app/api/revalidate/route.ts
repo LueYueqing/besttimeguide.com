@@ -34,10 +34,29 @@ async function handleRevalidate(request: NextRequest) {
 
     if (path) {
       // 重新验证特定路径
-      revalidatePath(path, 'page')
-      // 同时清除该路径的布局缓存
-      revalidatePath(path, 'layout')
-      console.log(`[Revalidate] Revalidated path: ${path}`)
+      // 注意：对于动态路由 [slug]，revalidatePath 可能不会立即生效
+      // 如果设置了 revalidate = false，建议优先使用 revalidateTag
+      try {
+        revalidatePath(path, 'page')
+        // 同时清除该路径的布局缓存
+        revalidatePath(path, 'layout')
+        console.log(`[Revalidate] Revalidated path: ${path}`)
+      } catch (error) {
+        console.warn(`[Revalidate] Path revalidation may not work for dynamic routes: ${path}`, error)
+      }
+      
+      // 对于动态路由，尝试通过 tag 重新验证（更可靠）
+      // 从路径中提取 slug（例如：/best-time-to-go-to-japan -> best-time-to-go-to-japan）
+      const slug = path.replace(/^\//, '').replace(/\/$/, '')
+      if (slug && !slug.includes('/')) {
+        try {
+          revalidateTag(`article-${slug}`)
+          console.log(`[Revalidate] Also revalidated tag: article-${slug}`)
+        } catch (error) {
+          console.warn(`[Revalidate] Tag revalidation failed for: article-${slug}`, error)
+        }
+      }
+      
       return NextResponse.json({
         revalidated: true,
         path,

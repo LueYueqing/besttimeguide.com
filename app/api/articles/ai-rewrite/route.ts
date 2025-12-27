@@ -198,8 +198,8 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
   return null
 }
 
-async function processArticles() {
-  // 1. 优先寻找已经出字但待补图的“半成品”（阶段 2）
+async function processArticles(): Promise<{ id: number; slug: string; title: string } | null> {
+  // 1. 优先寻找已经出字但待补图的"半成品"（阶段 2）
   let topArticle: any = await prisma.article.findFirst({
     where: {
       aiRewriteStatus: { in: ['pending', 'failed'] },
@@ -221,7 +221,7 @@ async function processArticles() {
     })
   }
 
-  if (!topArticle) return
+  if (!topArticle) return null
 
   const articles = [topArticle]
   for (const item of articles) {
@@ -348,6 +348,9 @@ async function processArticles() {
           where: { id: article.id },
           data: { aiRewriteStatus: 'completed' }
         })
+
+        // 返回处理的文章信息
+        return { id: article.id, slug: article.slug, title: article.title }
       }
     } catch (error: any) {
       console.error(`[AI 处理失败] 标题: ${article.title}, 错误:`, error.message)
@@ -355,8 +358,10 @@ async function processArticles() {
         where: { id: article.id },
         data: { aiRewriteStatus: 'failed' }
       })
+      return { id: article.id, slug: article.slug, title: article.title }
     }
   }
+  return null
 }
 
 export async function GET() {
@@ -373,8 +378,24 @@ async function handleRequest() {
     if (!adminId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
     // 在 Vercel 环境下，必须 await 异步任务，否则函数响应后会被立即冻结
-    await processArticles()
-    return NextResponse.json({ success: true, message: 'Processing completed' })
+    const processedArticle = await processArticles()
+
+    if (!processedArticle) {
+      return NextResponse.json({
+        success: true,
+        message: 'No articles pending processing'
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Processing completed',
+      article: {
+        id: processedArticle.id,
+        slug: processedArticle.slug,
+        title: processedArticle.title
+      }
+    })
   } catch (error: any) {
     console.error('[AI Rewrite API Error]:', error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })

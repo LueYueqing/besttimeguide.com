@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import { AiTriggerWrapper } from '@/components/AiTriggerWrapper'
 import { getPostsByCategory } from '@/lib/blog'
 import { 
   getBestPostsForCurrentSeason, 
@@ -519,6 +520,9 @@ export default async function HomePage() {
         </div>
       </main>
 
+      {/* AI 改写触发器 - 只在2026年3月1日前管理员访问时触发 */}
+      <AiTriggerWrapper />
+      
       <Footer variant="full" />
     </div>
   )

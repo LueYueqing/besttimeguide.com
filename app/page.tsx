@@ -174,7 +174,7 @@ export default async function HomePage() {
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="wikihow-heading wikihow-heading-h3 text-green-800">
-                  {timeInfo.seasonName}最佳
+                  Best for {timeInfo.seasonName}
                 </h3>
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -199,7 +199,7 @@ export default async function HomePage() {
                 </div>
               ) : (
                 <p className="wikihow-text-small text-neutral-600 italic">
-                  暂无{timeInfo.seasonName}推荐内容
+                  No {timeInfo.seasonName} recommendations yet
                 </p>
               )}
             </div>
@@ -208,7 +208,7 @@ export default async function HomePage() {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border-2 border-blue-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="wikihow-heading wikihow-heading-h3 text-blue-800">
-                  {timeInfo.monthName}最佳
+                  Best for {timeInfo.monthName}
                 </h3>
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -233,7 +233,7 @@ export default async function HomePage() {
                 </div>
               ) : (
                 <p className="wikihow-text-small text-neutral-600 italic">
-                  暂无{timeInfo.monthName}推荐内容
+                  No {timeInfo.monthName} recommendations yet
                 </p>
               )}
             </div>
@@ -242,7 +242,7 @@ export default async function HomePage() {
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-2 border-purple-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="wikihow-heading wikihow-heading-h3 text-purple-800">
-                  本周最佳
+                  Best for This Week
                 </h3>
                 <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -267,7 +267,7 @@ export default async function HomePage() {
                 </div>
               ) : (
                 <p className="wikihow-text-small text-neutral-600 italic">
-                  暂无本周推荐内容
+                  No weekly recommendations yet
                 </p>
               )}
             </div>

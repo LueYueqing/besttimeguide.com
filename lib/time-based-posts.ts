@@ -216,25 +216,25 @@ export function getCurrentTimeInfo() {
   const weekNumber = getCurrentWeekNumber()
   
   const seasonNames: Record<string, string> = {
-    spring: '春季',
-    summer: '夏季',
-    autumn: '秋季',
-    winter: '冬季',
+    spring: 'Spring',
+    summer: 'Summer',
+    autumn: 'Autumn',
+    winter: 'Winter',
   }
   
   const monthNames: Record<string, string> = {
-    january: '一月',
-    february: '二月',
-    march: '三月',
-    april: '四月',
-    may: '五月',
-    june: '六月',
-    july: '七月',
-    august: '八月',
-    september: '九月',
-    october: '十月',
-    november: '十一月',
-    december: '十二月',
+    january: 'January',
+    february: 'February',
+    march: 'March',
+    april: 'April',
+    may: 'May',
+    june: 'June',
+    july: 'July',
+    august: 'August',
+    september: 'September',
+    october: 'October',
+    november: 'November',
+    december: 'December',
   }
   
   return {

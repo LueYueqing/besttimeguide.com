@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { useToast } from '@/components/Toast'
@@ -36,6 +37,7 @@ interface Article {
   aiRewriteStatus: string | null
   aiRewriteAt: string | null
   viewCount: number
+  coverImage: string | null
 }
 
 interface ArticlesClientProps {
@@ -588,6 +590,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-20">
+                        缩略图
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                         标题
                       </th>
@@ -662,6 +667,25 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <tbody className="bg-white divide-y divide-neutral-200">
                     {articles.map((article) => (
                       <tr key={article.id} className="hover:bg-neutral-50 relative">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="relative w-16 h-12 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
+                            {article.coverImage ? (
+                              <Image
+                                src={article.coverImage}
+                                alt={article.title}
+                                fill
+                                className="object-cover"
+                                sizes="64px"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                                <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div>

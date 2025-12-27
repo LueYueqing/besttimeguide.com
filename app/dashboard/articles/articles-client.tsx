@@ -590,22 +590,22 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <table className="min-w-full divide-y divide-neutral-200">
                   <thead className="bg-neutral-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-20">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-16">
                         缩略图
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider min-w-[200px]">
                         标题
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-24">
                         分类
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-20">
                         状态
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-28">
                         AI 处理
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-20">
                         <button
                           onClick={() => handleSort('viewCount')}
                           className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
@@ -613,7 +613,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           浏览量
                           {sortField === 'viewCount' && (
                             <svg
-                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              className={`w-3 h-3 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -623,7 +623,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           )}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-28">
                         <button
                           onClick={() => handleSort('publishedAt')}
                           className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
@@ -631,7 +631,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           发布时间
                           {sortField === 'publishedAt' && (
                             <svg
-                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              className={`w-3 h-3 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -641,7 +641,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           )}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-28">
                         <button
                           onClick={() => handleSort('updatedAt')}
                           className="flex items-center gap-1 hover:text-neutral-700 transition-colors"
@@ -649,7 +649,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           更新时间
                           {sortField === 'updatedAt' && (
                             <svg
-                              className={`w-4 h-4 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
+                              className={`w-3 h-3 ${sortOrder === 'asc' ? '' : 'rotate-180'}`}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -659,7 +659,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           )}
                         </button>
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                      <th className="px-3 py-2 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider w-32">
                         操作
                       </th>
                     </tr>
@@ -667,62 +667,62 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                   <tbody className="bg-white divide-y divide-neutral-200">
                     {articles.map((article) => (
                       <tr key={article.id} className="hover:bg-neutral-50 relative">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="relative w-16 h-12 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
+                        <td className="px-2 py-2 whitespace-nowrap">
+                          <div className="relative w-12 h-9 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
                             {article.coverImage ? (
                               <Image
                                 src={article.coverImage}
                                 alt={article.title}
                                 fill
                                 className="object-cover"
-                                sizes="64px"
+                                sizes="48px"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
-                                <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm font-medium text-neutral-900">{article.title}</div>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center min-w-0">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-neutral-900 truncate">{article.title}</div>
                               {article.description && (
-                                <div className="text-sm text-neutral-500 truncate max-w-md">
+                                <div className="text-xs text-neutral-500 truncate max-w-[300px]">
                                   {article.description}
                                 </div>
                               )}
                             </div>
                             {article.featured && (
-                              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                              <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded flex-shrink-0">
                                 精选
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-neutral-600">{article.category.name}</span>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className="text-xs text-neutral-600">{article.category.name}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           {article.published ? (
-                            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                            <span className="px-1.5 py-0.5 text-xs bg-green-100 text-green-800 rounded">
                               已发布
                             </span>
                           ) : (
-                            <span className="px-2 py-1 text-xs bg-neutral-100 text-neutral-800 rounded">
+                            <span className="px-1.5 py-0.5 text-xs bg-neutral-100 text-neutral-800 rounded">
                               草稿
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           {article.aiRewriteStatus ? (
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className={`px-2 py-1 text-xs font-medium rounded-full ${article.aiRewriteStatus === 'completed'
+                                  className={`px-1.5 py-0.5 text-xs font-medium rounded-full ${article.aiRewriteStatus === 'completed'
                                     ? 'bg-green-100 text-green-800'
                                     : article.aiRewriteStatus === 'processing'
                                       ? 'bg-blue-100 text-blue-800'
@@ -745,7 +745,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 {article.aiRewriteStatus === 'failed' && (
                                   <button
                                     onClick={() => handleResetCooldown(article.id)}
-                                    className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                                    className="p-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
                                     title="重置冷却时间并将状态设置为待处理，允许立即重新处理"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -774,24 +774,24 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                             <span className="text-xs text-neutral-400">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                        <td className="px-3 py-2 whitespace-nowrap text-xs text-neutral-600">
                           {article.viewCount}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                        <td className="px-3 py-2 whitespace-nowrap text-xs text-neutral-600">
                           {formatDate(article.publishedAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                        <td className="px-3 py-2 whitespace-nowrap text-xs text-neutral-600">
                           {formatDate(article.updatedAt)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative z-10">
-                          <div className="flex items-center justify-end gap-3 relative z-10">
+                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium relative z-10">
+                          <div className="flex items-center justify-end gap-1.5 relative z-10">
                             <Link
                               href={`/dashboard/articles/${article.id}?${new URLSearchParams({
                                 ...(filter !== 'all' && { filter }),
                                 ...(categoryFilter !== 'all' && { category: categoryFilter }),
                                 ...(currentPage > 1 && { page: currentPage.toString() }),
                               }).toString()}`}
-                              className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors relative z-10"
+                              className="p-1.5 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors relative z-10"
                               title="编辑文章"
                               onClick={(e) => e.stopPropagation()}
                             >
@@ -804,7 +804,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 <Link
                                   href={`/${article.slug}`}
                                   target="_blank"
-                                  className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors relative z-10"
+                                  className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors relative z-10"
                                   title="查看文章"
                                   onClick={(e) => e.stopPropagation()}
                                 >
@@ -818,7 +818,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                     e.stopPropagation()
                                     handleRevalidateCache(article.slug, article.title)
                                   }}
-                                  className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors relative z-10"
+                                  className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors relative z-10"
                                   title="刷新缓存"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -832,7 +832,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                 e.stopPropagation()
                                 handleDelete(article.id)
                               }}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors relative z-10"
+                              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors relative z-10"
                               title="删除文章"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

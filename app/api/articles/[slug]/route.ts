@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import sharp from 'sharp'
@@ -271,35 +272,38 @@ export async function PUT(
     // 触发页面重新生成（如果文章已发布）
     if (article.published) {
       try {
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-        const secret = process.env.REVALIDATE_SECRET || ''
-        
         // 如果 slug 改变了，需要清除旧 slug 的缓存
         if (slug && slug !== existing.slug) {
           console.log(`[Article Update] Slug changed from ${existing.slug} to ${slug}, clearing old cache`)
           
-          // 清除旧 slug 的缓存
-          const oldPathUrl = `${baseUrl}/api/revalidate?path=/${existing.slug}&secret=${secret}`
-          await fetch(oldPathUrl, { method: 'POST' }).catch(() => {})
-          
-          const oldTagUrl = `${baseUrl}/api/revalidate?tag=article-${existing.slug}&secret=${secret}`
-          await fetch(oldTagUrl, { method: 'POST' }).catch(() => {})
+          // 直接调用 revalidateTag 清除旧 slug 的缓存（更可靠）
+          try {
+            revalidateTag(`article-${existing.slug}`)
+            revalidatePath(`/${existing.slug}`, 'page')
+            console.log(`[Article Update] Cleared old slug cache: ${existing.slug}`)
+          } catch (error) {
+            console.warn(`[Article Update] Error clearing old slug cache:`, error)
+          }
         }
         
-        // 方法1: 通过路径重新验证（新 slug）
-        const revalidateUrl = `${baseUrl}/api/revalidate?path=/${article.slug}&secret=${secret}`
-        await fetch(revalidateUrl, { method: 'POST' })
-
-        // 方法2: 通过 cache tag 重新验证（更精确，新 slug）
-        const tagUrl = `${baseUrl}/api/revalidate?tag=article-${article.slug}&secret=${secret}`
-        await fetch(tagUrl, { method: 'POST' })
-
-        // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
-        const allPostsUrl = `${baseUrl}/api/revalidate?tag=all-posts&secret=${secret}`
-        await fetch(allPostsUrl, { method: 'POST' })
-
-        // 等待一小段时间，确保缓存刷新完成
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // 直接调用 revalidateTag 清除缓存（比 HTTP 调用更可靠、更快）
+        revalidateTag(`article-${article.slug}`)
+        revalidatePath(`/${article.slug}`, 'page')
+        revalidatePath(`/${article.slug}`, 'layout')
+        
+        // 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
+        revalidateTag('all-posts')
+        
+        // 同时通过 HTTP 调用作为备用（确保 CDN 等也能刷新）
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        const secret = process.env.REVALIDATE_SECRET || ''
+        
+        // 异步调用 HTTP revalidate（不等待，作为备用）
+        Promise.all([
+          fetch(`${baseUrl}/api/revalidate?path=/${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => {}),
+          fetch(`${baseUrl}/api/revalidate?tag=article-${article.slug}&secret=${secret}`, { method: 'POST' }).catch(() => {}),
+          fetch(`${baseUrl}/api/revalidate?tag=all-posts&secret=${secret}`, { method: 'POST' }).catch(() => {}),
+        ]).catch(() => {})
 
         console.log(`[Article Update] Revalidated page: /${article.slug}`)
       } catch (revalidateError) {

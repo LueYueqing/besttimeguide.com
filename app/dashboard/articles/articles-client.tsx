@@ -93,6 +93,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [quickCreateTitles, setQuickCreateTitles] = useState('')
   const [quickCreateCategory, setQuickCreateCategory] = useState<string>('')
+  const [quickCreateMode, setQuickCreateMode] = useState<'manual' | 'ai-rewrite' | 'ai-generate'>('manual')
   const [quickCreateLoading, setQuickCreateLoading] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
@@ -398,6 +399,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         body: JSON.stringify({
           titles,
           categoryId: parseInt(quickCreateCategory, 10),
+          articleMode: quickCreateMode,
         }),
       })
 
@@ -408,6 +410,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
         setShowQuickCreateModal(false)
         setQuickCreateTitles('')
         setQuickCreateCategory('')
+        setQuickCreateMode('manual')
         fetchArticles() // 刷新列表
       } else {
         toast.error('创建失败：' + data.error)
@@ -985,9 +988,38 @@ Best Time to Visit Thailand`}
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  文章模式
+                </label>
+                <select
+                  value={quickCreateMode}
+                  onChange={(e) => setQuickCreateMode(e.target.value as 'manual' | 'ai-rewrite' | 'ai-generate')}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="manual">手动编辑</option>
+                  <option value="ai-rewrite">AI 改写（从参考内容）</option>
+                  <option value="ai-generate">AI 生成（从标题）</option>
+                </select>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {quickCreateMode === 'manual' && '创建后需要手动编辑内容'}
+                  {quickCreateMode === 'ai-rewrite' && '创建后需要在编辑页面提供参考内容，然后使用 AI 改写'}
+                  {quickCreateMode === 'ai-generate' && '创建后可以在编辑页面直接使用 AI 生成完整文章和配图'}
+                </p>
+              </div>
+
               <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                 <p className="text-sm text-blue-800">
-                  <strong>提示：</strong>提交后将自动创建多篇文章，系统会自动生成 slug。创建的文章将作为草稿保存，您可以在编辑页面完善内容。
+                  <strong>提示：</strong>提交后将自动创建多篇文章，系统会自动生成 slug。创建的文章将作为草稿保存。
+                  {quickCreateMode === 'ai-generate' && (
+                    <span className="block mt-1">选择"AI 生成"模式后，创建的文章可以在编辑页面直接使用 AI 生成完整内容和配图。</span>
+                  )}
+                  {quickCreateMode === 'ai-rewrite' && (
+                    <span className="block mt-1">选择"AI 改写"模式后，创建的文章需要在编辑页面提供参考内容，然后使用 AI 改写功能。</span>
+                  )}
+                  {quickCreateMode === 'manual' && (
+                    <span className="block mt-1">选择"手动编辑"模式后，您可以在编辑页面手动完善内容。</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -999,6 +1031,7 @@ Best Time to Visit Thailand`}
                   setShowQuickCreateModal(false)
                   setQuickCreateTitles('')
                   setQuickCreateCategory('')
+                  setQuickCreateMode('manual')
                 }}
                 className="px-4 py-2 text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors font-medium"
                 disabled={quickCreateLoading}

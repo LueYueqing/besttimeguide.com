@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { titles, categoryId } = body
+    const { titles, categoryId, articleMode } = body
 
     // 验证必填字段
     if (!titles || !Array.isArray(titles) || titles.length === 0) {
@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
             title,
             slug,
             description: null,
-            content: `# ${title}\n\n<!-- 请在此处填写文章内容 -->`,
+            content: articleMode === 'ai-generate' 
+              ? '' // AI 生成模式，内容为空，等待 AI 生成
+              : `# ${title}\n\n<!-- 请在此处填写文章内容 -->`,
             categoryId: parseInt(categoryId, 10),
             authorId: adminId,
             metaTitle: null,
@@ -123,7 +125,8 @@ export async function POST(request: NextRequest) {
             publishedAt: null,
             readingTime: null,
             sourceContent: null,
-            aiRewriteStatus: null,
+            articleMode: articleMode || 'manual', // 支持指定文章模式
+            aiRewriteStatus: articleMode === 'ai-generate' ? 'pending' : null, // AI 生成模式设置为 pending
             aiRewriteAt: null,
           },
           include: {

@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { Readable } from 'stream'
+import sharp from 'sharp'
 
 // 优先使用 CDN_BASE_URL，如果未设置则回退到 CLOUDFLARE_R2_PUBLIC_URL
 const R2_PUBLIC_URL = process.env.CDN_BASE_URL || process.env.CLOUDFLARE_R2_PUBLIC_URL
@@ -185,6 +186,25 @@ export async function uploadImageToR2(
     // 下载图片
     console.log(`[R2] Downloading image ${index + 1}: ${imageUrl}`)
     const imageBuffer = await downloadImage(imageUrl)
+
+    // 获取图片信息（尺寸和文件大小）
+    let imageInfo: { width?: number; height?: number; size: number; format?: string } = {
+      size: imageBuffer.length,
+    }
+
+    try {
+      const metadata = await sharp(imageBuffer).metadata()
+      imageInfo = {
+        width: metadata.width,
+        height: metadata.height,
+        size: imageBuffer.length,
+        format: metadata.format,
+      }
+      console.log(`[R2] Image ${index + 1} info: ${imageInfo.width}x${imageInfo.height}, ${(imageInfo.size / 1024).toFixed(2)} KB, format: ${imageInfo.format}`)
+    } catch (error) {
+      // 如果 sharp 无法处理（可能是 SVG 或其他格式），只记录文件大小
+      console.log(`[R2] Image ${index + 1} size: ${(imageInfo.size / 1024).toFixed(2)} KB (could not read dimensions)`)
+    }
 
     // 生成文件名和路径（基于文章slug，SEO友好）
     const fileName = generateFileName(articleSlug || null, alt, imageUrl, index)

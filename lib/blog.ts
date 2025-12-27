@@ -15,6 +15,7 @@ export interface BlogPost {
   content: string
   readingTime: number
   featured?: boolean
+  coverImage?: string | null
 }
 
 // 计算阅读时间（基于平均阅读速度200字/分钟）
@@ -67,6 +68,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
           content: article.content,
           readingTime: article.readingTime || calculateReadingTime(article.content),
           featured: article.featured,
+          coverImage: article.coverImage,
         }))
       },
       ['all-posts'],
@@ -123,6 +125,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
       content: article.content,
       readingTime: article.readingTime || calculateReadingTime(article.content),
       featured: article.featured,
+      coverImage: article.coverImage,
     }
   } catch (error: any) {
     // 检查是否是数据库连接错误
@@ -178,6 +181,7 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
       content: article.content,
       readingTime: article.readingTime || calculateReadingTime(article.content),
       featured: article.featured,
+      coverImage: article.coverImage,
     }))
   } catch (error) {
     console.error(`Error fetching posts by category ${categorySlug}:`, error)
@@ -219,6 +223,7 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
         content: article.content,
         readingTime: article.readingTime || calculateReadingTime(article.content),
         featured: article.featured,
+        coverImage: article.coverImage,
       }))
   } catch (error) {
     console.error(`Error fetching posts by tag ${tag}:`, error)

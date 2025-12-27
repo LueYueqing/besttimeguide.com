@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import { getPostsByCategory } from '@/lib/blog'
 
 export const metadata: Metadata = {
   title: 'BestTimeGuide - Find the Best Time for Everything',
@@ -64,29 +66,13 @@ const browseCategories = [
   { name: 'Lifestyle', href: '/category/lifestyle', count: '70+' },
 ]
 
-// Featured guides by category
-const featuredByCategory = {
-  travel: [
-    { title: 'Best Time to Visit Japan', href: '/best-time-to-visit-japan' },
-    { title: 'Best Time to Visit Hawaii', href: '/best-time-to-visit-hawaii' },
-    { title: 'Best Time to Visit Iceland', href: '/best-time-to-visit-iceland' },
-    { title: 'Best Time to Visit Thailand', href: '/best-time-to-visit-thailand' },
-  ],
-  socialMedia: [
-    { title: 'Best Time to Post on Instagram', href: '/best-time-to-post-on-instagram' },
-    { title: 'Best Time to Post on TikTok', href: '/best-time-to-post-on-tiktok' },
-    { title: 'Best Time to Post on Facebook', href: '/best-time-to-post-on-facebook' },
-    { title: 'Best Time to Post on LinkedIn', href: '/best-time-to-post-on-linkedin' },
-  ],
-  health: [
-    { title: 'Best Time to Take Creatine', href: '/best-time-to-take-creatine' },
-    { title: 'Best Time to Take Vitamin D', href: '/best-time-to-take-vitamin-d' },
-    { title: 'Best Time to Take Magnesium', href: '/best-time-to-take-magnesium' },
-    { title: 'Best Time to Take Probiotics', href: '/best-time-to-take-probiotics' },
-  ],
-}
-
-export default function HomePage() {
+export default async function HomePage() {
+  // 从数据库获取各分类的文章
+  const [travelPosts, socialMediaPosts, healthPosts] = await Promise.all([
+    getPostsByCategory('travel').then((posts) => posts.slice(0, 4)),
+    getPostsByCategory('social-media').then((posts) => posts.slice(0, 4)),
+    getPostsByCategory('health').then((posts) => posts.slice(0, 4)),
+  ])
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -198,18 +184,42 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {featuredByCategory.travel.map((guide) => (
+                {travelPosts.map((post) => (
                   <Link
-                    key={guide.href}
-                    href={guide.href}
-                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                    key={post.slug}
+                    href={`/${post.slug}`}
+                    className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
-                      {guide.title}
-                    </h3>
-                    <p className="wikihow-text wikihow-text-small">
-                      Discover the best months, weather, prices, and crowds for your perfect trip.
-                    </p>
+                    <div className="relative w-full h-48 bg-neutral-100">
+                      {post.coverImage ? (
+                        <Image
+                          src={post.coverImage}
+                          alt={post.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                          <div className="text-neutral-400 text-center px-4">
+                            <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-xs">封面图待添加</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      {post.description && (
+                        <p className="wikihow-text wikihow-text-small line-clamp-2">
+                          {post.description}
+                        </p>
+                      )}
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -224,18 +234,42 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {featuredByCategory.socialMedia.map((guide) => (
+                {socialMediaPosts.map((post) => (
                   <Link
-                    key={guide.href}
-                    href={guide.href}
-                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                    key={post.slug}
+                    href={`/${post.slug}`}
+                    className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
-                      {guide.title}
-                    </h3>
-                    <p className="wikihow-text wikihow-text-small">
-                      Learn the optimal posting times for maximum engagement and reach.
-                    </p>
+                    <div className="relative w-full h-48 bg-neutral-100">
+                      {post.coverImage ? (
+                        <Image
+                          src={post.coverImage}
+                          alt={post.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                          <div className="text-neutral-400 text-center px-4">
+                            <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-xs">封面图待添加</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      {post.description && (
+                        <p className="wikihow-text wikihow-text-small line-clamp-2">
+                          {post.description}
+                        </p>
+                      )}
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -250,18 +284,42 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {featuredByCategory.health.map((guide) => (
+                {healthPosts.map((post) => (
                   <Link
-                    key={guide.href}
-                    href={guide.href}
-                    className="group wikihow-card hover:border-wikihow-green-400 transition-all"
+                    key={post.slug}
+                    href={`/${post.slug}`}
+                    className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors">
-                      {guide.title}
-                    </h3>
-                    <p className="wikihow-text wikihow-text-small">
-                      Find the best time to take supplements for optimal effectiveness.
-                    </p>
+                    <div className="relative w-full h-48 bg-neutral-100">
+                      {post.coverImage ? (
+                        <Image
+                          src={post.coverImage}
+                          alt={post.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                          <div className="text-neutral-400 text-center px-4">
+                            <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p className="text-xs">封面图待添加</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="wikihow-heading wikihow-heading-h3 mb-2 wikihow-link-standard group-hover:text-wikihow-linkHover transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      {post.description && (
+                        <p className="wikihow-text wikihow-text-small line-clamp-2">
+                          {post.description}
+                        </p>
+                      )}
+                    </div>
                   </Link>
                 ))}
               </div>

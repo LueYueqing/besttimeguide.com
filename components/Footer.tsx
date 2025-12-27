@@ -17,7 +17,7 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <Image
-                  src="/images/logo-quart.png"
+                  src="/logo.png"
                   alt="BestTimeGuide"
                   width={40}
                   height={40}
@@ -115,7 +115,7 @@ export default function Footer({ variant = 'simple' }: FooterProps) {
           <div className="mb-6">
             <div className="flex items-center justify-center gap-3 mb-3">
               <Image
-                src="/images/logo-quart.png"
+                src="/logo.png"
                 alt="BestTimeGuide"
                 width={40}
                 height={40}

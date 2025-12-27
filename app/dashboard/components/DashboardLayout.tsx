@@ -40,7 +40,7 @@ export default function DashboardLayout({ children, title, subtitle, isFullWidth
                     <Link href="/" className="flex items-center gap-2 group">
                         <div className="relative w-8 h-8 transition-transform group-hover:scale-110">
                             <Image
-                                src="/images/logo-quart.png"
+                                src="/logo.png"
                                 alt="Logo"
                                 width={32}
                                 height={32}
@@ -161,4 +161,3 @@ export default function DashboardLayout({ children, title, subtitle, isFullWidth
         </div>
     )
 }
-

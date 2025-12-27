@@ -91,7 +91,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 动态页面：从数据库获取文章
   let articlePages: MetadataRoute.Sitemap = []
   try {
-    // 从数据库获取已发布的文章
+    // 从数据库获取最近100条已发布的文章
+    // 限制数量以优化性能和sitemap文件大小
     const { getAllPosts } = await import('@/lib/blog')
     const posts = await getAllPosts()
     articlePages = posts.map((post) => ({
@@ -108,4 +109,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 合并所有页面
   return [...staticPages, ...articlePages]
 }
-

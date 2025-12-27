@@ -18,6 +18,8 @@
     "analyze-features": "node scripts/analyze-feature-opportunities.js",
     "seed-articles": "tsx scripts/seed-articles.ts",
     "seed-keywords": "tsx scripts/seed-keyword-articles.ts",
+    "submit-sitemap": "node scripts/submit-sitemap-to-indexnow.js",
+    "submit-article": "node scripts/submit-article-to-indexnow.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {

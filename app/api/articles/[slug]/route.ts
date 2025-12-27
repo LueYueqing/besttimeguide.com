@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import sharp from 'sharp'
 import { downloadImage, uploadBufferToR2 } from '@/lib/r2'
+import { submitToIndexNow } from '@/lib/indexnow'
 
 const prisma = new PrismaClient()
 
@@ -280,7 +281,7 @@ export async function PUT(
 
           // 直接调用 revalidateTag 清除旧 slug 的缓存（更可靠）
           try {
-            revalidateTag(`article-${existing.slug}`)
+            revalidateTag(`article-${existing.slug}` as string)
             revalidatePath(`/${existing.slug}`, 'page')
             console.log(`[Article Update] Cleared old slug cache: ${existing.slug}`)
           } catch (error) {
@@ -289,7 +290,7 @@ export async function PUT(
         }
 
         // 直接调用 revalidateTag 清除缓存（比 HTTP 调用更可靠、更快）
-        revalidateTag(`article-${article.slug}`)
+        revalidateTag(`article-${article.slug}` as string)
         revalidatePath(`/${article.slug}`, 'page')
         revalidatePath(`/${article.slug}`, 'layout')
 
@@ -308,6 +309,25 @@ export async function PUT(
         ]).catch(() => { })
 
         console.log(`[Article Update] Revalidated page: /${article.slug}`)
+
+        // 如果文章从未发布变为发布，自动提交到 IndexNow
+        if (!existing.published && article.published) {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+          const articleUrl = `${siteUrl}/${article.slug}`
+          
+          console.log(`[Article Update] Submitting newly published article to IndexNow: ${articleUrl}`)
+          
+          // 异步提交，不阻塞响应
+          submitToIndexNow(articleUrl).then((result) => {
+            if (result.success) {
+              console.log(`[Article Update] Successfully submitted to IndexNow: ${articleUrl}`)
+            } else {
+              console.warn(`[Article Update] Failed to submit to IndexNow: ${result.error}`)
+            }
+          }).catch((error) => {
+            console.warn(`[Article Update] Error submitting to IndexNow:`, error)
+          })
+        }
       } catch (revalidateError) {
         console.error('[Article Update] Error revalidating page:', revalidateError)
         // 不阻止更新，即使 revalidate 失败

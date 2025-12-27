@@ -37,7 +37,7 @@ function parseTags(tags: string | null | undefined): string[] {
   }
 }
 
-// 获取所有已发布的文章
+// 获取所有已发布的文章（限制最近100条，用于sitemap）
 export async function getAllPosts(): Promise<BlogPost[]> {
   try {
     // 使用 unstable_cache 包装查询，添加 cache tag 便于精确清除缓存
@@ -55,6 +55,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
           orderBy: {
             publishedAt: 'desc',
           },
+          take: 100, // 只获取最近100条，用于sitemap优化
         })
 
         return articles.map((article) => ({

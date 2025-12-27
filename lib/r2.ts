@@ -120,7 +120,7 @@ function generateR2Path(fileName: string): string {
 }
 
 // 下载图片
-async function downloadImage(url: string): Promise<Buffer> {
+export async function downloadImage(url: string): Promise<Buffer> {
   try {
     const response = await fetch(url, {
       headers: {

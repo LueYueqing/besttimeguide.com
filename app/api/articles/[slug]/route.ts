@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
+import sharp from 'sharp'
+import { downloadImage, uploadBufferToR2 } from '@/lib/r2'
 
 const prisma = new PrismaClient()
 
@@ -163,6 +165,54 @@ export async function PUT(
     // 处理tags
     const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : existing.tags
 
+    // 如果没有封面图，尝试从内容中提取第一张图片并生成缩略图
+    let coverImageUrl = existing.coverImage
+    if (!coverImageUrl && content) {
+      try {
+        // 从 Markdown 内容中提取第一张图片 URL
+        const imageRegex = /!\[.*?\]\((.*?)\)/g
+        const matches = Array.from(content.matchAll(imageRegex))
+        
+        if (matches.length > 0) {
+          const firstImageUrl = matches[0][1]
+          
+          // 检查是否是有效的 URL
+          if (firstImageUrl && (firstImageUrl.startsWith('http://') || firstImageUrl.startsWith('https://'))) {
+            try {
+              console.log(`[Article Update] Generating cover image from: ${firstImageUrl}`)
+              
+              // 下载图片
+              const imageBuffer = await downloadImage(firstImageUrl)
+              
+              // 使用 sharp 调整为 375x200
+              const resizedBuffer = await sharp(imageBuffer)
+                .resize(375, 200, {
+                  fit: 'cover',
+                  position: 'center',
+                })
+                .jpeg({ quality: 85 })
+                .toBuffer()
+              
+              // 生成文件名
+              const articleSlug = slug || existing.slug
+              const fileName = `${articleSlug}-cover-375x200.jpg`
+              
+              // 上传到 R2
+              coverImageUrl = await uploadBufferToR2(resizedBuffer, fileName, 'image/jpeg')
+              
+              console.log(`[Article Update] Cover image uploaded: ${coverImageUrl}`)
+            } catch (error) {
+              console.error('[Article Update] Error generating cover image:', error)
+              // 如果生成失败，继续使用原有的 coverImage（null）
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Article Update] Error extracting image from content:', error)
+        // 如果提取失败，继续使用原有的 coverImage
+      }
+    }
+
     // 更新文章
     const updateData: any = {}
     if (title !== undefined) updateData.title = title
@@ -179,6 +229,10 @@ export async function PUT(
     if (tags !== undefined) updateData.tags = tagsJson
     if (featured !== undefined) updateData.featured = featured
     if (sourceContent !== undefined) updateData.sourceContent = sourceContent || null
+    // 如果生成了新的封面图，更新它
+    if (coverImageUrl && coverImageUrl !== existing.coverImage) {
+      updateData.coverImage = coverImageUrl
+    }
     if (published !== undefined) {
       updateData.published = published
       // 如果从未发布变为发布，设置发布时间

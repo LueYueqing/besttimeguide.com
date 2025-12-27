@@ -908,139 +908,137 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
           </div>
         </div>
       )}
-    </div>
 
-    {/* 快捷创建文章弹窗 */ }
-  {
-    showQuickCreateModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowQuickCreateModal(false)}>
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          {/* 头部 */}
-          <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-neutral-900">快捷创建文章</h2>
-            <button
-              onClick={() => setShowQuickCreateModal(false)}
-              className="text-neutral-400 hover:text-neutral-600 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      {showQuickCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowQuickCreateModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* 头部 */}
+            <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">快捷创建文章</h2>
+              <button
+                onClick={() => setShowQuickCreateModal(false)}
+                className="text-neutral-400 hover:text-neutral-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          {/* 内容 */}
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                文章标题 <span className="text-neutral-500">(每行一个或逗号分隔)</span>
-              </label>
-              <textarea
-                value={quickCreateTitles}
-                onChange={(e) => setQuickCreateTitles(e.target.value)}
-                placeholder={`请输入文章标题，每行一个或使用逗号分隔
+            {/* 内容 */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  文章标题 <span className="text-neutral-500">(每行一个或逗号分隔)</span>
+                </label>
+                <textarea
+                  value={quickCreateTitles}
+                  onChange={(e) => setQuickCreateTitles(e.target.value)}
+                  placeholder={`请输入文章标题，每行一个或使用逗号分隔
 例如：
 Best Time to Visit Japan
 Best Time to Visit Korea
 Best Time to Visit Thailand`}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
-                rows={8}
-              />
-              <p className="mt-1 text-xs text-neutral-500">
-                已输入 {quickCreateTitles.split(/[\n,，]/).filter(t => t.trim().length > 0).length} 个标题
-              </p>
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                  rows={8}
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  已输入 {quickCreateTitles.split(/[\n,，]/).filter(t => t.trim().length > 0).length} 个标题
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  分类 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={quickCreateCategory}
+                  onChange={(e) => setQuickCreateCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">请选择分类</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  文章模式
+                </label>
+                <select
+                  value={quickCreateMode}
+                  onChange={(e) => setQuickCreateMode(e.target.value as 'manual' | 'ai-rewrite' | 'ai-generate')}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="manual">手动编辑</option>
+                  <option value="ai-rewrite">AI 改写（从参考内容）</option>
+                  <option value="ai-generate">AI 生成（从标题）</option>
+                </select>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {quickCreateMode === 'manual' && '创建后需要手动编辑内容'}
+                  {quickCreateMode === 'ai-rewrite' && '创建后需要在编辑页面提供参考内容，然后使用 AI 改写'}
+                  {quickCreateMode === 'ai-generate' && '创建后可以在编辑页面直接使用 AI 生成完整文章和配图'}
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <p className="text-sm text-blue-800">
+                  <strong>提示：</strong>提交后将自动创建多篇文章，系统会自动生成 slug。创建的文章将作为草稿保存。
+                  {quickCreateMode === 'ai-generate' && (
+                    <span className="block mt-1">选择"AI 生成"模式后，创建的文章可以在编辑页面直接使用 AI 生成完整内容和配图。</span>
+                  )}
+                  {quickCreateMode === 'ai-rewrite' && (
+                    <span className="block mt-1">选择"AI 改写"模式后，创建的文章需要在编辑页面提供参考内容，然后使用 AI 改写功能。</span>
+                  )}
+                  {quickCreateMode === 'manual' && (
+                    <span className="block mt-1">选择"手动编辑"模式后，您可以在编辑页面手动完善内容。</span>
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                分类 <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={quickCreateCategory}
-                onChange={(e) => setQuickCreateCategory(e.target.value)}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            {/* 底部按钮 */}
+            <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowQuickCreateModal(false)
+                  setQuickCreateTitles('')
+                  setQuickCreateCategory('')
+                  setQuickCreateMode('manual')
+                }}
+                className="px-4 py-2 text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors font-medium"
+                disabled={quickCreateLoading}
               >
-                <option value="">请选择分类</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id.toString()}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                文章模式
-              </label>
-              <select
-                value={quickCreateMode}
-                onChange={(e) => setQuickCreateMode(e.target.value as 'manual' | 'ai-rewrite' | 'ai-generate')}
-                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                取消
+              </button>
+              <button
+                onClick={handleQuickCreate}
+                disabled={quickCreateLoading || !quickCreateTitles.trim() || !quickCreateCategory}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <option value="manual">手动编辑</option>
-                <option value="ai-rewrite">AI 改写（从参考内容）</option>
-                <option value="ai-generate">AI 生成（从标题）</option>
-              </select>
-              <p className="mt-1 text-xs text-neutral-500">
-                {quickCreateMode === 'manual' && '创建后需要手动编辑内容'}
-                {quickCreateMode === 'ai-rewrite' && '创建后需要在编辑页面提供参考内容，然后使用 AI 改写'}
-                {quickCreateMode === 'ai-generate' && '创建后可以在编辑页面直接使用 AI 生成完整文章和配图'}
-              </p>
+                {quickCreateLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    创建中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    创建文章
+                  </>
+                )}
+              </button>
             </div>
-
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <p className="text-sm text-blue-800">
-                <strong>提示：</strong>提交后将自动创建多篇文章，系统会自动生成 slug。创建的文章将作为草稿保存。
-                {quickCreateMode === 'ai-generate' && (
-                  <span className="block mt-1">选择"AI 生成"模式后，创建的文章可以在编辑页面直接使用 AI 生成完整内容和配图。</span>
-                )}
-                {quickCreateMode === 'ai-rewrite' && (
-                  <span className="block mt-1">选择"AI 改写"模式后，创建的文章需要在编辑页面提供参考内容，然后使用 AI 改写功能。</span>
-                )}
-                {quickCreateMode === 'manual' && (
-                  <span className="block mt-1">选择"手动编辑"模式后，您可以在编辑页面手动完善内容。</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* 底部按钮 */}
-          <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-6 py-4 flex items-center justify-end gap-3">
-            <button
-              onClick={() => {
-                setShowQuickCreateModal(false)
-                setQuickCreateTitles('')
-                setQuickCreateCategory('')
-                setQuickCreateMode('manual')
-              }}
-              className="px-4 py-2 text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors font-medium"
-              disabled={quickCreateLoading}
-            >
-              取消
-            </button>
-            <button
-              onClick={handleQuickCreate}
-              disabled={quickCreateLoading || !quickCreateTitles.trim() || !quickCreateCategory}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {quickCreateLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  创建中...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  创建文章
-                </>
-              )}
-            </button>
           </div>
         </div>
       )}
-      </DashboardLayout>
-    )
-  }
+    </DashboardLayout>
+  )
+}
 

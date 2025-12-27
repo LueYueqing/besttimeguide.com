@@ -88,13 +88,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Category not found' }, { status: 400 })
     }
 
+    // 获取虚拟用户 ID 列表
+    const virtualUsers = await prisma.user.findMany({
+      where: {
+        email: {
+          contains: 'virtual_user_',
+          endsWith: '@besttimeguide.com'
+        }
+      },
+      select: { id: true }
+    })
+    const virtualUserIds = virtualUsers.map(u => u.id)
+
     const results = []
     const errors = []
 
     // 批量创建文章
     for (let i = 0; i < titles.length; i++) {
       const title = titles[i].trim()
-      
+
       if (!title || title.length === 0) {
         errors.push({ index: i, title, error: 'Title is empty' })
         continue
@@ -105,17 +117,22 @@ export async function POST(request: NextRequest) {
         const baseSlug = generateSlug(title)
         const slug = await ensureUniqueSlug(baseSlug)
 
+        // 随机选择一个作者
+        const authorId = virtualUserIds.length > 0
+          ? virtualUserIds[Math.floor(Math.random() * virtualUserIds.length)]
+          : adminId
+
         // 创建文章（作为草稿）
         const article = await prisma.article.create({
           data: {
             title,
             slug,
             description: null,
-            content: articleMode === 'ai-generate' 
+            content: articleMode === 'ai-generate'
               ? '' // AI 生成模式，内容为空，等待 AI 生成
               : `# ${title}\n\n<!-- 请在此处填写文章内容 -->`,
             categoryId: parseInt(categoryId, 10),
-            authorId: adminId,
+            authorId,
             metaTitle: null,
             metaDescription: null,
             keywords: null,
@@ -173,4 +190,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

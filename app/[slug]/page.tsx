@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 import ShareButtons from '../../components/ShareButtons'
@@ -292,23 +293,47 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               {relatedPosts.length > 0 && (
                 <div className="border-t border-neutral-200 pt-8">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">Related Articles</h2>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {relatedPosts.map((relatedPost) => (
                       <Link
                         key={relatedPost.slug}
                         href={`/${relatedPost.slug}`}
-                        className="group border border-neutral-200 rounded-lg p-4 hover:shadow-lg transition-all hover:border-primary-300"
+                        className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-primary-300 transition-all"
                       >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded font-medium">
-                            {relatedPost.category}
-                          </span>
-                          <span className="text-neutral-500 text-xs">{relatedPost.readingTime} min read</span>
+                        <div className="relative w-full h-48 bg-neutral-100">
+                          {relatedPost.coverImage ? (
+                            <Image
+                              src={relatedPost.coverImage}
+                              alt={relatedPost.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
+                              <div className="text-neutral-400 text-center px-4">
+                                <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p className="text-xs">封面图待添加</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors">
-                          {relatedPost.title}
-                        </h3>
-                        <p className="text-neutral-600 text-sm line-clamp-2">{relatedPost.description}</p>
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded font-medium">
+                              {relatedPost.category}
+                            </span>
+                            <span className="text-neutral-500 text-xs">{relatedPost.readingTime} min read</span>
+                          </div>
+                          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
+                            {relatedPost.title}
+                          </h3>
+                          {relatedPost.description && (
+                            <p className="text-neutral-600 text-sm line-clamp-2">{relatedPost.description}</p>
+                          )}
+                        </div>
                       </Link>
                     ))}
                   </div>

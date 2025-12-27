@@ -336,11 +336,19 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
   for (const query of searchSequences) {
     if (!query || query.length < 3) continue
 
+    console.log(`[Image Search] Attempting search with query: "${query}"`)
+
     const unsplashUrl = await searchImageFromUnsplash(query)
-    if (unsplashUrl) return unsplashUrl
+    if (unsplashUrl) {
+      console.log(`[Image Search] Found image on Unsplash for query: "${query}"`)
+      return unsplashUrl
+    }
 
     const pexelsUrl = await searchImageFromPexels(query)
-    if (pexelsUrl) return pexelsUrl
+    if (pexelsUrl) {
+      console.log(`[Image Search] Found image on Pexels for query: "${query}"`)
+      return pexelsUrl
+    }
   }
 
   return null
@@ -478,6 +486,9 @@ export async function GET(request: NextRequest) {
             .replace('{categoryName}', article.category.name)
 
           const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          console.log(`[AI Processor] Calling AI (mode: generate, model: ${model}) for: ${article.title}`)
+          console.log(`[AI Prompt] System: ${prompt.substring(0, 500)}${prompt.length > 500 ? '...' : ''}`)
+
           const completion = await aiClient.chat.completions.create({
             model,
             messages: [
@@ -489,6 +500,10 @@ export async function GET(request: NextRequest) {
           })
 
           let generatedContent = completion.choices[0]?.message?.content || ''
+          console.log(`[AI Raw Response] Length: ${generatedContent.length} chars`)
+          if (generatedContent) {
+            console.log(`[AI Raw Response] Preview: ${generatedContent.substring(0, 500)}${generatedContent.length > 500 ? '...' : ''}`)
+          }
           if (!generatedContent) throw new Error('AI returned empty content')
 
           // 处理图片占位符
@@ -559,6 +574,9 @@ export async function GET(request: NextRequest) {
           }
 
           const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          console.log(`[AI Processor] Calling AI (mode: rewrite, model: ${model}) for: ${article.title}`)
+          console.log(`[AI Prompt] System: ${enhancedPrompt.substring(0, 500)}${enhancedPrompt.length > 500 ? '...' : ''}`)
+
           const completion = await aiClient.chat.completions.create({
             model,
             messages: [
@@ -570,6 +588,10 @@ export async function GET(request: NextRequest) {
           })
 
           rewrittenContent = completion.choices[0]?.message?.content || ''
+          console.log(`[AI Raw Response] Length: ${rewrittenContent.length} chars`)
+          if (rewrittenContent) {
+            console.log(`[AI Raw Response] Preview: ${rewrittenContent.substring(0, 500)}${rewrittenContent.length > 500 ? '...' : ''}`)
+          }
           if (!rewrittenContent) throw new Error('AI returned empty content')
 
           if (updatedImages.length > 0) {
@@ -823,6 +845,9 @@ export async function POST(request: NextRequest) {
             .replace('{categoryName}', article.category.name)
 
           const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          console.log(`[AI Processor] Calling AI (mode: generate, model: ${model}) for: ${article.title}`)
+          console.log(`[AI Prompt] System: ${prompt.substring(0, 500)}${prompt.length > 500 ? '...' : ''}`)
+
           const completion = await aiClient.chat.completions.create({
             model,
             messages: [
@@ -834,6 +859,10 @@ export async function POST(request: NextRequest) {
           })
 
           let generatedContent = completion.choices[0]?.message?.content || ''
+          console.log(`[AI Raw Response] Length: ${generatedContent.length} chars`)
+          if (generatedContent) {
+            console.log(`[AI Raw Response] Preview: ${generatedContent.substring(0, 500)}${generatedContent.length > 500 ? '...' : ''}`)
+          }
           if (!generatedContent) throw new Error('AI returned empty content')
 
           // 处理图片占位符
@@ -903,6 +932,9 @@ export async function POST(request: NextRequest) {
           }
 
           const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          console.log(`[AI Processor] Calling AI (mode: rewrite, model: ${model}) for: ${article.title}`)
+          console.log(`[AI Prompt] System: ${enhancedPrompt.substring(0, 500)}${enhancedPrompt.length > 500 ? '...' : ''}`)
+
           const completion = await aiClient.chat.completions.create({
             model,
             messages: [
@@ -914,6 +946,10 @@ export async function POST(request: NextRequest) {
           })
 
           rewrittenContent = completion.choices[0]?.message?.content || ''
+          console.log(`[AI Raw Response] Length: ${rewrittenContent.length} chars`)
+          if (rewrittenContent) {
+            console.log(`[AI Raw Response] Preview: ${rewrittenContent.substring(0, 500)}${rewrittenContent.length > 500 ? '...' : ''}`)
+          }
           if (!rewrittenContent) throw new Error('AI returned empty content')
 
           if (updatedImages.length > 0) {

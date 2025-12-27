@@ -339,7 +339,8 @@ export async function GET(request: NextRequest) {
             console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
 
             const uploadResults = await uploadImagesToR2(
-              images.map((img) => ({ url: img.url, alt: img.alt }))
+              images.map((img) => ({ url: img.url, alt: img.alt })),
+              article.slug
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)
@@ -683,7 +684,8 @@ export async function POST(request: NextRequest) {
             console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
 
             const uploadResults = await uploadImagesToR2(
-              images.map((img) => ({ url: img.url, alt: img.alt }))
+              images.map((img) => ({ url: img.url, alt: img.alt })),
+              article.slug
             )
             uploadResults.forEach((newUrl, oldUrl) => {
               imageUrlMap.set(oldUrl, newUrl)

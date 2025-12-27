@@ -290,7 +290,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       await fetch(pathUrl, { method: 'POST' })
 
       if (tagResponse.ok) {
-        toast.success(`"${title}" 的缓存已刷新`)
+        toast.success(`"${title}" 的缓存已刷新，通常几秒内生效。如未看到更新，请硬刷新浏览器（Ctrl+F5）`)
       } else {
         toast.warning(`"${title}" 的缓存刷新可能未完全生效`)
       }
@@ -344,9 +344,9 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       await fetch('/api/revalidate?tag=all-posts', { method: 'POST' })
 
       if (failCount === 0) {
-        toast.success(`成功刷新 ${successCount} 篇文章的缓存`)
+        toast.success(`成功刷新 ${successCount} 篇文章的缓存，通常几秒内生效。如未看到更新，请硬刷新浏览器（Ctrl+F5）`)
       } else {
-        toast.warning(`刷新完成：成功 ${successCount} 篇，失败 ${failCount} 篇`)
+        toast.warning(`刷新完成：成功 ${successCount} 篇，失败 ${failCount} 篇。如未看到更新，请硬刷新浏览器（Ctrl+F5）`)
       }
     } catch (error) {
       console.error('Error batch revalidating cache:', error)

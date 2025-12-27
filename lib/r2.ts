@@ -29,44 +29,77 @@ const getR2Client = () => {
   }
 }
 
-// 生成文件名（从 alt 文本或 URL 提取）
-function generateFileName(alt: string, url: string, index: number): string {
-  // 尝试从 alt 文本生成文件名
-  let baseName = alt
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // 移除特殊字符
-    .replace(/\s+/g, '-') // 空格替换为连字符
-    .replace(/-+/g, '-') // 多个连字符合并为一个
-    .replace(/^-|-$/g, '') // 移除开头和结尾的连字符
-    .substring(0, 50) // 限制长度
+// 生成文件名（基于文章slug和alt文本，SEO友好）
+function generateFileName(articleSlug: string | null, alt: string, url: string, index: number): string {
+  // 从 URL 提取扩展名
+  let extension = ''
+  try {
+    const urlObj = new URL(url)
+    const pathname = urlObj.pathname
+    const urlFileName = pathname.split('/').pop() || ''
+    const extMatch = urlFileName.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
+    if (extMatch) {
+      extension = extMatch[1].toLowerCase()
+      // 统一 jpeg 为 jpg
+      if (extension === 'jpeg') extension = 'jpg'
+    }
+  } catch {
+    // URL 解析失败，稍后使用默认扩展名
+  }
 
-  // 如果 alt 文本为空或太短，尝试从 URL 提取
-  if (!baseName || baseName.length < 3) {
-    try {
-      const urlObj = new URL(url)
-      const pathname = urlObj.pathname
-      const urlFileName = pathname.split('/').pop() || ''
-      baseName = urlFileName
-        .replace(/[^a-z0-9.-]/gi, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .substring(0, 50)
-    } catch {
-      // URL 解析失败，使用默认名称
+  // 如果没有从 URL 提取到扩展名，默认使用 png
+  if (!extension) {
+    extension = 'png'
+  }
+
+  // 构建文件名：{article-slug}-{index}-{alt-keywords}.{ext}
+  const parts: string[] = []
+
+  // 1. 文章slug（如果有）
+  if (articleSlug) {
+    parts.push(articleSlug)
+  }
+
+  // 2. 索引（从1开始，用于区分同一篇文章的多张图片）
+  parts.push(String(index + 1))
+
+  // 3. Alt文本关键词（如果有且有效）
+  if (alt && alt.trim().length >= 3) {
+    const altKeywords = alt
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // 移除特殊字符
+      .replace(/\s+/g, '-') // 空格替换为连字符
+      .replace(/-+/g, '-') // 多个连字符合并为一个
+      .replace(/^-|-$/g, '') // 移除开头和结尾的连字符
+      .substring(0, 30) // 限制长度，避免文件名过长
+    
+    if (altKeywords && altKeywords.length >= 3) {
+      parts.push(altKeywords)
     }
   }
 
-  // 如果还是没有有效的名称，使用索引
-  if (!baseName || baseName.length < 3) {
-    baseName = `image-${index + 1}`
+  // 组合文件名
+  let fileName = parts.join('-')
+  
+  // 确保文件名不会太长（限制总长度为80字符，不包括扩展名）
+  if (fileName.length > 80) {
+    // 如果太长，保留slug和索引，截断alt部分
+    if (articleSlug) {
+      const slugAndIndex = `${articleSlug}-${index + 1}`
+      const remainingLength = 80 - slugAndIndex.length - 1 // -1 for the dash
+      if (remainingLength > 0 && parts.length > 2) {
+        const altPart = parts[2].substring(0, remainingLength)
+        fileName = `${slugAndIndex}-${altPart}`
+      } else {
+        fileName = slugAndIndex
+      }
+    } else {
+      fileName = fileName.substring(0, 80)
+    }
   }
 
-  // 确保有扩展名
-  if (!baseName.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
-    baseName += '.png' // 默认使用 png
-  }
-
-  return baseName
+  // 添加扩展名
+  return `${fileName}.${extension}`
 }
 
 // 生成 R2 路径：article\{year-month-day}\filename
@@ -115,7 +148,8 @@ function isR2Url(url: string): boolean {
 export async function uploadImageToR2(
   imageUrl: string,
   alt: string,
-  index: number
+  index: number,
+  articleSlug?: string | null
 ): Promise<string> {
   try {
     // 如果图片 URL 已经是 R2 URL，检查是否需要转换为 CDN 链接
@@ -152,8 +186,8 @@ export async function uploadImageToR2(
     console.log(`[R2] Downloading image ${index + 1}: ${imageUrl}`)
     const imageBuffer = await downloadImage(imageUrl)
 
-    // 生成文件名和路径
-    const fileName = generateFileName(alt, imageUrl, index)
+    // 生成文件名和路径（基于文章slug，SEO友好）
+    const fileName = generateFileName(articleSlug || null, alt, imageUrl, index)
 
     // 检测内容类型
     const contentType = getContentType(imageUrl, imageBuffer)
@@ -239,7 +273,8 @@ function getContentType(url: string, buffer: Buffer): string {
 
 // 批量上传图片（自动去重，跳过已上传的图片）
 export async function uploadImagesToR2(
-  images: Array<{ url: string; alt: string }>
+  images: Array<{ url: string; alt: string }>,
+  articleSlug?: string | null
 ): Promise<Map<string, string>> {
   const urlMap = new Map<string, string>()
   let skippedCount = 0
@@ -253,7 +288,7 @@ export async function uploadImagesToR2(
       // 因为 uploadImageToR2 内部包含了将 R2 原始链接转换为 CDN 链接的逻辑
       // 如果我们在这里跳过，就会导致已经是 R2 格式但未转换为 CDN 格式的链接被直接保留
 
-      const newUrl = await uploadImageToR2(url, alt, i)
+      const newUrl = await uploadImageToR2(url, alt, i, articleSlug)
 
       // 统计逻辑：如果 URL 变了（说明被转换或新上传了），或者是新上传的
       // 这里简化统计，不再区分跳过还是上传，统一视为处理成功

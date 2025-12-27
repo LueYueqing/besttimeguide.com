@@ -35,14 +35,14 @@ export default function Navigation({ variant }: NavigationProps) {
           {/* Logo */}
           <Link href="/" className="navbar-wikihow-brand">
             <Image
-              src="/images/logo-quart.png"
+              src="/logo.png"
               alt="BestTimeGuide"
               width={32}
               height={32}
               className="w-8 h-8 object-contain"
               priority
             />
-            <span>BestTime<span>Guide</span></span>
+            <span className="text-white">BestTime<span className="text-wikihow-button">Guide</span></span>
           </Link>
 
           {/* Main Navigation - wikiHow style */}

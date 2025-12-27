@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 import { useToast } from '@/components/Toast'
@@ -668,21 +667,23 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                     {articles.map((article) => (
                       <tr key={article.id} className="hover:bg-neutral-50 relative">
                         <td className="px-2 py-2 whitespace-nowrap">
-                          <div className="relative w-12 h-9 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
+                          <div className="w-12 h-9 bg-neutral-100 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
                             {article.coverImage ? (
-                              <Image
+                              <img
                                 src={article.coverImage}
                                 alt={article.title}
-                                fill
-                                className="object-cover"
-                                sizes="48px"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // 如果图片加载失败，隐藏图片，显示占位符
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
                               />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
-                                <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
+                            ) : null}
+                            {!article.coverImage && (
+                              <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
                             )}
                           </div>
                         </td>

@@ -592,7 +592,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                       <th className="px-2 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-16">
                         缩略图
                       </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider min-w-[200px]">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
                         标题
                       </th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider w-24">
@@ -688,17 +688,17 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                           </div>
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex items-center min-w-0">
+                          <div className="flex items-start gap-2 min-w-0">
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-medium text-neutral-900 truncate">{article.title}</div>
                               {article.description && (
-                                <div className="text-xs text-neutral-500 truncate max-w-[300px]">
+                                <div className="text-xs text-neutral-500 truncate max-w-[200px] mt-0.5">
                                   {article.description}
                                 </div>
                               )}
                             </div>
                             {article.featured && (
-                              <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded flex-shrink-0">
+                              <span className="px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded flex-shrink-0">
                                 精选
                               </span>
                             )}

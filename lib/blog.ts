@@ -61,7 +61,9 @@ export async function getAllPosts(): Promise<BlogPost[]> {
           slug: article.slug,
           title: article.title,
           description: article.description || '',
-          date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+          date: article.publishedAt instanceof Date 
+            ? article.publishedAt.toISOString() 
+            : article.publishedAt || article.createdAt.toISOString(),
           author: article.author.name || article.author.email || 'besttimeguide.com Team',
           category: article.category.name,
           tags: parseTags(article.tags),
@@ -118,7 +120,9 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
       slug: article.slug,
       title: article.title,
       description: article.description || '',
-      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+      date: article.publishedAt instanceof Date 
+        ? article.publishedAt.toISOString() 
+        : article.publishedAt || article.createdAt.toISOString(),
       author: article.author.name || article.author.email || 'besttimeguide.com Team',
       category: article.category.name,
       tags: parseTags(article.tags),
@@ -174,7 +178,9 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
       slug: article.slug,
       title: article.title,
       description: article.description || '',
-      date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+      date: article.publishedAt instanceof Date 
+        ? article.publishedAt.toISOString() 
+        : article.publishedAt || article.createdAt.toISOString(),
       author: article.author.name || article.author.email || 'besttimeguide.com Team',
       category: article.category.name,
       tags: parseTags(article.tags),
@@ -216,7 +222,9 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
         slug: article.slug,
         title: article.title,
         description: article.description || '',
-        date: article.publishedAt?.toISOString() || article.createdAt.toISOString(),
+        date: article.publishedAt instanceof Date 
+          ? article.publishedAt.toISOString() 
+          : article.publishedAt || article.createdAt.toISOString(),
         author: article.author.name || article.author.email || 'besttimeguide.com Team',
         category: article.category.name,
         tags: parseTags(article.tags),

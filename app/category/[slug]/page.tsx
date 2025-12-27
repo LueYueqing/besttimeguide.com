@@ -318,12 +318,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 >
                   <div className="relative w-full h-48 bg-neutral-100">
                     {post.coverImage ? (
-                      <Image
+                      <img
                         src={post.coverImage}
                         alt={post.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">

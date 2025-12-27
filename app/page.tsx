@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { getPostsByCategory } from '@/lib/blog'
@@ -190,14 +189,12 @@ export default async function HomePage() {
                     href={`/${post.slug}`}
                     className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <div className="relative w-full h-48 bg-neutral-100">
+                    <div className="w-full h-48 bg-neutral-100 overflow-hidden">
                       {post.coverImage ? (
-                        <Image
+                        <img
                           src={post.coverImage}
                           alt={post.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
@@ -240,14 +237,12 @@ export default async function HomePage() {
                     href={`/${post.slug}`}
                     className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <div className="relative w-full h-48 bg-neutral-100">
+                    <div className="w-full h-48 bg-neutral-100 overflow-hidden">
                       {post.coverImage ? (
-                        <Image
+                        <img
                           src={post.coverImage}
                           alt={post.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">
@@ -290,14 +285,12 @@ export default async function HomePage() {
                     href={`/${post.slug}`}
                     className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-wikihow-green-400 transition-all"
                   >
-                    <div className="relative w-full h-48 bg-neutral-100">
+                    <div className="w-full h-48 bg-neutral-100 overflow-hidden">
                       {post.coverImage ? (
-                        <Image
+                        <img
                           src={post.coverImage}
                           alt={post.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 50vw"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">

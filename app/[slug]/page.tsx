@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 import ShareButtons from '../../components/ShareButtons'
@@ -300,14 +299,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                         href={`/${relatedPost.slug}`}
                         className="group bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md hover:border-primary-300 transition-all"
                       >
-                        <div className="relative w-full h-48 bg-neutral-100">
+                        <div className="w-full h-48 bg-neutral-100 overflow-hidden">
                           {relatedPost.coverImage ? (
-                            <Image
+                            <img
                               src={relatedPost.coverImage}
                               alt={relatedPost.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200">

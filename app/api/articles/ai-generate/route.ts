@@ -237,7 +237,8 @@ export async function POST(request: NextRequest) {
 
     try {
       // 构建提示词
-      const prompt = customPrompt || AI_GENERATE_PROMPT
+      const basePrompt = customPrompt || AI_GENERATE_PROMPT
+      const prompt = basePrompt
         .replace('{title}', article.title)
         .replace('{categoryName}', article.category.name)
 

@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
+import { revalidateTag } from 'next/cache'
 
 // Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
 export const maxDuration = 60
@@ -343,6 +344,15 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           }
         })
         console.log(`[AI 流水线] 全阶段完成: ${article.title}`)
+
+        // 清除缓存，使新文章立即可访问
+        try {
+          revalidateTag(`article-${article.slug}`)
+          revalidateTag('all-posts')
+          console.log(`[AI 流水线] 已清除缓存: ${article.slug}`)
+        } catch (error) {
+          console.warn(`[AI 流水线] 清除缓存失败:`, error)
+        }
       } else {
         await prisma.article.update({
           where: { id: article.id },

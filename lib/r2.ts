@@ -5,6 +5,11 @@ import sharp from 'sharp'
 // 优先使用 CDN_BASE_URL，如果未设置则回退到 CLOUDFLARE_R2_PUBLIC_URL
 const R2_PUBLIC_URL = process.env.CDN_BASE_URL || process.env.CLOUDFLARE_R2_PUBLIC_URL
 
+// 图片处理阈值配置
+const MIN_IMAGE_WIDTH = parseInt(process.env.MIN_IMAGE_WIDTH || '200', 10) // 最小宽度（像素）
+const MIN_IMAGE_HEIGHT = parseInt(process.env.MIN_IMAGE_HEIGHT || '200', 10) // 最小高度（像素）
+const MIN_IMAGE_SIZE = parseInt(process.env.MIN_IMAGE_SIZE_KB || '10', 10) * 1024 // 最小文件大小（字节，默认10KB）
+
 // 初始化 R2 客户端
 const getR2Client = () => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
@@ -192,6 +197,7 @@ export async function uploadImageToR2(
       size: imageBuffer.length,
     }
 
+    let hasDimensions = false
     try {
       const metadata = await sharp(imageBuffer).metadata()
       imageInfo = {
@@ -200,10 +206,35 @@ export async function uploadImageToR2(
         size: imageBuffer.length,
         format: metadata.format,
       }
+      hasDimensions = true
       console.log(`[R2] Image ${index + 1} info: ${imageInfo.width}x${imageInfo.height}, ${(imageInfo.size / 1024).toFixed(2)} KB, format: ${imageInfo.format}`)
     } catch (error) {
       // 如果 sharp 无法处理（可能是 SVG 或其他格式），只记录文件大小
       console.log(`[R2] Image ${index + 1} size: ${(imageInfo.size / 1024).toFixed(2)} KB (could not read dimensions)`)
+    }
+
+    // 检查图片是否小于阈值，如果是则跳过处理
+    let shouldSkip = false
+    let skipReason = ''
+
+    // 检查文件大小
+    if (imageInfo.size < MIN_IMAGE_SIZE) {
+      shouldSkip = true
+      skipReason = `文件大小 ${(imageInfo.size / 1024).toFixed(2)} KB 小于最小阈值 ${(MIN_IMAGE_SIZE / 1024).toFixed(2)} KB`
+    }
+
+    // 检查图片尺寸（如果有尺寸信息）
+    if (hasDimensions && imageInfo.width && imageInfo.height) {
+      if (imageInfo.width < MIN_IMAGE_WIDTH || imageInfo.height < MIN_IMAGE_HEIGHT) {
+        shouldSkip = true
+        skipReason = `图片尺寸 ${imageInfo.width}x${imageInfo.height} 小于最小阈值 ${MIN_IMAGE_WIDTH}x${MIN_IMAGE_HEIGHT}`
+      }
+    }
+
+    // 如果图片太小，跳过上传，返回原URL
+    if (shouldSkip) {
+      console.log(`[R2] Image ${index + 1} skipped: ${skipReason}. Keeping original URL.`)
+      return imageUrl
     }
 
     // 生成文件名和路径（基于文章slug，SEO友好）

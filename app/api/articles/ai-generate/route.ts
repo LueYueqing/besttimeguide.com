@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
+import { generateAutoTimeTags } from '@/lib/auto-time-tags'
 
 // Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
 export const maxDuration = 60
@@ -359,6 +360,20 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // 重新获取文章信息以生成时间标签
+        const articleForTags = await prisma.article.findUnique({
+          where: { id: articleId },
+          include: { category: true },
+        })
+        
+        // 自动生成时间标签
+        const autoTags = generateAutoTimeTags(
+          articleForTags?.title || '',
+          currentContent,
+          articleForTags?.category?.name || '',
+          []
+        )
+
         const finalArticle = await prisma.article.update({
           where: { id: articleId },
           data: {
@@ -369,6 +384,7 @@ export async function POST(request: NextRequest) {
             aiRewriteAt: new Date(),
             published: true,
             publishedAt: await getNextPublishedAt(),
+            tags: JSON.stringify(autoTags),
           },
           include: { category: true },
         })

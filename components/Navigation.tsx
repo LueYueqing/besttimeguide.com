@@ -34,8 +34,8 @@ export default function Navigation({ variant }: NavigationProps) {
         <div className="navbar-wikihow-content">
           {/* Logo */}
           <Link href="/" className="navbar-wikihow-brand">
-            <Image
-              src="/logo.png"
+              <Image
+              src="/images/logo.png"
               alt="BestTimeGuide"
               width={32}
               height={32}

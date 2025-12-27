@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client'
 import sharp from 'sharp'
 import { downloadImage, uploadBufferToR2 } from '@/lib/r2'
 import { submitToIndexNow } from '@/lib/indexnow'
+import { generateAutoTimeTags } from '@/lib/auto-time-tags'
 
 const prisma = new PrismaClient()
 
@@ -165,8 +166,43 @@ export async function PUT(
     // 计算阅读时间（如果内容更新）
     const readingTime = content ? calculateReadingTime(content) : existing.readingTime
 
-    // 处理tags
-    const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : existing.tags
+    // 自动生成时间标签（如果标题、内容或分类发生变化）
+    let tagsJson = existing.tags
+    if (tags !== undefined || title !== undefined || content !== undefined || categoryId !== undefined) {
+      const currentTitle = title || existing.title
+      const currentContent = content || existing.content || ''
+      const currentCategoryId = categoryId !== undefined ? parseInt(categoryId, 10) : existing.categoryId
+      
+      // 获取分类名称
+      const currentCategory = await prisma.category.findUnique({
+        where: { id: currentCategoryId },
+        select: { name: true }
+      })
+      
+      // 解析现有标签
+      let existingTags: string[] = []
+      if (existing.tags) {
+        try {
+          const parsed = JSON.parse(existing.tags)
+          existingTags = Array.isArray(parsed) ? parsed : []
+        } catch {
+          existingTags = existing.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0)
+        }
+      }
+      
+      // 使用用户提供的标签或现有标签
+      const userTags = tags !== undefined && Array.isArray(tags) ? tags : existingTags
+      
+      // 自动生成时间标签
+      const autoTags = generateAutoTimeTags(
+        currentTitle,
+        currentContent,
+        currentCategory?.name || '',
+        userTags
+      )
+      
+      tagsJson = JSON.stringify(autoTags)
+    }
 
     // 如果没有封面图，尝试从内容中提取第一张图片并生成缩略图
     let coverImageUrl = existing.coverImage
@@ -266,7 +302,8 @@ export async function PUT(
     let parsedTags: string[] = []
     if (article.tags) {
       try {
-        parsedTags = JSON.parse(article.tags)
+        const parsed = JSON.parse(article.tags) as unknown
+        parsedTags = Array.isArray(parsed) ? (parsed as string[]) : []
       } catch {
         parsedTags = article.tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0)
       }

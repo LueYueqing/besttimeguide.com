@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
+import { generateAutoTimeTags } from '@/lib/auto-time-tags'
 
 const prisma = new PrismaClient()
 
@@ -185,8 +186,16 @@ export async function POST(request: NextRequest) {
     // 计算阅读时间（如果有内容）
     const readingTime = content ? calculateReadingTime(content) : null
 
-    // 处理tags（转换为JSON字符串）
-    const tagsJson = tags && Array.isArray(tags) ? JSON.stringify(tags) : null
+    // 自动生成时间标签
+    const autoTags = generateAutoTimeTags(
+      title,
+      content || '',
+      category.name,
+      tags && Array.isArray(tags) ? tags : []
+    )
+
+    // 处理tags（用户手动指定 + 自动生成的时间标签）
+    const tagsJson = JSON.stringify(autoTags)
 
     // 设置 AI 生成状态（如果是 AI 生成模式且没有内容）
     const aiRewriteStatus = articleMode === 'ai-generate' && !content ? 'pending' : null
@@ -255,4 +264,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
-

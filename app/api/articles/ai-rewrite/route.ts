@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import OpenAI from 'openai'
-import { uploadImagesToR2, uploadBufferToR2 } from '@/lib/r2'
+import { uploadImagesToR2, uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
 
 const prisma = new PrismaClient()
@@ -92,6 +92,61 @@ const AI_REWRITE_PROMPT = `你是一位专业的内容编辑和 SEO 专家。
 
 请直接输出最终改写后的文章内容（Markdown 格式）。`
 
+// AI 生成提示词模板
+const AI_GENERATE_PROMPT = `You are a professional content writer and SEO expert.
+Generate a comprehensive, high-quality article based on the following title and category.
+
+## Article Information
+- Title: {title}
+- Category: {categoryName}
+- Target Audience: English-speaking users in the United States
+
+## Requirements
+
+### Content Quality
+1. Write in fluent, natural American English
+2. Follow Google's E-E-A-T principles (Experience, Expertise, Authoritativeness, Trustworthiness)
+3. Provide practical, actionable information
+4. Use clear, engaging writing style
+
+### SEO Optimization
+1. The H1 heading must naturally include the main keyword from the title
+2. Answer the core question within the first 120 words
+3. Use clear H2/H3 structure to cover subtopics
+4. Naturally incorporate related keywords and synonyms
+5. Ensure content is comprehensive and valuable
+
+### Structure Requirements
+1. Start with an engaging introduction (2-3 paragraphs)
+2. Use H2 headings for main sections
+3. Use H3 headings for subsections
+4. Include practical tips, examples, or recommendations
+5. End with a concise conclusion
+
+### Image Requirements
+- Include 3-5 relevant images throughout the article
+- Use descriptive alt text for each image
+- Images should be relevant to the content section
+- Format: Use Markdown image syntax: ![alt text](IMAGE_PLACEHOLDER_1), ![alt text](IMAGE_PLACEHOLDER_2), etc.
+- Place images at appropriate points in the content (after relevant paragraphs)
+
+### Output Format
+- Use Markdown format
+- Output ONLY the article content (no explanations or meta-commentary)
+- Include image placeholders in the format: IMAGE_PLACEHOLDER_1, IMAGE_PLACEHOLDER_2, etc.
+- Each image placeholder should have descriptive alt text
+
+## Example Image Placeholder Usage
+\`\`\`markdown
+![Beautiful sunset over mountains](IMAGE_PLACEHOLDER_1)
+
+The best time to visit depends on several factors...
+
+![Travel guide map](IMAGE_PLACEHOLDER_2)
+\`\`\`
+
+Now generate the article based on the title: "{title}"`
+
 // 计算阅读时间
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200
@@ -154,7 +209,7 @@ function extractImages(content: string): { images: ImageInfo[]; processedContent
   return { images, processedContent }
 }
 
-// 在改写后的内容中插入图片
+// 插入图片到 Markdown 内容中
 function insertImages(rewrittenContent: string, images: ImageInfo[]): string {
   if (images.length === 0) {
     return rewrittenContent
@@ -214,6 +269,83 @@ function insertImages(rewrittenContent: string, images: ImageInfo[]): string {
   return result
 }
 
+// 从 Unsplash 搜索图片
+async function searchImageFromUnsplash(keywords: string): Promise<string | null> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY
+  if (!accessKey) return null
+
+  try {
+    const searchUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&page=1&per_page=1&orientation=landscape`
+    const response = await fetch(searchUrl, {
+      headers: { 'Authorization': `Client-ID ${accessKey}` },
+    })
+    if (!response.ok) return null
+    const data = await response.json()
+    if (data.results && data.results.length > 0) {
+      return data.results[0].urls.regular
+    }
+  } catch (error) {
+    console.error('[AI Processor] Unsplash search failed:', error)
+  }
+  return null
+}
+
+// 从 Pexels 搜索图片
+async function searchImageFromPexels(keywords: string): Promise<string | null> {
+  const apiKey = process.env.PEXELS_API_KEY
+  if (!apiKey) return null
+
+  try {
+    const searchUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
+    const response = await fetch(searchUrl, {
+      headers: { 'Authorization': apiKey },
+    })
+    if (!response.ok) return null
+    const data = await response.json()
+    if (data.photos && data.photos.length > 0) {
+      return data.photos[0].src.large
+    }
+  } catch (error) {
+    console.error('[AI Processor] Pexels search failed:', error)
+  }
+  return null
+}
+
+// 清洗和精炼关键词
+function refineKeywords(keywords: string): string {
+  return keywords
+    .replace(/!\[([^\]]*)\]/g, '$1')
+    .replace(/[#*`_]/g, '')
+    .replace(/[.,!?;:]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// 搜索图片（带回退逻辑）
+async function searchImage(keywords: string, altText: string, articleTitle: string): Promise<string | null> {
+  const cleanAlt = refineKeywords(altText)
+  const cleanTitle = refineKeywords(articleTitle)
+
+  const searchSequences = [
+    `${cleanAlt} ${cleanTitle}`.substring(0, 80),
+    cleanAlt.substring(0, 80),
+    `${cleanTitle} ${cleanAlt.split(' ').slice(0, 3).join(' ')}`.substring(0, 80),
+    cleanTitle.substring(0, 80)
+  ]
+
+  for (const query of searchSequences) {
+    if (!query || query.length < 3) continue
+
+    const unsplashUrl = await searchImageFromUnsplash(query)
+    if (unsplashUrl) return unsplashUrl
+
+    const pexelsUrl = await searchImageFromPexels(query)
+    if (pexelsUrl) return pexelsUrl
+  }
+
+  return null
+}
+
 // GET - 直接执行 AI 改写（处理所有待改写文章）
 export async function GET(request: NextRequest) {
   try {
@@ -249,12 +381,15 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       aiRewriteStatus: 'pending',
-      sourceContent: {
-        not: null,
-      },
-      // 排除最近失败的文章：如果 aiRewriteAt 在最近24小时内，说明可能刚失败过
-      // 但这里我们只查询 pending 状态，所以不会包含 failed 状态
-      // 这个逻辑主要用于防止用户重新标记为 pending 后立即重试
+      OR: [
+        {
+          articleMode: 'ai-rewrite',
+          sourceContent: { not: null },
+        },
+        {
+          articleMode: 'ai-generate',
+        },
+      ],
     }
 
     if (articleId) {
@@ -328,178 +463,172 @@ export async function GET(request: NextRequest) {
           },
         })
 
-        // 预处理：提取图片
-        const { images, processedContent } = extractImages(sourceContent)
+        let rewrittenContent = ''
+        let updatedSourceContent = sourceContent
+        let imageUrlMap = new Map<string, string>()
 
-        // 上传图片到 R2（如果有图片）
-        // 注意：会自动跳过已经是 R2 URL 的图片，避免重复上传
-        const imageUrlMap = new Map<string, string>()
-        if (images.length > 0) {
-          try {
-            console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
+        if (article.articleMode === 'ai-generate') {
+          // ==========================================
+          // 模式 A: 从标题生成 (AI Generate)
+          // ==========================================
+          console.log(`[AI Processor] Generating article from title: ${article.title}`)
 
-            const uploadResults = await uploadImagesToR2(
+          const prompt = AI_GENERATE_PROMPT
+            .replace('{title}', article.title)
+            .replace('{categoryName}', article.category.name)
+
+          const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          const completion = await aiClient.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: prompt },
+              { role: 'user', content: `Generate a comprehensive article about: ${article.title}` }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+          })
+
+          let generatedContent = completion.choices[0]?.message?.content || ''
+          if (!generatedContent) throw new Error('AI returned empty content')
+
+          // 处理图片占位符
+          const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)/g
+          let match
+          const placeholders: Array<{ index: number; altText: string }> = []
+
+          while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
+            const placeholderIndex = parseInt(match[1], 10)
+            const imageSyntaxMatch = generatedContent.substring(Math.max(0, match.index - 50), match.index + match[0].length + 50).match(/!\[([^\]]*)\]/)
+            placeholders.push({
+              index: placeholderIndex,
+              altText: imageSyntaxMatch ? imageSyntaxMatch[1] : `Image ${placeholderIndex}`
+            })
+          }
+
+          // 搜索并上传图片
+          for (const placeholder of placeholders) {
+            try {
+              console.log(`[AI Processor] Searching image for: ${placeholder.altText}`)
+              const imageUrl = await searchImage('', placeholder.altText, article.title)
+
+              if (imageUrl) {
+                const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+                if (r2Url) {
+                  generatedContent = generatedContent.replace(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
+                  imageUrlMap.set(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
+                }
+              }
+            } catch (err) {
+              console.error(`[AI Processor] Image placeholder ${placeholder.index} error:`, err)
+            }
+          }
+          // 移除剩余占位符
+          rewrittenContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+/g, '')
+        } else {
+          // ==========================================
+          // 模式 B: 从原文改写 (AI Rewrite)
+          // ==========================================
+          const { images, processedContent } = extractImages(sourceContent)
+          let sourceImageUrlMap = new Map<string, string>()
+
+          if (images.length > 0) {
+            console.log(`[AI Processor] Processing ${images.length} images from source content to R2...`)
+            sourceImageUrlMap = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt })),
               article.slug
             )
-            uploadResults.forEach((newUrl, oldUrl) => {
-              imageUrlMap.set(oldUrl, newUrl)
-            })
-
-            console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
-          } catch (error) {
-            console.error('[AI Rewrite] Error uploading images to R2:', error)
-            // 如果上传失败，继续使用原 URL
+            updatedSourceContent = insertImages(sourceContent, images.map(img => ({
+              ...img,
+              markdown: `![${img.alt}](${sourceImageUrlMap.get(img.url) || img.url})`
+            })))
           }
-        }
 
-        // 更新图片 URL（如果已上传到 R2）
-        const updatedImages = images.map((img) => {
-          const newUrl = imageUrlMap.get(img.url) || img.url
-          return {
-            ...img,
-            url: newUrl,
-            markdown: `![${img.alt}](${newUrl})`,
+          // 更新占位符信息用于 AI
+          const updatedImages = images.map((img) => {
+            const newUrl = sourceImageUrlMap.get(img.url) || img.url
+            return {
+              ...img,
+              url: newUrl,
+              markdown: `![${img.alt}](${newUrl})`,
+            }
+          })
+
+          let enhancedPrompt = AI_REWRITE_PROMPT
+          if (updatedImages.length > 0) {
+            enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符。`
           }
-        })
 
-        // 在提示词中添加图片占位符说明（如果有图片）
-        let enhancedPrompt = AI_REWRITE_PROMPT
-        if (updatedImages.length > 0) {
-          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
-        }
+          const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          const completion = await aiClient.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: enhancedPrompt },
+              { role: 'user', content: processedContent },
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+          })
 
-        // 调用 AI API 进行改写
-        const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
-        const completion = await aiClient.chat.completions.create({
-          model, // DeepSeek 使用 'deepseek-chat'，OpenAI 使用 'gpt-4o-mini'
-          messages: [
-            {
-              role: 'system',
-              content: enhancedPrompt,
-            },
-            {
-              role: 'user',
-              content: processedContent, // 使用处理后的内容（图片已替换为占位符）
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 4000, // 根据需求调整
-        })
+          rewrittenContent = completion.choices[0]?.message?.content || ''
+          if (!rewrittenContent) throw new Error('AI returned empty content')
 
-        let rewrittenContent = completion.choices[0]?.message?.content || ''
-
-        if (!rewrittenContent) {
-          throw new Error('AI returned empty content')
-        }
-
-        // 后处理：插入图片（使用更新后的 URL）
-        if (updatedImages.length > 0) {
-          rewrittenContent = insertImages(rewrittenContent, updatedImages)
+          if (updatedImages.length > 0) {
+            rewrittenContent = insertImages(rewrittenContent, updatedImages)
+          }
         }
 
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
         // -- Start Thumbnail Logic --
-        let coverImageUrl = (article as any).coverImage // 保留原有缩略图（如果有）
-
-        // 从改写后的内容中寻找第一张图片
-        // 注意：此时图片应该已经是 R2 URL 或 CDN URL
+        let coverImageUrl = (article as any).coverImage
         const firstImageMatch = rewrittenContent.match(/!\[([^\]]*)\]\(([^)]+)(?:\s+"[^"]*")?\)/)
+
         if (firstImageMatch && firstImageMatch[2]) {
           const firstImageUrl = firstImageMatch[2]
           try {
-            // 检查是否已经在处理中或强制生成
-            console.log(`[AI Rewrite] Generating thumbnail from: ${firstImageUrl}`)
-
+            console.log(`[AI Processor] Generating thumbnail from: ${firstImageUrl}`)
             const response = await fetch(firstImageUrl)
             if (response.ok) {
               const arrayBuffer = await response.arrayBuffer()
               const inputBuffer = Buffer.from(arrayBuffer)
-
-              // Sharp 处理：缩放并裁剪为 375x250
               const coverBuffer = await sharp(inputBuffer)
-                .resize(375, 250, {
-                  fit: 'cover',
-                  position: 'center'
-                })
+                .resize(375, 250, { fit: 'cover', position: 'center' })
                 .jpeg({ quality: 80 })
                 .toBuffer()
-
-              // 上传
               const coverFileName = `thumbnail-${article.slug}-${Date.now()}.jpg`
-              // 覆盖旧的 coverUrl
               coverImageUrl = await uploadBufferToR2(coverBuffer, coverFileName, 'image/jpeg')
-              console.log(`[AI Rewrite] Generated thumbnail: ${coverImageUrl}`)
             }
           } catch (err) {
-            console.error('[AI Rewrite] Failed to generate thumbnail:', err)
-            // 不阻断流程
+            console.error('[AI Processor] Failed to generate thumbnail:', err)
           }
         }
-        // -- End Thumbnail Logic --
 
-        // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
-        let updatedSourceContent = sourceContent
-        if (imageUrlMap.size > 0) {
-          for (const [oldUrl, newUrl] of imageUrlMap.entries()) {
-            // 替换 sourceContent 中的第三方图片 URL 为 R2 URL
-            updatedSourceContent = updatedSourceContent.replace(oldUrl, newUrl)
-          }
-          console.log(`[AI Rewrite] Updated sourceContent with R2 image URLs to avoid duplicate uploads`)
-        }
-
-        // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
-        // 注意：publishedAt 只在文章从未发布时才设置，已发布的文章保持原有发布时间
         const updateData: any = {
           content: rewrittenContent,
-          sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
+          sourceContent: updatedSourceContent,
           aiRewriteStatus: 'completed',
           aiRewriteAt: new Date(),
           readingTime,
-          published: true, // 设置为已发布
+          published: true,
           coverImage: coverImageUrl,
         }
-        // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
         if (!article.published && !article.publishedAt) {
           updateData.publishedAt = new Date()
         }
-        // updatedAt 会自动更新（Prisma @updatedAt）
 
-        const updatedArticle = await prisma.article.update({
+        await prisma.article.update({
           where: { id: article.id },
           data: updateData,
-          include: {
-            category: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
         })
 
-        // 触发页面重新生成（主动清除缓存）
+        // 触发页面重新生成
         try {
-          // 方法1: 通过路径重新验证
           const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(revalidateUrl, { method: 'POST' })
-
-          // 方法2: 通过 cache tag 重新验证（更精确）
-          const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
-          await fetch(tagUrl, { method: 'POST' })
-
-          // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
-          const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
-          await fetch(allPostsUrl, { method: 'POST' })
-
-          console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
+          console.log(`[AI Processor] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {
-          console.error('[AI Rewrite] Error revalidating page:', revalidateError)
-          // 不阻止流程，即使 revalidate 失败
+          console.error('[AI Processor] Error revalidating page:', revalidateError)
         }
 
         results.push({
@@ -597,9 +726,15 @@ export async function POST(request: NextRequest) {
 
     const where: any = {
       aiRewriteStatus: 'pending',
-      sourceContent: {
-        not: null,
-      },
+      OR: [
+        {
+          articleMode: 'ai-rewrite',
+          sourceContent: { not: null },
+        },
+        {
+          articleMode: 'ai-generate',
+        },
+      ],
     }
 
     if (articleId) {
@@ -673,178 +808,171 @@ export async function POST(request: NextRequest) {
           },
         })
 
-        // 预处理：提取图片
-        const { images, processedContent } = extractImages(sourceContent)
+        let rewrittenContent = ''
+        let updatedSourceContent = sourceContent
+        let imageUrlMap = new Map<string, string>()
 
-        // 上传图片到 R2（如果有图片）
-        // 注意：会自动跳过已经是 R2 URL 的图片，避免重复上传
-        const imageUrlMap = new Map<string, string>()
-        if (images.length > 0) {
-          try {
-            console.log(`[AI Rewrite] Processing ${images.length} images to R2...`)
+        if (article.articleMode === 'ai-generate') {
+          // ==========================================
+          // 模式 A: 从标题生成 (AI Generate)
+          // ==========================================
+          console.log(`[AI Processor] Generating article from title: ${article.title}`)
 
-            const uploadResults = await uploadImagesToR2(
+          const prompt = AI_GENERATE_PROMPT
+            .replace('{title}', article.title)
+            .replace('{categoryName}', article.category.name)
+
+          const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          const completion = await aiClient.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: prompt },
+              { role: 'user', content: `Generate a comprehensive article about: ${article.title}` }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+          })
+
+          let generatedContent = completion.choices[0]?.message?.content || ''
+          if (!generatedContent) throw new Error('AI returned empty content')
+
+          // 处理图片占位符
+          const imagePlaceholderRegex = /IMAGE_PLACEHOLDER_(\d+)/g
+          let match
+          const placeholders: Array<{ index: number; altText: string }> = []
+
+          while ((match = imagePlaceholderRegex.exec(generatedContent)) !== null) {
+            const placeholderIndex = parseInt(match[1], 10)
+            const imageSyntaxMatch = generatedContent.substring(Math.max(0, match.index - 50), match.index + match[0].length + 50).match(/!\[([^\]]*)\]/)
+            placeholders.push({
+              index: placeholderIndex,
+              altText: imageSyntaxMatch ? imageSyntaxMatch[1] : `Image ${placeholderIndex}`
+            })
+          }
+
+          // 搜索并上传图片
+          for (const placeholder of placeholders) {
+            try {
+              console.log(`[AI Processor] Searching image for: ${placeholder.altText}`)
+              const imageUrl = await searchImage('', placeholder.altText, article.title)
+
+              if (imageUrl) {
+                const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+                if (r2Url) {
+                  generatedContent = generatedContent.replace(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
+                  imageUrlMap.set(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
+                }
+              }
+            } catch (err) {
+              console.error(`[AI Processor] Image placeholder ${placeholder.index} error:`, err)
+            }
+          }
+          // 移除剩余占位符
+          rewrittenContent = generatedContent.replace(/IMAGE_PLACEHOLDER_\d+/g, '')
+        } else {
+          // ==========================================
+          // 模式 B: 从原文改写 (AI Rewrite)
+          // ==========================================
+          const { images, processedContent } = extractImages(sourceContent)
+          let sourceImageUrlMap = new Map<string, string>()
+
+          if (images.length > 0) {
+            console.log(`[AI Processor] Processing ${images.length} images from source content to R2...`)
+            sourceImageUrlMap = await uploadImagesToR2(
               images.map((img) => ({ url: img.url, alt: img.alt })),
               article.slug
             )
-            uploadResults.forEach((newUrl, oldUrl) => {
-              imageUrlMap.set(oldUrl, newUrl)
-            })
-
-            console.log(`[AI Rewrite] Successfully processed ${imageUrlMap.size} images (duplicates automatically skipped)`)
-          } catch (error) {
-            console.error('[AI Rewrite] Error uploading images to R2:', error)
-            // 如果上传失败，继续使用原 URL
+            updatedSourceContent = insertImages(sourceContent, images.map(img => ({
+              ...img,
+              markdown: `![${img.alt}](${sourceImageUrlMap.get(img.url) || img.url})`
+            })))
           }
-        }
 
-        // 更新图片 URL（如果已上传到 R2）
-        const updatedImages = images.map((img) => {
-          const newUrl = imageUrlMap.get(img.url) || img.url
-          return {
-            ...img,
-            url: newUrl,
-            markdown: `![${img.alt}](${newUrl})`,
+          const updatedImages = images.map((img) => {
+            const newUrl = sourceImageUrlMap.get(img.url) || img.url
+            return {
+              ...img,
+              url: newUrl,
+              markdown: `![${img.alt}](${newUrl})`,
+            }
+          })
+
+          let enhancedPrompt = AI_REWRITE_PROMPT
+          if (updatedImages.length > 0) {
+            enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符。`
           }
-        })
 
-        // 在提示词中添加图片占位符说明（如果有图片）
-        let enhancedPrompt = AI_REWRITE_PROMPT
-        if (updatedImages.length > 0) {
-          enhancedPrompt += `\n\n## 图片处理说明\n原文中包含 ${updatedImages.length} 张图片，已用占位符 [IMAGE_1], [IMAGE_2] 等标记。请在改写时保留这些占位符，它们将在后处理阶段被替换为实际图片。`
-        }
+          const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
+          const completion = await aiClient.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: enhancedPrompt },
+              { role: 'user', content: processedContent },
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+          })
 
-        // 调用 AI API 进行改写
-        const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini'
-        const completion = await aiClient.chat.completions.create({
-          model, // DeepSeek 使用 'deepseek-chat'，OpenAI 使用 'gpt-4o-mini'
-          messages: [
-            {
-              role: 'system',
-              content: enhancedPrompt,
-            },
-            {
-              role: 'user',
-              content: processedContent, // 使用处理后的内容（图片已替换为占位符）
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 4000, // 根据需求调整
-        })
+          rewrittenContent = completion.choices[0]?.message?.content || ''
+          if (!rewrittenContent) throw new Error('AI returned empty content')
 
-        let rewrittenContent = completion.choices[0]?.message?.content || ''
-
-        if (!rewrittenContent) {
-          throw new Error('AI returned empty content')
-        }
-
-        // 后处理：插入图片（使用更新后的 URL）
-        if (updatedImages.length > 0) {
-          rewrittenContent = insertImages(rewrittenContent, updatedImages)
+          if (updatedImages.length > 0) {
+            rewrittenContent = insertImages(rewrittenContent, updatedImages)
+          }
         }
 
         // 计算阅读时间
         const readingTime = calculateReadingTime(rewrittenContent)
 
         // -- Start Thumbnail Logic --
-        let coverImageUrl = (article as any).coverImage // 保留原有缩略图（如果有）
-
-        // 从改写后的内容中寻找第一张图片
-        // 注意：此时图片应该已经是 R2 URL 或 CDN URL
+        let coverImageUrl = (article as any).coverImage
         const firstImageMatch = rewrittenContent.match(/!\[([^\]]*)\]\(([^)]+)(?:\s+"[^"]*")?\)/)
+
         if (firstImageMatch && firstImageMatch[2]) {
           const firstImageUrl = firstImageMatch[2]
           try {
-            // 检查是否已经在处理中或强制生成
-            console.log(`[AI Rewrite] Generating thumbnail from: ${firstImageUrl}`)
-
+            console.log(`[AI Processor] Generating thumbnail from: ${firstImageUrl}`)
             const response = await fetch(firstImageUrl)
             if (response.ok) {
               const arrayBuffer = await response.arrayBuffer()
               const inputBuffer = Buffer.from(arrayBuffer)
-
-              // Sharp 处理：缩放并裁剪为 375x250
               const coverBuffer = await sharp(inputBuffer)
-                .resize(375, 250, {
-                  fit: 'cover',
-                  position: 'center'
-                })
+                .resize(375, 250, { fit: 'cover', position: 'center' })
                 .jpeg({ quality: 80 })
                 .toBuffer()
-
-              // 上传
               const coverFileName = `thumbnail-${article.slug}-${Date.now()}.jpg`
-              // 覆盖旧的 coverUrl
               coverImageUrl = await uploadBufferToR2(coverBuffer, coverFileName, 'image/jpeg')
-              console.log(`[AI Rewrite] Generated thumbnail: ${coverImageUrl}`)
             }
           } catch (err) {
-            console.error('[AI Rewrite] Failed to generate thumbnail:', err)
-            // 不阻断流程
+            console.error('[AI Processor] Failed to generate thumbnail:', err)
           }
         }
-        // -- End Thumbnail Logic --
 
-        // 更新 sourceContent 中的图片 URL 为 R2 URL（避免下次改写时重复上传）
-        let updatedSourceContent = sourceContent
-        if (imageUrlMap.size > 0) {
-          for (const [oldUrl, newUrl] of imageUrlMap.entries()) {
-            // 替换 sourceContent 中的第三方图片 URL 为 R2 URL
-            updatedSourceContent = updatedSourceContent.replace(oldUrl, newUrl)
-          }
-          console.log(`[AI Rewrite] Updated sourceContent with R2 image URLs to avoid duplicate uploads`)
-        }
-
-        // 更新文章：保存改写后的内容，更新 sourceContent（图片 URL 已替换为 R2），更新状态，设置为已发布
-        // 注意：publishedAt 只在文章从未发布时才设置，已发布的文章保持原有发布时间
         const updateData: any = {
           content: rewrittenContent,
-          sourceContent: updatedSourceContent, // 更新 sourceContent，将图片 URL 替换为 R2 URL
+          sourceContent: updatedSourceContent,
           aiRewriteStatus: 'completed',
-          readingTime,
-          published: true, // 设置为已发布
-          coverImage: coverImageUrl,
           aiRewriteAt: new Date(),
+          readingTime,
+          published: true,
+          coverImage: coverImageUrl,
         }
-        // 如果文章从未发布过，设置发布时间；否则保持原有发布时间
         if (!article.published && !article.publishedAt) {
           updateData.publishedAt = new Date()
         }
-        // updatedAt 会自动更新（Prisma @updatedAt）
 
-        const updatedArticle = await prisma.article.update({
+        await prisma.article.update({
           where: { id: article.id },
           data: updateData,
-          include: {
-            category: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
         })
 
-        // 触发页面重新生成（主动清除缓存）
+        // 触发页面重新生成
         try {
-          // 方法1: 通过路径重新验证
           const revalidateUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?path=/${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
           await fetch(revalidateUrl, { method: 'POST' })
-
-          // 方法2: 通过 cache tag 重新验证（更精确）
-          const tagUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=article-${article.slug}&secret=${process.env.REVALIDATE_SECRET || ''}`
-          await fetch(tagUrl, { method: 'POST' })
-
-          // 方法3: 清除所有文章列表缓存（确保 generateStaticParams 能获取最新列表）
-          const allPostsUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/revalidate?tag=all-posts&secret=${process.env.REVALIDATE_SECRET || ''}`
-          await fetch(allPostsUrl, { method: 'POST' })
-
-          console.log(`[AI Rewrite] Revalidated page: /${article.slug}`)
+          console.log(`[AI Processor] Revalidated page: /${article.slug}`)
         } catch (revalidateError) {
-          console.error('[AI Rewrite] Error revalidating page:', revalidateError)
-          // 不阻止流程，即使 revalidate 失败
+          console.error('[AI Processor] Error revalidating page:', revalidateError)
         }
 
         results.push({

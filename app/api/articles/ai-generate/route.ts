@@ -166,18 +166,45 @@ async function searchImageFromPexels(keywords: string): Promise<string | null> {
   return null
 }
 
-// 搜索图片（优先 Unsplash，失败则尝试 Pexels）
-async function searchImage(keywords: string): Promise<string | null> {
-  // 先尝试 Unsplash
-  const unsplashUrl = await searchImageFromUnsplash(keywords)
-  if (unsplashUrl) {
-    return unsplashUrl
-  }
+// 清洗和精炼关键词
+function refineKeywords(keywords: string): string {
+  return keywords
+    .replace(/!\[([^\]]*)\]/g, '$1') // 移除 Markdown 图片语法
+    .replace(/[#*`_]/g, '') // 移除 Markdown 符号
+    .replace(/[.,!?;:]/g, ' ') // 移除标点
+    .replace(/\s+/g, ' ') // 压缩空格
+    .trim()
+}
 
-  // 如果 Unsplash 失败，尝试 Pexels
-  const pexelsUrl = await searchImageFromPexels(keywords)
-  if (pexelsUrl) {
-    return pexelsUrl
+// 搜索图片（带回退逻辑）
+async function searchImage(keywords: string, altText: string, articleTitle: string): Promise<string | null> {
+  const cleanAlt = refineKeywords(altText)
+  const cleanTitle = refineKeywords(articleTitle)
+
+  // 搜索尝试序列：
+  // 1. altText + title (最精确)
+  // 2. 仅 altText
+  // 3. title + altText 的前几个词
+  // 4. 仅 title
+  const searchSequences = [
+    `${cleanAlt} ${cleanTitle}`.substring(0, 80),
+    cleanAlt.substring(0, 80),
+    `${cleanTitle} ${cleanAlt.split(' ').slice(0, 3).join(' ')}`.substring(0, 80),
+    cleanTitle.substring(0, 80)
+  ]
+
+  for (const query of searchSequences) {
+    if (!query || query.length < 3) continue
+
+    console.log(`[AI Processor] Trying image search with: "${query}"`)
+
+    // 先尝试 Unsplash
+    const unsplashUrl = await searchImageFromUnsplash(query)
+    if (unsplashUrl) return unsplashUrl
+
+    // 如果 Unsplash 失败，尝试 Pexels
+    const pexelsUrl = await searchImageFromPexels(query)
+    if (pexelsUrl) return pexelsUrl
   }
 
   return null
@@ -280,7 +307,7 @@ export async function POST(request: NextRequest) {
         const placeholderIndex = parseInt(match[1], 10)
         const beforeMatch = generatedContent.substring(Math.max(0, match.index - 100), match.index)
         const afterMatch = generatedContent.substring(match.index + match[0].length, Math.min(generatedContent.length, match.index + match[0].length + 100))
-        
+
         // 尝试从 Markdown 图片语法中提取 alt text
         const imageSyntaxMatch = generatedContent.substring(Math.max(0, match.index - 50), match.index + match[0].length + 50).match(/!\[([^\]]*)\]/)
         const altText = imageSyntaxMatch ? imageSyntaxMatch[1] : `Image ${placeholderIndex}`
@@ -299,23 +326,21 @@ export async function POST(request: NextRequest) {
       for (const placeholder of placeholders) {
         try {
           // 构建搜索关键词（使用 alt text 和上下文）
-          const searchKeywords = `${article.title} ${placeholder.altText}`.substring(0, 50)
-          
-          console.log(`[AI Generate] Searching image for placeholder ${placeholder.index}: ${searchKeywords}`)
-          
-          const imageUrl = await searchImage(searchKeywords)
-          
+          console.log(`[AI Generate] Searching image for placeholder ${placeholder.index}: ${placeholder.altText}`)
+
+          const imageUrl = await searchImage('', placeholder.altText, article.title)
+
           if (imageUrl) {
             // 使用 uploadImageToR2 上传单个图片
             console.log(`[AI Generate] Uploading image to R2: ${imageUrl}`)
-            
+
             const r2Url = await uploadImageToR2(
               imageUrl,
               placeholder.altText,
               placeholder.index - 1, // 索引从0开始
               article.slug
             )
-            
+
             if (r2Url) {
               imageUrlMap.set(`IMAGE_PLACEHOLDER_${placeholder.index}`, r2Url)
               console.log(`[AI Generate] Image ${placeholder.index} uploaded to R2: ${r2Url}`)

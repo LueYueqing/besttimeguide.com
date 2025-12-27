@@ -104,21 +104,24 @@ export default async function HomePage() {
           </div>
 
           {/* Search Box - wikiHow style */}
-          <div className="wikihow-search-box">
+          <form action="/search" method="get" className="wikihow-search-box">
             <input
               type="search"
+              name="q"
               placeholder="Search for best time to..."
               className="wikihow-search-input"
+              required
             />
-            <svg
-              className="wikihow-search-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+            <button type="submit" className="wikihow-search-icon cursor-pointer">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </form>
         </section>
 
         {/* Trending Now Section - wikiHow style */}

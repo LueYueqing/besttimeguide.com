@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { Providers } from '@/components/Providers'
 import { getAppUrl } from '@/lib/app-url'
@@ -99,6 +100,19 @@ export default function RootLayout({
         <meta name="application-name" content="BestTimeGuide" />
       </head>
       <body className="font-sans antialiased bg-neutral-50 text-neutral-700">
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-SDYSFRPPR2"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-SDYSFRPPR2');
+          `}
+        </Script>
         <Providers>
           {children}
         </Providers>

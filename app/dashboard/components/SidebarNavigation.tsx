@@ -67,9 +67,10 @@ export default function SidebarNavigation({
             {/* Dashboard */}
             <Link
               href="/dashboard"
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === '/dashboard'
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-neutral-600 hover:bg-neutral-50'
+                ? 'bg-primary-50 text-primary-700'
+                : 'text-neutral-600 hover:bg-neutral-50'
                 }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,9 +92,10 @@ export default function SidebarNavigation({
                 </div>
                 <Link
                   href="/dashboard/articles"
+                  onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname?.startsWith('/dashboard/articles')
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-600 hover:bg-neutral-50'
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-neutral-600 hover:bg-neutral-50'
                     }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,9 +110,10 @@ export default function SidebarNavigation({
             <div className="pt-4 border-t border-neutral-200 mt-4">
               <Link
                 href="/dashboard/profile"
+                onClick={onClose}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === '/dashboard/profile'
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-600 hover:bg-neutral-50'
+                  ? 'bg-neutral-100 text-neutral-900'
+                  : 'text-neutral-600 hover:bg-neutral-50'
                   }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,9 +123,10 @@ export default function SidebarNavigation({
               </Link>
               <Link
                 href="/help/contact"
+                onClick={onClose}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === '/help/contact'
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-600 hover:bg-neutral-50'
+                  ? 'bg-neutral-100 text-neutral-900'
+                  : 'text-neutral-600 hover:bg-neutral-50'
                   }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

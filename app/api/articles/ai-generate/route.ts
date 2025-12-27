@@ -101,7 +101,8 @@ async function searchImageFromPixabay(keywords: string): Promise<string | null> 
       return null
     }
     const data = await response.json()
-    return data.hits?.[0]?.largeImageURL || null
+    // 改用 webformatURL (max 640px)，显著减小原始下载大小
+    return data.hits?.[0]?.webformatURL || null
   } catch (error) {
     console.error('[Pixabay 搜索异常]:', error)
   }
@@ -147,11 +148,38 @@ async function searchImageFromUnsplash(keywords: string): Promise<string | null>
       return null
     }
     const data = await response.json()
-    return data.results?.[0]?.urls?.regular || null
+    const rawUrl = data.results?.[0]?.urls?.regular || null
+    return rawUrl ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=800&q=80` : null
   } catch (error) {
     console.error('[Unsplash 搜索异常]:', error)
   }
   return null
+}
+
+async function getNextPublishedAt(): Promise<Date> {
+  const latestArticle = await prisma.article.findFirst({
+    where: {
+      published: true,
+      publishedAt: { not: null }
+    },
+    orderBy: {
+      publishedAt: 'desc'
+    },
+    select: {
+      publishedAt: true
+    }
+  })
+
+  const now = new Date()
+  let baseTime = now
+
+  if (latestArticle && latestArticle.publishedAt) {
+    baseTime = new Date(latestArticle.publishedAt)
+  }
+
+  // 递增1小时。如果要确保始终在未来，可以取 baseTime 和 now 的最大值
+  const nextTime = new Date(Math.max(baseTime.getTime(), now.getTime()) + 60 * 60 * 1000)
+  return nextTime
 }
 
 function refineKeywords(keywords: string): string {
@@ -252,20 +280,31 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
-      let successImageCount = 0
-      for (const placeholder of placeholders) {
+
+      // 并行处理所有图片，极大地缩短整体耗时
+      const imagePromises = placeholders.map(async (placeholder) => {
         try {
           const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
           if (imageUrl) {
             const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
             if (r2Url) {
-              console.log(`[图片处理] 占位符 ${placeholder.index} 已替换为 R2 URL: ${r2Url}`)
-              generatedContent = generatedContent.replace(placeholder.fullMatch, `![${placeholder.altText}](${r2Url})`)
-              successImageCount++
+              console.log(`[图片处理] 占位符 ${placeholder.index} 已成功上传至 R2: ${r2Url}`)
+              return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
             }
           }
-        } catch (err) {
-          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err)
+        } catch (err: any) {
+          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err.message)
+        }
+        return { success: false }
+      })
+
+      const imageResults = await Promise.all(imagePromises)
+      let successImageCount = 0
+
+      for (const res of imageResults) {
+        if (res.success && res.fullMatch && res.r2Url) {
+          generatedContent = generatedContent.replace(res.fullMatch, `![${res.altText}](${res.r2Url})`)
+          successImageCount++
         }
       }
 
@@ -302,7 +341,7 @@ export async function POST(request: NextRequest) {
           aiRewriteStatus: 'completed',
           aiRewriteAt: new Date(),
           published: successImageCount > 0,
-          publishedAt: successImageCount > 0 ? new Date() : undefined,
+          publishedAt: successImageCount > 0 ? await getNextPublishedAt() : undefined,
         },
         include: { category: true },
       })

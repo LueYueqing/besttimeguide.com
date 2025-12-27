@@ -9,6 +9,8 @@ const R2_PUBLIC_URL = process.env.CDN_BASE_URL || process.env.CLOUDFLARE_R2_PUBL
 const MIN_IMAGE_WIDTH = parseInt(process.env.MIN_IMAGE_WIDTH || '200', 10) // 最小宽度（像素）
 const MIN_IMAGE_HEIGHT = parseInt(process.env.MIN_IMAGE_HEIGHT || '200', 10) // 最小高度（像素）
 const MIN_IMAGE_SIZE = parseInt(process.env.MIN_IMAGE_SIZE_KB || '10', 10) * 1024 // 最小文件大小（字节，默认10KB）
+const MAX_IMAGE_WIDTH = parseInt(process.env.MAX_IMAGE_WIDTH || '800', 10) // 最大宽度（像素）
+const MAX_IMAGE_HEIGHT = parseInt(process.env.MAX_IMAGE_HEIGHT || '600', 10) // 最大高度（像素）
 
 // 初始化 R2 客户端
 const getR2Client = () => {
@@ -78,7 +80,7 @@ function generateFileName(articleSlug: string | null, alt: string, url: string, 
       .replace(/-+/g, '-') // 多个连字符合并为一个
       .replace(/^-|-$/g, '') // 移除开头和结尾的连字符
       .substring(0, 30) // 限制长度，避免文件名过长
-    
+
     if (altKeywords && altKeywords.length >= 3) {
       parts.push(altKeywords)
     }
@@ -86,7 +88,7 @@ function generateFileName(articleSlug: string | null, alt: string, url: string, 
 
   // 组合文件名
   let fileName = parts.join('-')
-  
+
   // 确保文件名不会太长（限制总长度为80字符，不包括扩展名）
   if (fileName.length > 80) {
     // 如果太长，保留slug和索引，截断alt部分
@@ -241,10 +243,30 @@ export async function uploadImageToR2(
     const fileName = generateFileName(articleSlug || null, alt, imageUrl, index)
 
     // 检测内容类型
-    const contentType = getContentType(imageUrl, imageBuffer)
+    let contentType = getContentType(imageUrl, imageBuffer)
+    let finalBuffer = imageBuffer
+
+    // 如果图片尺寸超过最大值，进行缩放处理
+    if (hasDimensions && imageInfo.width && imageInfo.height && (imageInfo.width > MAX_IMAGE_WIDTH || imageInfo.height > MAX_IMAGE_HEIGHT)) {
+      try {
+        console.log(`[R2] Image ${index + 1} is too large (${imageInfo.width}x${imageInfo.height}), resizing to fit ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}...`)
+        finalBuffer = await sharp(imageBuffer)
+          .resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
+            withoutEnlargement: true,
+            fit: 'inside'
+          })
+          .jpeg({ quality: 85, mozjpeg: true })
+          .toBuffer()
+
+        contentType = 'image/jpeg' // 缩放后统一转为 jpeg
+        console.log(`[R2] Image ${index + 1} resized and optimized. New size: ${(finalBuffer.length / 1024).toFixed(2)} KB`)
+      } catch (resizeError) {
+        console.error(`[R2] Failed to resize image ${index + 1}, uploading original:`, resizeError)
+      }
+    }
 
     // 上传到 R2
-    return await uploadBufferToR2(imageBuffer, fileName, contentType)
+    return await uploadBufferToR2(finalBuffer, fileName, contentType)
   } catch (error) {
     console.error(`[R2] Error uploading image:`, error)
     throw error

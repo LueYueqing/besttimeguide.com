@@ -18,6 +18,8 @@ interface User {
     totalReferrals: number
     successfulReferrals: number
   }
+  loginCount?: number
+  lastLoginAt?: string | Date | null
 }
 
 interface UserContextType {

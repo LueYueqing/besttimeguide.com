@@ -46,6 +46,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
         const articles = await prisma.article.findMany({
           where: {
             published: true,
+            publishedAt: { lte: new Date() },
           },
           include: {
             category: true,
@@ -61,8 +62,8 @@ export async function getAllPosts(): Promise<BlogPost[]> {
           slug: article.slug,
           title: article.title,
           description: article.description || '',
-          date: article.publishedAt instanceof Date 
-            ? article.publishedAt.toISOString() 
+          date: article.publishedAt instanceof Date
+            ? article.publishedAt.toISOString()
             : article.publishedAt || article.createdAt.toISOString(),
           author: article.author.name || article.author.email || 'besttimeguide.com Team',
           category: article.category.name,
@@ -87,10 +88,8 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 }
 
 // 根据slug获取单篇文章
-// 返回值：BlogPost | null | { error: 'DATABASE_ERROR' }
 export async function getPostBySlug(slug: string): Promise<BlogPost | null | { error: 'DATABASE_ERROR' }> {
   try {
-    // 使用 unstable_cache 包装查询，添加 cache tag 便于精确清除缓存
     const getCachedArticle = unstable_cache(
       async () => {
         return await prisma.article.findUnique({
@@ -104,14 +103,12 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
       [`article-${slug}`],
       {
         tags: [`article-${slug}`],
-        // 不设置 revalidate，完全依赖 on-demand revalidation
-        // 这样只有在主动调用 revalidateTag 时才会重新生成
       }
     )
 
     const article = await getCachedArticle()
 
-    if (!article || !article.published) {
+    if (!article || !article.published || (article.publishedAt && new Date(article.publishedAt) > new Date())) {
       return null
     }
 
@@ -120,8 +117,8 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
       slug: article.slug,
       title: article.title,
       description: article.description || '',
-      date: article.publishedAt instanceof Date 
-        ? article.publishedAt.toISOString() 
+      date: article.publishedAt instanceof Date
+        ? article.publishedAt.toISOString()
         : article.publishedAt || article.createdAt.toISOString(),
       author: article.author.name || article.author.email || 'besttimeguide.com Team',
       category: article.category.name,
@@ -132,17 +129,11 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
       coverImage: article.coverImage,
     }
   } catch (error: any) {
-    // 检查是否是数据库连接错误
     const isDatabaseError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)
-
     if (isDatabaseError) {
       console.warn(`[Blog] Database connection error for ${slug}`)
-      // 返回特殊标记，让页面组件知道这是数据库错误
-      // Next.js ISR 会在后台使用缓存的静态页面（如果存在）
       return { error: 'DATABASE_ERROR' as const }
     }
-
-    // 其他错误记录并返回 null
     console.error(`Error reading post ${slug}:`, error)
     return null
   }
@@ -163,6 +154,7 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
       where: {
         categoryId: category.id,
         published: true,
+        publishedAt: { lte: new Date() },
       },
       include: {
         category: true,
@@ -178,8 +170,8 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
       slug: article.slug,
       title: article.title,
       description: article.description || '',
-      date: article.publishedAt instanceof Date 
-        ? article.publishedAt.toISOString() 
+      date: article.publishedAt instanceof Date
+        ? article.publishedAt.toISOString()
         : article.publishedAt || article.createdAt.toISOString(),
       author: article.author.name || article.author.email || 'besttimeguide.com Team',
       category: article.category.name,
@@ -201,6 +193,7 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
     const articles = await prisma.article.findMany({
       where: {
         published: true,
+        publishedAt: { lte: new Date() },
         tags: {
           contains: tag,
         },
@@ -214,7 +207,6 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
       },
     })
 
-    // 过滤出真正包含该标签的文章
     return articles
       .filter((article) => parseTags(article.tags).includes(tag))
       .map((article) => ({
@@ -222,8 +214,8 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
         slug: article.slug,
         title: article.title,
         description: article.description || '',
-        date: article.publishedAt instanceof Date 
-          ? article.publishedAt.toISOString() 
+        date: article.publishedAt instanceof Date
+          ? article.publishedAt.toISOString()
           : article.publishedAt || article.createdAt.toISOString(),
         author: article.author.name || article.author.email || 'besttimeguide.com Team',
         category: article.category.name,
@@ -247,6 +239,7 @@ export async function getAllCategories(): Promise<string[]> {
         articles: {
           some: {
             published: true,
+            publishedAt: { lte: new Date() },
           },
         },
       },
@@ -268,6 +261,7 @@ export async function getAllTags(): Promise<string[]> {
     const articles = await prisma.article.findMany({
       where: {
         published: true,
+        publishedAt: { lte: new Date() },
         tags: {
           not: null,
         },

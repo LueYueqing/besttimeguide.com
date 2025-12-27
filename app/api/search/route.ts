@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {
       published: true, // 只搜索已发布的文章
+      publishedAt: { lte: new Date() }, // 只搜索已到发布时间的文章
     }
 
     // 搜索功能：搜索标题、描述、内容
@@ -80,4 +81,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
-

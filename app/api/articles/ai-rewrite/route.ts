@@ -103,7 +103,8 @@ async function searchImageFromPixabay(keywords: string): Promise<string | null> 
       return null
     }
     const data = await response.json()
-    return data.hits?.[0]?.largeImageURL || null
+    // 改用 webformatURL (通常为 640px 宽度)，比 largeImageURL 小得多，下载飞快
+    return data.hits?.[0]?.webformatURL || null
   } catch (error) {
     console.error('[Pixabay 搜索异常]:', error)
   }
@@ -134,12 +135,40 @@ async function searchImageFromUnsplash(keywords: string): Promise<string | null>
     const response = await fetch(url, { headers: { 'Authorization': `Client-ID ${accessKey}` } })
     if (response.ok) {
       const data = await response.json()
-      return data.results?.[0]?.urls?.regular || null
+      const rawUrl = data.results?.[0]?.urls?.regular || null
+      // Unsplash 支持动态缩放，直接请求 800 宽度的图片
+      return rawUrl ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=800&q=80` : null
     }
   } catch (err) {
     console.error('[Unsplash 搜索异常]:', err)
   }
   return null
+}
+
+async function getNextPublishedAt(): Promise<Date> {
+  const latestArticle = await prisma.article.findFirst({
+    where: {
+      published: true,
+      publishedAt: { not: null }
+    },
+    orderBy: {
+      publishedAt: 'desc'
+    },
+    select: {
+      publishedAt: true
+    }
+  })
+
+  const now = new Date()
+  let baseTime = now
+
+  if (latestArticle && latestArticle.publishedAt) {
+    baseTime = new Date(latestArticle.publishedAt)
+  }
+
+  // 递增1小时。如果要确保始终在未来，可以取 baseTime 和 now 的最大值
+  const nextTime = new Date(Math.max(baseTime.getTime(), now.getTime()) + 60 * 60 * 1000)
+  return nextTime
 }
 
 async function searchImage(keywords: string, altText: string, articleTitle: string): Promise<string | null> {
@@ -217,19 +246,30 @@ async function processArticles() {
       }
 
       console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
-      let successCount = 0
-      for (const placeholder of placeholders) {
+
+      // 并行处理所有图片，显著加快速度
+      const imagePromises = placeholders.map(async (placeholder) => {
         try {
           const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
           if (imageUrl) {
             const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
             if (r2Url) {
-              generatedContent = generatedContent.replace(placeholder.fullMatch, `![${placeholder.altText}](${r2Url})`)
-              successCount++
+              return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
             }
           }
-        } catch (err) {
-          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err)
+        } catch (err: any) {
+          console.error(`[图片处理错误] 占位符 ${placeholder.index}:`, err.message)
+        }
+        return { success: false }
+      })
+
+      const imageResults = await Promise.all(imagePromises)
+      let successCount = 0
+
+      for (const res of imageResults) {
+        if (res.success && res.fullMatch && res.r2Url) {
+          generatedContent = generatedContent.replace(res.fullMatch, `![${res.altText}](${res.r2Url})`)
+          successCount++
         }
       }
 
@@ -263,7 +303,7 @@ async function processArticles() {
           aiRewriteStatus: 'completed',
           aiRewriteAt: new Date(),
           published: successCount > 0,
-          publishedAt: successCount > 0 ? new Date() : undefined
+          publishedAt: successCount > 0 ? await getNextPublishedAt() : undefined
         }
       })
     } catch (error: any) {
@@ -277,6 +317,14 @@ async function processArticles() {
 }
 
 export async function GET() {
+  return handleRequest()
+}
+
+export async function POST() {
+  return handleRequest()
+}
+
+async function handleRequest() {
   try {
     const adminId = await checkAdmin()
     if (!adminId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
@@ -285,6 +333,7 @@ export async function GET() {
     await processArticles()
     return NextResponse.json({ success: true, message: 'Processing completed' })
   } catch (error: any) {
+    console.error('[AI Rewrite API Error]:', error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

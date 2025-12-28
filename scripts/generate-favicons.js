@@ -2,8 +2,8 @@ const sharp = require('sharp')
 const fs = require('fs')
 const path = require('path')
 
-// 源文件路径
-const sourceFile = path.join(__dirname, '../public/images/favico.jpg')
+// 源文件路径 - 使用 logo.png 生成 favicon
+const sourceFile = path.join(__dirname, '../public/logo.png')
 const publicDir = path.join(__dirname, '../public')
 
 // 需要生成的 favicon 尺寸
@@ -21,7 +21,7 @@ async function generateFavicons() {
     // 检查源文件是否存在
     if (!fs.existsSync(sourceFile)) {
       console.error(`❌ 源文件不存在: ${sourceFile}`)
-      console.log('请确保 public/images/favico.jpg 文件存在')
+      console.log('请确保 public/logo.png 文件存在')
       process.exit(1)
     }
 
@@ -70,4 +70,3 @@ async function generateFavicons() {
 
 // 运行脚本
 generateFavicons()
-

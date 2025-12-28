@@ -252,8 +252,17 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
     }
   }
 
-  const handleResetCooldown = async (id: number) => {
-    if (!confirm('确定要重新生成这篇文章的 AI 内容吗？这将把文章状态重置为"待处理"，AI 将在几分钟内重新生成内容、搜索图片并尝试自动发布。')) {
+  const handleResetCooldown = async (id: number, currentStatus: string | null, isPublished: boolean) => {
+    let confirmMessage = '确定要重新生成这篇文章的 AI 内容吗？这将把文章状态重置为"待处理"，AI 将在几分钟内重新生成内容、搜索图片并尝试自动发布。'
+    
+    // 如果是处理中状态，显示更强烈的警告
+    if (currentStatus === 'processing') {
+      confirmMessage = '⚠️ 警告：文章当前处于"处理中"状态。\n\n强制重置将清空已生成的内容，将文章恢复为草稿状态并重新开始 AI 生成流程。\n\n此操作不可撤销，确定要继续吗？'
+    } else if (isPublished && currentStatus !== 'processing') {
+      confirmMessage = '文章当前已发布。重置后文章将变为草稿状态，需要等待 AI 重新生成完成后才能再次发布。\n\n确定要继续吗？'
+    }
+
+    if (!confirm(confirmMessage)) {
       return
     }
 
@@ -269,7 +278,11 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
       const data = await response.json()
 
       if (data.success) {
-        toast.success('冷却时间已重置，文章已设置为待处理状态')
+        if (currentStatus === 'processing') {
+          toast.success('强制重置成功，文章已恢复为草稿状态并重新进入待处理队列')
+        } else {
+          toast.success('冷却时间已重置，文章已设置为待处理状态')
+        }
         fetchArticles() // 刷新列表
       } else {
         toast.error('重置失败：' + data.error)
@@ -741,17 +754,19 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                                       ? '失败'
                                       : article.aiRewriteStatus}
                             </span>
-                            {article.aiRewriteStatus !== 'processing' && (
-                              <button
-                                onClick={() => handleResetCooldown(article.id)}
-                                className="p-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
-                                title="重新触发 AI 生成/改写流程"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleResetCooldown(article.id, article.aiRewriteStatus, article.published)}
+                              className={`p-1 rounded transition-colors ${
+                                article.aiRewriteStatus === 'processing'
+                                  ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                                  : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
+                              }`}
+                              title={article.aiRewriteStatus === 'processing' ? '强制重置（清空内容）' : '重新触发 AI 生成/改写流程'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
                           </div>
                           {/* 显示处理时间：只在有 aiRewriteAt 时显示（即已开始处理、完成或失败） */}
                           {article.aiRewriteAt && (
@@ -1041,4 +1056,3 @@ Best Time to Visit Thailand`}
     </DashboardLayout>
   )
 }
-

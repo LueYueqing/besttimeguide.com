@@ -226,6 +226,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   remarkPlugins={[remarkGfm]}
                   components={{
                     h1: ({ node, ...props }) => {
+                      // 将内容中的 h1 转换为 h2，避免与页面主标题重复
                       const text = String(props.children)
                       const id = text
                         .toLowerCase()
@@ -233,7 +234,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                         .replace(/\s+/g, '-')
                         .replace(/-+/g, '-')
                         .trim()
-                      return <h1 id={id} className="text-3xl font-bold text-neutral-900 mt-8 mb-4 pt-4 border-t border-neutral-200 first:mt-0 first:pt-0 first:border-t-0" {...props} />
+                      return <h2 id={id} className="text-2xl font-bold text-neutral-900 mt-8 mb-4 pt-4 border-t border-neutral-200" {...props} />
                     },
                     h2: ({ node, ...props }) => {
                       const text = String(props.children)

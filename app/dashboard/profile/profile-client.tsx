@@ -384,7 +384,7 @@ export default function ProfileClient() {
   const subscription = user.subscription
 
   return (
-    <DashboardLayout title="账户设置">
+    <DashboardLayout title="账户设置" isFullWidth={true}>
       <div className="space-y-8">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg">
           <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />

@@ -223,19 +223,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               {/* 文章内容 */}
               <div className="prose prose-lg max-w-none mb-8">
                 <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ node, ...props }) => {
-                      // 将内容中的 h1 转换为 h2，避免与页面主标题重复
-                      const text = String(props.children)
-                      const id = text
-                        .toLowerCase()
-                        .replace(/[^\w\s-]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/-+/g, '-')
-                        .trim()
-                      return <h2 id={id} className="text-2xl font-bold text-neutral-900 mt-8 mb-4 pt-4 border-t border-neutral-200" {...props} />
+                  remarkPlugins={[
+                    remarkGfm,
+                    // 移除内容中的第一个 h1 标题，避免与页面主标题重复
+                    function removeFirstH1() {
+                      return function (tree) {
+                        const firstNode = tree.children[0]
+                        // 检查第一个节点是否是 h1
+                        if (firstNode && firstNode.type === 'heading' && firstNode.depth === 1) {
+                          // 移除第一个 h1
+                          tree.children.shift()
+                        }
+                      }
                     },
+                  ]}
+                  components={{
                     h2: ({ node, ...props }) => {
                       const text = String(props.children)
                       const id = text

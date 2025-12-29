@@ -442,6 +442,17 @@ async function processArticles(): Promise<{
         } catch (error) {
           console.warn(`[AI 流水线] 清除缓存失败:`, error)
         }
+
+        // 返回图片处理信息
+        return { 
+          id: article.id, 
+          slug: article.slug, 
+          title: article.title,
+          aiProvider: 'Image Processing',
+          model: 'N/A',
+          prompt: `图片搜索完成 (${placeholders.length} 个占位符, ${successCount} 张成功)`,
+          response: currentContent.substring(0, 500) + (currentContent.length > 500 ? '...' : '')
+        }
       } else {
         // 有内容但没有图片占位符 - 这意味着AI没有按预期生成占位符
         console.warn(`[AI 流水线] 文章 ${article.title} 有内容但无图片占位符，需要重新生成`)

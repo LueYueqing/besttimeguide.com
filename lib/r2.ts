@@ -1,6 +1,9 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { Readable } from 'stream'
 import sharp from 'sharp'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 // 优先使用 CDN_BASE_URL，如果未设置则回退到 CLOUDFLARE_R2_PUBLIC_URL
 const R2_PUBLIC_URL = process.env.CDN_BASE_URL || process.env.CLOUDFLARE_R2_PUBLIC_URL
@@ -111,7 +114,13 @@ function generateFileName(articleSlug: string | null, alt: string, url: string, 
 }
 
 // 生成 R2 路径：article\{year-month-day}\filename
-function generateR2Path(fileName: string): string {
+function generateR2Path(fileName: string, existingDatePath?: string): string {
+  // 如果提供了已有日期路径，直接使用（用于覆盖）
+  if (existingDatePath) {
+    return `article/${existingDatePath}/${fileName}`
+  }
+  
+  // 否则使用当前日期（用于新上传）
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -150,6 +159,40 @@ function isR2Url(url: string): boolean {
   }
   // 检查是否是 R2 默认 URL 格式
   return url.includes('.r2.cloudflarestorage.com') || url.includes('.r2.dev')
+}
+
+// 从 R2 路径中提取日期部分
+function extractDateFromR2Path(r2Path: string): string | null {
+  const match = r2Path.match(/article\/(\d{4}-\d{2}-\d{2})\//)
+  return match ? match[1] : null
+}
+
+// 检查图片是否已存在并返回其日期路径
+async function findExistingImagePath(fileName: string): Promise<string | null> {
+  try {
+    const existingImage = await prisma.articleImage.findFirst({
+      where: {
+        name: fileName,
+      },
+      select: {
+        r2Path: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    if (existingImage && existingImage.r2Path) {
+      const datePath = extractDateFromR2Path(existingImage.r2Path)
+      console.log(`[R2] Found existing image with same filename: ${fileName}, using date path: ${datePath}`)
+      return datePath
+    }
+
+    return null
+  } catch (error) {
+    console.error('[R2] Error checking for existing image:', error)
+    return null
+  }
 }
 
 // 上传图片到 R2
@@ -253,6 +296,9 @@ export async function uploadImageToR2(
     // 生成文件名和路径（基于文章slug，SEO友好）
     const fileName = generateFileName(articleSlug || null, alt, imageUrl, index)
 
+    // 检查是否已存在相同文件名的图片
+    const existingDatePath = await findExistingImagePath(fileName)
+
     // 检测内容类型
     let contentType = getContentType(imageUrl, imageBuffer)
     let finalBuffer = imageBuffer
@@ -276,8 +322,16 @@ export async function uploadImageToR2(
       }
     }
 
-    // 上传到 R2
-    const result = await uploadBufferToR2(finalBuffer, fileName, contentType, imageUrl)
+    // 上传到 R2（如果找到已有路径，使用它进行覆盖；否则创建新路径）
+    const result = await uploadBufferToR2(
+      finalBuffer, 
+      fileName, 
+      contentType, 
+      imageUrl, 
+      undefined, // 不直接指定完整路径，让 uploadBufferToR2 根据日期路径生成
+      true, // 标记为替换操作（因为可能会覆盖）
+      existingDatePath // 传递已有的日期路径
+    )
     return result
   } catch (error) {
     console.error(`[R2] Error uploading image:`, error)
@@ -291,11 +345,23 @@ export async function uploadBufferToR2(
   fileName: string,
   contentType: string,
   sourceUrl?: string,
-  r2Path?: string, // 可选：指定R2路径（用于替换现有图片）
-  isReplacement: boolean = false // 是否是替换操作
+  r2Path?: string, // 可选：指定完整R2路径（用于替换现有图片）
+  isReplacement: boolean = false, // 是否是替换操作
+  existingDatePath?: string | null // 可选：已有图片的日期路径（用于覆盖）
 ): Promise<UploadImageResult> {
   const { client, bucketName } = getR2Client()
-  const finalR2Path = r2Path || generateR2Path(fileName)
+  
+  // 优先使用完整的 r2Path（替换时使用）
+  // 如果没有完整路径但有已有日期路径，使用该日期路径（去重时使用）
+  // 否则使用当前日期（新上传时使用）
+  let finalR2Path: string
+  if (r2Path) {
+    finalR2Path = r2Path
+  } else if (existingDatePath) {
+    finalR2Path = generateR2Path(fileName, existingDatePath)
+  } else {
+    finalR2Path = generateR2Path(fileName)
+  }
 
   console.log(`[R2] Uploading buffer to: ${finalR2Path}`)
   const command = new PutObjectCommand({

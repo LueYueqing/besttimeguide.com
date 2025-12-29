@@ -350,22 +350,25 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           }
         }
 
-        // 检查是否至少成功上传了一张图片
+        // 第三层防护：检查是否至少成功上传了一张图片
         if (placeholders.length > 0 && successCount === 0) {
-          console.error(`[图片补全失败] 文章 ${article.title} 未能匹配任何图片，保留占位符，状态重置为 pending`)
-          // 保留占位符，不清理，以便下次重试
-          // 不发布文章，状态设为 pending，让后台任务下次继续处理
+          console.error(`[第三层防护失败] 文章 ${article.title} 未能匹配任何图片 (${placeholders.length} 个占位符，0 张成功)`)
+          console.error(`[第三层防护] 保留占位符，清空内容，重置为 pending 状态，重新从第一步开始`)
+          
+          // 清空内容，保留占位符格式，让 AI 重新生成（可能需要不同的关键词）
           await prisma.article.update({
             where: { id: article.id },
             data: {
-              content: currentContent,  // 保留占位符的内容
+              content: '',  // 清空内容，强制 AI 重新生成
               aiRewriteStatus: 'pending',
               aiRewriteAt: new Date()
             }
           })
-          console.log(`[AI 流水线] 文章 ${article.title} 因图片匹配失败已重置为 pending 状态`)
+          console.log(`[AI 流水线] 文章 ${article.title} 已清空内容并重置为 pending 状态（需要重新生成）`)
           return { id: article.id, slug: article.slug, title: article.title }
         }
+
+        console.log(`[第三层防护成功] 文章 ${article.title} 成功匹配 ${successCount}/${placeholders.length} 张图片，继续发布流程`)
 
         // 至少有一张图片成功上传，继续处理
         let coverImageUrl = article.coverImage

@@ -6,6 +6,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // 优化 SWC 编译器配置，减少不必要的 polyfill
+  swcMinify: true,
+  compiler: {
+    // 移除 console.log（生产环境）
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
   images: {
     // 允许的图片域名，根据实际需要配置
     domains: [

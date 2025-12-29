@@ -69,5 +69,23 @@
   },
   "overrides": {
     "nodemailer": "^6.9.15"
+  },
+  "browserslist": {
+    "production": [
+      "last 2 versions",
+      "> 0.5%",
+      "not dead",
+      "not IE 11",
+      "not Edge < 79",
+      "not Firefox < 68",
+      "not Chrome < 80",
+      "not Safari < 13",
+      "not iOS < 13",
+      "not Android < 80"
+    ],
+    "development": [
+      "last 1 version",
+      "> 1%"
+    ]
   }
 }

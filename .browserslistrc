@@ -1,0 +1,14 @@
+# 支持最新的 2 个浏览器版本
+# 不包括已停止维护的浏览器
+# 这样可以减少不必要的 polyfill，提升性能
+
+last 2 versions
+> 0.5%
+not dead
+not IE 11
+not Edge < 79
+not Firefox < 68
+not Chrome < 80
+not Safari < 13
+not iOS < 13
+not Android < 80

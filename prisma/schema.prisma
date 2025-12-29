@@ -339,6 +339,7 @@ model ArticleImage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([articleId, r2Url]) // 确保同一篇文章中的同一张图片不会重复记录
   @@index([articleId])
   @@index([slug])
   @@index([size])

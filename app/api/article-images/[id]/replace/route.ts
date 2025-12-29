@@ -74,27 +74,14 @@ export async function POST(
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // 获取文件扩展名
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-
-    // 生成新的文件名（使用原文件名，但保留原路径）
-    const originalFileName = existingImage.name.split('.').slice(0, -1).join('.')
-    const newFileName = `${originalFileName}.${extension}`
-
-    // 上传到R2（使用原路径）
-    const r2Path = existingImage.r2Path.substring(0, existingImage.r2Path.lastIndexOf('/')) + '/' + newFileName
-    const r2Url = existingImage.r2Url.substring(0, existingImage.r2Url.lastIndexOf('/')) + '/' + newFileName
-
     try {
-      const result = await uploadBufferToR2(buffer, r2Path.substring(r2Path.lastIndexOf('/') + 1), file.type)
+      // 上传到R2，使用原路径（直接覆盖原文件）
+      const result = await uploadBufferToR2(buffer, existingImage.name, file.type)
 
-      // 更新数据库
+      // 更新数据库（只更新大小、尺寸等信息，保持路径不变）
       const updatedImage = await prisma.articleImage.update({
         where: { id: imageId },
         data: {
-          name: newFileName,
-          r2Path: result.r2Path,
-          r2Url: result.r2Url,
           size: result.size,
           width: result.width,
           height: result.height,
@@ -106,39 +93,17 @@ export async function POST(
               id: true,
               title: true,
               slug: true,
-              content: true,
             },
           },
         },
       })
 
-      // 更新文章内容中的图片URL
-      const articleContent = updatedImage.article.content || ''
-      const oldImagePattern = new RegExp(
-        `!\\[([^\\]]*)\\]\\(${existingImage.r2Url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-        'g'
-      )
-
-      let updatedArticle = null
-      if (oldImagePattern.test(articleContent)) {
-        const newContent = articleContent.replace(
-          oldImagePattern,
-          `![${updatedImage.altText || 'image'}](${updatedImage.r2Url})`
-        )
-
-        updatedArticle = await prisma.article.update({
-          where: { id: updatedImage.articleId },
-          data: { content: newContent },
-        })
-
-        console.log(`[图片替换] 已更新文章内容中的图片URL: ${updatedImage.article.title}`)
-      }
+      console.log(`[图片替换] 已替换图片内容（路径不变）: ${existingImage.r2Path}`)
 
       return NextResponse.json({
         success: true,
         data: updatedImage,
-        articleUpdated: updatedArticle !== null,
-        message: 'Image replaced successfully',
+        message: 'Image replaced successfully, content updated without changing URL',
       })
     } catch (uploadError: any) {
       console.error('[图片替换] 上传到R2失败:', uploadError)

@@ -295,9 +295,19 @@ export async function uploadBufferToR2(
   isReplacement: boolean = false // 是否是替换操作
 ): Promise<UploadImageResult> {
   const { client, bucketName } = getR2Client()
+  
+  // 调试：检查 r2Path 参数
+  if (isReplacement) {
+    console.log(`[R2] Replacement mode - r2Path parameter: ${r2Path || 'undefined'}`)
+    console.log(`[R2] Replacement mode - fileName: ${fileName}`)
+  }
+  
   const finalR2Path = r2Path || generateR2Path(fileName)
 
   console.log(`[R2] Uploading buffer to: ${finalR2Path}`)
+  if (isReplacement) {
+    console.log(`[R2] Replacement mode - finalR2Path: ${finalR2Path}`)
+  }
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: finalR2Path,

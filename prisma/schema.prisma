@@ -257,6 +257,7 @@ model Article {
 
   // 关联反馈
   feedbacks ArticleFeedback[]
+  images ArticleImage[] // 文章图片
 
   @@index([slug])
   @@index([categoryId])
@@ -312,6 +313,37 @@ model ArticleFeedback {
   @@index([helpful])
   @@index([createdAt])
   @@map("article_feedbacks")
+}
+
+// 文章图片表
+model ArticleImage {
+  id        Int     @id @default(autoincrement())
+  articleId Int // 文章ID
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // 图片信息
+  slug       String // 图片slug/关键词（用于搜索）
+  name       String // 图片名称（文件名）
+  r2Path     String // R2存储路径
+  r2Url      String @db.Text // 完整的R2 URL
+  size       Int // 图片大小（字节）
+  width      Int? // 图片宽度（像素）
+  height     Int? // 图片高度（像素）
+  altText    String? // Alt文本（替代文本）
+  sourceUrl  String? @db.Text // 原始来源URL（pixabay/pexels/unsplash等）
+
+  // 排序
+  order Int @default(0) // 在文章中的顺序
+
+  // 时间戳
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([articleId])
+  @@index([slug])
+  @@index([size])
+  @@index([order])
+  @@map("article_images")
 }
 
 // ============================================

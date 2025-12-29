@@ -313,9 +313,16 @@ export async function POST(request: NextRequest) {
           try {
             const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
             if (imageUrl) {
-              const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
-              if (r2Url) {
-                return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
+              const result = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+              if (result) {
+                const r2Url = typeof result === 'string' ? result : result.r2Url
+                return { 
+                  success: true, 
+                  fullMatch: placeholder.fullMatch, 
+                  altText: placeholder.altText, 
+                  r2Url,
+                  result: typeof result === 'string' ? null : result
+                }
               }
             }
           } catch (err: any) {
@@ -327,11 +334,52 @@ export async function POST(request: NextRequest) {
         const imageResults = await Promise.all(imagePromises)
         let successImageCount = 0
 
+        // 保存图片信息到数据库
+        const imagesToSave: Array<{
+          articleId: number
+          slug: string
+          name: string
+          r2Path: string
+          r2Url: string
+          size: number
+          width?: number
+          height?: number
+          altText?: string
+          sourceUrl?: string
+          order: number
+        }> = []
+
         for (const res of imageResults) {
           if (res.success && res.fullMatch && res.r2Url) {
             currentContent = currentContent.replace(res.fullMatch, `![${res.altText}](${res.r2Url})`)
             successImageCount++
+
+            // 如果有详细的图片信息，保存到数据库
+            if (res.result) {
+              imagesToSave.push({
+                articleId: articleId,
+                slug: placeholders.find(p => p.fullMatch === res.fullMatch)?.keywords || '',
+                name: res.result.fileName,
+                r2Path: res.result.r2Path,
+                r2Url: res.result.r2Url,
+                size: res.result.size,
+                width: res.result.width,
+                height: res.result.height,
+                altText: res.altText,
+                sourceUrl: res.result.sourceUrl,
+                order: placeholders.findIndex(p => p.fullMatch === res.fullMatch) || 0
+              })
+            }
           }
+        }
+
+        // 批量保存图片信息
+        if (imagesToSave.length > 0) {
+          await prisma.articleImage.createMany({
+            data: imagesToSave,
+            skipDuplicates: true
+          })
+          console.log(`[图片信息] 已保存 ${imagesToSave.length} 张图片信息到数据库`)
         }
 
         // 清理占位符

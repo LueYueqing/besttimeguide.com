@@ -153,12 +153,23 @@ function isR2Url(url: string): boolean {
 }
 
 // 上传图片到 R2
+export interface UploadImageResult {
+  r2Url: string
+  r2Path: string
+  fileName: string
+  size: number
+  width?: number
+  height?: number
+  format?: string
+  sourceUrl: string
+}
+
 export async function uploadImageToR2(
   imageUrl: string,
   alt: string,
   index: number,
   articleSlug?: string | null
-): Promise<string> {
+): Promise<UploadImageResult | string> {
   try {
     // 如果图片 URL 已经是 R2 URL，检查是否需要转换为 CDN 链接
     if (isR2Url(imageUrl)) {
@@ -266,7 +277,8 @@ export async function uploadImageToR2(
     }
 
     // 上传到 R2
-    return await uploadBufferToR2(finalBuffer, fileName, contentType)
+    const result = await uploadBufferToR2(finalBuffer, fileName, contentType, imageUrl)
+    return result
   } catch (error) {
     console.error(`[R2] Error uploading image:`, error)
     throw error
@@ -277,8 +289,9 @@ export async function uploadImageToR2(
 export async function uploadBufferToR2(
   buffer: Buffer,
   fileName: string,
-  contentType: string
-): Promise<string> {
+  contentType: string,
+  sourceUrl?: string
+): Promise<UploadImageResult> {
   const { client, bucketName } = getR2Client()
   const r2Path = generateR2Path(fileName)
 
@@ -303,7 +316,31 @@ export async function uploadBufferToR2(
   }
 
   console.log(`[R2] Buffer uploaded successfully: ${publicUrl}`)
-  return publicUrl
+
+  // 获取图片尺寸信息
+  let width: number | undefined
+  let height: number | undefined
+  let format: string | undefined
+
+  try {
+    const metadata = await sharp(buffer).metadata()
+    width = metadata.width
+    height = metadata.height
+    format = metadata.format
+  } catch (error) {
+    // 无法获取尺寸信息
+  }
+
+  return {
+    r2Url: publicUrl,
+    r2Path,
+    fileName,
+    size: buffer.length,
+    width,
+    height,
+    format,
+    sourceUrl: sourceUrl || ''
+  }
 }
 
 // 检测图片内容类型
@@ -361,7 +398,8 @@ export async function uploadImagesToR2(
       // 因为 uploadImageToR2 内部包含了将 R2 原始链接转换为 CDN 链接的逻辑
       // 如果我们在这里跳过，就会导致已经是 R2 格式但未转换为 CDN 格式的链接被直接保留
 
-      const newUrl = await uploadImageToR2(url, alt, i, articleSlug)
+      const result = await uploadImageToR2(url, alt, i, articleSlug)
+      const newUrl = typeof result === 'string' ? result : result.r2Url
 
       // 统计逻辑：如果 URL 变了（说明被转换或新上传了），或者是新上传的
       // 这里简化统计，不再区分跳过还是上传，统一视为处理成功

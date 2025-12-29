@@ -290,18 +290,21 @@ export async function uploadBufferToR2(
   buffer: Buffer,
   fileName: string,
   contentType: string,
-  sourceUrl?: string
+  sourceUrl?: string,
+  r2Path?: string, // 可选：指定R2路径（用于替换现有图片）
+  isReplacement: boolean = false // 是否是替换操作
 ): Promise<UploadImageResult> {
   const { client, bucketName } = getR2Client()
-  const r2Path = generateR2Path(fileName)
+  const finalR2Path = r2Path || generateR2Path(fileName)
 
-  console.log(`[R2] Uploading buffer to: ${r2Path}`)
+  console.log(`[R2] Uploading buffer to: ${finalR2Path}`)
   const command = new PutObjectCommand({
     Bucket: bucketName,
-    Key: r2Path,
+    Key: finalR2Path,
     Body: buffer,
     ContentType: contentType,
-    CacheControl: 'public, max-age=31536000', // 1 年缓存
+    // 替换操作使用短缓存（1小时），新上传使用长缓存（1年）
+    CacheControl: isReplacement ? 'public, max-age=3600' : 'public, max-age=31536000',
   })
 
   await client.send(command)
@@ -310,12 +313,12 @@ export async function uploadBufferToR2(
   let publicUrl: string
   if (R2_PUBLIC_URL) {
     const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
-    publicUrl = `${baseUrl}/${r2Path}`
+    publicUrl = `${baseUrl}/${finalR2Path}`
   } else {
-    publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Path}`
+    publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${finalR2Path}`
   }
 
-  console.log(`[R2] Buffer uploaded successfully: ${publicUrl}`)
+  console.log(`[R2] Buffer uploaded successfully: ${publicUrl} (replacement: ${isReplacement})`)
 
   // 获取图片尺寸信息
   let width: number | undefined
@@ -333,13 +336,65 @@ export async function uploadBufferToR2(
 
   return {
     r2Url: publicUrl,
-    r2Path,
+    r2Path: finalR2Path,
     fileName,
     size: buffer.length,
     width,
     height,
     format,
     sourceUrl: sourceUrl || ''
+  }
+}
+
+// 清除CDN缓存（如果配置了Cloudflare）
+export async function purgeCDNCache(urls: string[]): Promise<boolean> {
+  try {
+    const apiKey = process.env.CLOUDFLARE_API_KEY
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
+    const zoneId = process.env.CLOUDFLARE_ZONE_ID
+
+    if (!apiKey || !accountId || !zoneId) {
+      console.log('[R2] Cloudflare API credentials not configured, skipping cache purge')
+      return false
+    }
+
+    // 构建要清除的URL列表
+    const purgeUrls = urls.map(url => {
+      // 如果URL没有协议，添加https
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`
+      }
+      return url
+    })
+
+    console.log('[R2] Purging CDN cache for:', purgeUrls)
+
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          files: purgeUrls,
+        }),
+      }
+    )
+
+    const result = await response.json()
+    
+    if (result.success) {
+      console.log('[R2] CDN cache purged successfully')
+      return true
+    } else {
+      console.error('[R2] Failed to purge CDN cache:', result.errors)
+      return false
+    }
+  } catch (error) {
+    console.error('[R2] Error purging CDN cache:', error)
+    return false
   }
 }
 

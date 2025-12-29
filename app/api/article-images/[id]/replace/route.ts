@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
-import { uploadBufferToR2 } from '@/lib/r2'
+import { uploadBufferToR2, purgeCDNCache } from '@/lib/r2'
 import sharp from 'sharp'
 
 const prisma = new PrismaClient()
@@ -107,10 +107,30 @@ export async function POST(
     }
 
     try {
+      // 提取原文件名（用于上传时指定文件名）
+      const fileName = existingImage.name
+      
       // 上传到R2，使用原路径（直接覆盖原文件）
-      const result = await uploadBufferToR2(buffer, existingImage.name, file.type)
+      const result = await uploadBufferToR2(
+        buffer,
+        fileName,
+        file.type,
+        undefined,
+        existingImage.r2Path, // 使用原R2路径
+        true // 标记为替换操作
+      )
 
-      // 更新数据库（只更新大小、尺寸等信息，保持路径不变）
+      console.log(`[图片替换] 已覆盖R2文件: ${existingImage.r2Path}`)
+
+      // 清除CDN缓存
+      const purgeSuccess = await purgeCDNCache([existingImage.r2Url])
+      if (purgeSuccess) {
+        console.log(`[图片替换] 已清除CDN缓存: ${existingImage.r2Url}`)
+      } else {
+        console.log(`[图片替换] 清除CDN缓存失败或未配置，使用短缓存策略`)
+      }
+
+      // 更新数据库（只更新大小、尺寸，不改变URL）
       const updatedImage = await prisma.articleImage.update({
         where: { id: imageId },
         data: {
@@ -130,12 +150,12 @@ export async function POST(
         },
       })
 
-      console.log(`[图片替换] 已替换图片内容（路径不变）: ${existingImage.r2Path}`)
+      console.log(`[图片替换] 已更新数据库记录，URL保持不变`)
 
       return NextResponse.json({
         success: true,
         data: updatedImage,
-        message: resizeInfo || 'Image replaced successfully, content updated without changing URL',
+        message: resizeInfo || 'Image replaced successfully',
         resizeInfo: resizeInfo || null,
       })
     } catch (uploadError: any) {

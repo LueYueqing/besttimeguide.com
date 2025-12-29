@@ -12,6 +12,10 @@ const MIN_IMAGE_SIZE = parseInt(process.env.MIN_IMAGE_SIZE_KB || '10', 10) * 102
 const MAX_IMAGE_WIDTH = parseInt(process.env.MAX_IMAGE_WIDTH || '800', 10) // 最大宽度（像素）
 const MAX_IMAGE_HEIGHT = parseInt(process.env.MAX_IMAGE_HEIGHT || '600', 10) // 最大高度（像素）
 
+// WebP 转换配置
+const ENABLE_WEBP_CONVERSION = process.env.ENABLE_WEBP_CONVERSION !== 'false' // 默认启用 WebP 转换
+const WEBP_QUALITY = parseInt(process.env.WEBP_QUALITY || '80', 10) // WebP 质量（0-100），默认80
+
 // 初始化 R2 客户端
 const getR2Client = () => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID
@@ -38,7 +42,7 @@ const getR2Client = () => {
 }
 
 // 生成文件名（基于文章slug和alt文本，SEO友好）
-function generateFileName(articleSlug: string | null, alt: string, url: string, index: number): string {
+function generateFileName(articleSlug: string | null, alt: string, url: string, index: number, forceWebp: boolean = false): string {
   // 从 URL 提取扩展名
   let extension = ''
   try {
@@ -55,8 +59,11 @@ function generateFileName(articleSlug: string | null, alt: string, url: string, 
     // URL 解析失败，稍后使用默认扩展名
   }
 
-  // 如果没有从 URL 提取到扩展名，默认使用 png
-  if (!extension) {
+  // 如果启用了 WebP 转换且不是 SVG，强制使用 webp 扩展名
+  if (forceWebp && ENABLE_WEBP_CONVERSION && extension !== 'svg') {
+    extension = 'webp'
+  } else if (!extension) {
+    // 如果没有从 URL 提取到扩展名，默认使用 png
     extension = 'png'
   }
 
@@ -250,29 +257,72 @@ export async function uploadImageToR2(
       return imageUrl
     }
 
-    // 生成文件名和路径（基于文章slug，SEO友好）
-    const fileName = generateFileName(articleSlug || null, alt, imageUrl, index)
+    // 图片处理：缩放和格式转换
+    let imageProcessed = false
+
+    // 检查是否需要缩放
+    const needsResize = hasDimensions && imageInfo.width && imageInfo.height && 
+                      (imageInfo.width > MAX_IMAGE_WIDTH || imageInfo.height > MAX_IMAGE_HEIGHT)
+    
+    // 检查是否需要转换为 WebP
+    const needsWebPConversion = ENABLE_WEBP_CONVERSION && 
+                               imageInfo.format && 
+                               imageInfo.format !== 'webp' && 
+                               imageInfo.format !== 'svg'
+
+    // 决定是否强制使用 WebP 文件名（确保是 boolean 类型）
+    const forceWebp: boolean = Boolean(needsWebPConversion)
+
+    // 生成文件名（基于文章slug，SEO友好）
+    const fileName = generateFileName(articleSlug || null, alt, imageUrl, index, forceWebp)
 
     // 检测内容类型
     let contentType = getContentType(imageUrl, imageBuffer)
     let finalBuffer = imageBuffer
 
-    // 如果图片尺寸超过最大值，进行缩放处理
-    if (hasDimensions && imageInfo.width && imageInfo.height && (imageInfo.width > MAX_IMAGE_WIDTH || imageInfo.height > MAX_IMAGE_HEIGHT)) {
+    if (needsResize || needsWebPConversion) {
       try {
-        console.log(`[R2] Image ${index + 1} is too large (${imageInfo.width}x${imageInfo.height}), resizing to fit ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}...`)
-        finalBuffer = await sharp(imageBuffer)
-          .resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
+        let sharpInstance = sharp(imageBuffer)
+
+        // 应用缩放
+        if (needsResize) {
+          console.log(`[R2] Image ${index + 1} is too large (${imageInfo.width}x${imageInfo.height}), resizing to fit ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}...`)
+          sharpInstance = sharpInstance.resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
             withoutEnlargement: true,
             fit: 'inside'
           })
-          .jpeg({ quality: 85, mozjpeg: true })
-          .toBuffer()
+          imageProcessed = true
+        }
 
-        contentType = 'image/jpeg' // 缩放后统一转为 jpeg
-        console.log(`[R2] Image ${index + 1} resized and optimized. New size: ${(finalBuffer.length / 1024).toFixed(2)} KB`)
-      } catch (resizeError) {
-        console.error(`[R2] Failed to resize image ${index + 1}, uploading original:`, resizeError)
+        // 应用 WebP 转换
+        if (needsWebPConversion) {
+          console.log(`[R2] Converting image ${index + 1} from ${imageInfo.format} to WebP...`)
+          sharpInstance = sharpInstance.webp({ 
+            quality: WEBP_QUALITY,
+            effort: 4 // 压缩力度 0-6，4 为平衡性能和质量
+          })
+          contentType = 'image/webp'
+          imageProcessed = true
+        }
+
+        // 如果缩放了但没有转换为 WebP，使用 JPEG
+        if (needsResize && !needsWebPConversion) {
+          sharpInstance = sharpInstance.jpeg({ quality: 85, mozjpeg: true })
+          contentType = 'image/jpeg'
+        }
+
+        // 执行处理
+        if (imageProcessed) {
+          finalBuffer = await sharpInstance.toBuffer()
+          console.log(`[R2] Image ${index + 1} processed successfully. New size: ${(finalBuffer.length / 1024).toFixed(2)} KB, format: ${contentType}`)
+          
+          // 计算压缩率
+          const compressionRatio = ((imageBuffer.length - finalBuffer.length) / imageBuffer.length * 100).toFixed(1)
+          console.log(`[R2] Compression ratio: ${compressionRatio}%`)
+        }
+      } catch (processError) {
+        console.error(`[R2] Failed to process image ${index + 1}, uploading original:`, processError)
+        finalBuffer = imageBuffer
       }
     }
 

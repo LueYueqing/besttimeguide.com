@@ -125,7 +125,11 @@ export default async function HomePage() {
               className="wikihow-search-input"
               required
             />
-            <button type="submit" className="wikihow-search-icon cursor-pointer">
+            <button 
+              type="submit" 
+              className="wikihow-search-icon cursor-pointer"
+              aria-label="Search"
+            >
               <svg
                 fill="none"
                 stroke="currentColor"

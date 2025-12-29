@@ -1,8 +1,17 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/Providers'
 import { getAppUrl } from '@/lib/app-url'
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  display: 'optional',
+  variable: '--font-inter',
+  preload: true,
+})
 
 const appUrl = getAppUrl()
 
@@ -71,13 +80,21 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className={`scroll-smooth ${inter.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        
-        {/* Font Awesome for icons */}
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+        {/* Font Awesome - 动态加载以避免阻塞渲染 */}
+        <Script id="font-awesome-loader" strategy="lazyOnload">
+          {`
+            (function() {
+              var link = document.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+              link.crossOrigin = 'anonymous';
+              link.referrerPolicy = 'no-referrer';
+              document.head.appendChild(link);
+            })();
+          `}
+        </Script>
         
         {/* Favicon and PWA icons */}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />

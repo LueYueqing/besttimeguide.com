@@ -11,6 +11,10 @@ export const maxDuration = 60
 
 const prisma = new PrismaClient()
 
+// WebP 转换配置
+const ENABLE_WEBP_CONVERSION = process.env.ENABLE_WEBP_CONVERSION !== 'false'
+const WEBP_QUALITY = parseInt(process.env.WEBP_QUALITY || '80', 10)
+
 // 初始化 AI 客户端（支持 DeepSeek 和 OpenAI）
 const getAIClient = () => {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || ''
@@ -397,11 +401,44 @@ export async function POST(request: NextRequest) {
             const response = await fetch(firstImageMatch[2])
             if (response.ok) {
               const buffer = Buffer.from(await response.arrayBuffer())
-              const coverBuffer = await sharp(buffer)
-                .resize(375, 200, { fit: 'cover', position: 'center' })
-                .jpeg({ quality: 85 })
-                .toBuffer()
-              coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+              let sharpInstance = sharp(buffer).resize(375, 200, { fit: 'cover', position: 'center' })
+              
+              // 应用 WebP 转换（如果启用）
+              let finalBuffer: Buffer
+              let finalContentType = 'image/jpeg'
+              let fileExtension = 'jpg'
+              
+              if (ENABLE_WEBP_CONVERSION) {
+                try {
+                  const metadata = await sharp(buffer).metadata()
+                  
+                  if (metadata.format && metadata.format !== 'webp' && metadata.format !== 'svg') {
+                    console.log(`[AI 生成] Converting cover image from ${metadata.format} to WebP...`)
+                    
+                    const webpBuffer = Buffer.from(await sharpInstance.webp({ 
+                      quality: WEBP_QUALITY,
+                      effort: 4
+                    }).toBuffer())
+                    
+                    finalBuffer = webpBuffer
+                    finalContentType = 'image/webp'
+                    fileExtension = 'webp'
+                    
+                    const compressionRatio = ((buffer.length - webpBuffer.length) / buffer.length * 100).toFixed(1)
+                    console.log(`[AI 生成] Cover WebP conversion complete. Compression ratio: ${compressionRatio}%`)
+                  } else {
+                    finalBuffer = Buffer.from(await sharpInstance.jpeg({ quality: 85 }).toBuffer())
+                  }
+                } catch (processError) {
+                  console.error('[AI 生成] WebP conversion failed, using JPEG:', processError)
+                  finalBuffer = Buffer.from(await sharpInstance.jpeg({ quality: 85 }).toBuffer())
+                }
+              } else {
+                finalBuffer = Buffer.from(await sharpInstance.jpeg({ quality: 85 }).toBuffer())
+              }
+              
+              const uploadResult = await uploadBufferToR2(finalBuffer, `${article.slug}-cover.${fileExtension}`, finalContentType)
+              coverImageUrl = uploadResult.r2Url
             }
           } catch (err) {
             console.error('[AI 生成] 封面图处理失败:', err)

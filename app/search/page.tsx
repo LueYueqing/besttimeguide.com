@@ -94,7 +94,11 @@ function SearchContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="wikihow-search-icon cursor-pointer">
+            <button 
+              type="submit" 
+              className="wikihow-search-icon cursor-pointer"
+              aria-label="Search"
+            >
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -222,4 +226,3 @@ export default function SearchPage() {
     </Suspense>
   )
 }
-

@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
                                  ? 'image/webp' 
                                  : contentType
 
-        const url = await uploadBufferToR2(buffer, fileName, finalContentType)
+        const result = await uploadBufferToR2(buffer, fileName, finalContentType)
+        const url = typeof result === 'string' ? result : result.r2Url
 
         return NextResponse.json({ success: true, url })
     } catch (error: any) {

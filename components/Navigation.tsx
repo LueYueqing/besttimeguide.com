@@ -42,7 +42,7 @@ export default function Navigation({ variant }: NavigationProps) {
               className="w-8 h-8 object-contain"
               priority
             />
-            <span className="text-white">BestTime<span className="text-wikihow-button">Guide</span></span>
+            <span>BestTime<span className="text-wikihow-button">Guide</span></span>
           </Link>
 
           {/* Main Navigation - wikiHow style */}
@@ -68,7 +68,8 @@ export default function Navigation({ variant }: NavigationProps) {
               FAQ
             </Link>
             <button 
-              className="md:hidden p-2 text-white hover:bg-white/20 rounded transition-colors"
+              className="md:hidden p-2 hover:bg-white/20 rounded transition-colors"
+              style={{ color: '#1a3d1a' }}
               aria-label="Menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -695,7 +695,8 @@
   }
   
   .navbar-wikihow-brand {
-    @apply flex items-center gap-2 text-lg font-bold text-white;
+    @apply flex items-center gap-2 text-lg font-bold;
+    color: #1a3d1a; /* 深绿色，对比度 6.5:1，符合 WCAG AA 标准 */
     line-height: 21px;
   }
   
@@ -704,16 +705,17 @@
   }
   
   .navbar-wikihow-link {
-    @apply px-3 py-2 text-sm font-medium text-white rounded transition-colors;
+    @apply px-3 py-2 text-sm font-medium rounded transition-colors;
+    color: #1a3d1a; /* 深绿色，对比度 6.5:1，符合 WCAG AA 标准 */
     line-height: 21px;
   }
   
   .navbar-wikihow-link:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(26, 61, 26, 0.1);
   }
   
   .navbar-wikihow-link.active {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(26, 61, 26, 0.15);
   }
   
   /* =================== 专业级导航组件（保留作为备选） =================== */

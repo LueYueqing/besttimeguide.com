@@ -12,9 +12,15 @@ export const maxDuration = 60
 const prisma = new PrismaClient()
 
 // 初始化 AI 客户端
+// 优先使用 OpenAI，如果没有 OPENAI_API_KEY 才使用 DeepSeek
+// 这样可以方便地在 OpenAI 和 DeepSeek 之间切换
 const getAIClient = () => {
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || ''
-  const baseURL = process.env.DEEPSEEK_API_KEY
+  // 优先使用 OpenAI API key（默认）
+  const openAIApiKey = process.env.OPENAI_API_KEY
+  const deepSeekApiKey = process.env.DEEPSEEK_API_KEY
+  
+  const apiKey = openAIApiKey || deepSeekApiKey || ''
+  const baseURL = !openAIApiKey && deepSeekApiKey
     ? 'https://api.deepseek.com'
     : undefined
 
@@ -280,14 +286,21 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
         })
 
         const prompt = AI_GENERATE_PROMPT.replace('{title}', article.title).replace('{categoryName}', article.category.name)
+        
+        // 根据使用的 API 选择合适的模型
+        const useOpenAI = !!process.env.OPENAI_API_KEY
+        const model = useOpenAI ? 'gpt-4o-mini' : 'deepseek-chat'
+        
         const completion = await aiClient.chat.completions.create({
-          model: process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini',
+          model,
           messages: [
             { role: 'system', content: prompt },
             { role: 'user', content: `Generate a comprehensive article about: ${article.title}` }
           ],
           temperature: 0.7,
         })
+        
+        console.log(`[AI 流水线] 使用 ${useOpenAI ? 'OpenAI' : 'DeepSeek'} (${model}) 生成内容`)
 
         const generatedContent = completion.choices[0]?.message?.content || ''
         if (!generatedContent) throw new Error('AI 生成内容为空')

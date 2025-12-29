@@ -246,7 +246,15 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
   return null
 }
 
-async function processArticles(): Promise<{ id: number; slug: string; title: string } | null> {
+async function processArticles(): Promise<{ 
+  id: number; 
+  slug: string; 
+  title: string;
+  aiProvider?: string;
+  model?: string;
+  prompt?: string;
+  response?: string;
+} | null> {
   // 1. 优先寻找已经出字但待补图的"半成品"（阶段 2）
   let topArticle: any = await prisma.article.findFirst({
     where: {
@@ -289,6 +297,7 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
         
         // 根据使用的 API 选择合适的模型
         const useOpenAI = !!process.env.OPENAI_API_KEY
+        const aiProvider = useOpenAI ? 'OpenAI' : 'DeepSeek'
         const model = useOpenAI ? 'gpt-4o-mini' : 'deepseek-chat'
         
         const completion = await aiClient.chat.completions.create({
@@ -300,7 +309,7 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           temperature: 0.7,
         })
         
-        console.log(`[AI 流水线] 使用 ${useOpenAI ? 'OpenAI' : 'DeepSeek'} (${model}) 生成内容`)
+        console.log(`[AI 流水线] 使用 ${aiProvider} (${model}) 生成内容`)
 
         const generatedContent = completion.choices[0]?.message?.content || ''
         if (!generatedContent) throw new Error('AI 生成内容为空')
@@ -314,7 +323,17 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           }
         })
         console.log(`[AI 流水线] 文本阶段完成: ${article.title}`)
-        continue
+        
+        // 返回 AI 调用信息
+        return { 
+          id: article.id, 
+          slug: article.slug, 
+          title: article.title,
+          aiProvider,
+          model,
+          prompt,
+          response: generatedContent
+        }
       }
 
       if (hasPlaceholders) {
@@ -481,7 +500,11 @@ async function handleRequest() {
       article: {
         id: processedArticle.id,
         slug: processedArticle.slug,
-        title: processedArticle.title
+        title: processedArticle.title,
+        aiProvider: processedArticle.aiProvider,
+        model: processedArticle.model,
+        prompt: processedArticle.prompt,
+        response: processedArticle.response
       }
     })
   } catch (error: any) {

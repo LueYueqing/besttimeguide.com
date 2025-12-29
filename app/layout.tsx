@@ -117,17 +117,26 @@ export default function RootLayout({
         <meta name="application-name" content="BestTimeGuide" />
       </head>
       <body className="font-sans antialiased bg-neutral-50 text-neutral-700">
-        {/* Google tag (gtag.js) */}
+        {/* Google tag (gtag.js) - 使用 lazyOnload 避免强制重排 */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-SDYSFRPPR2"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-SDYSFRPPR2');
+            gtag('config', 'G-SDYSFRPPR2', {
+              send_page_view: false,
+              transport_type: 'beacon'
+            });
+            // 手动发送页面视图，避免重复
+            if (window.location.pathname !== '/') {
+              gtag('event', 'page_view', {
+                page_path: window.location.pathname
+              });
+            }
           `}
         </Script>
         <Providers>

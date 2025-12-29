@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import { uploadBufferToR2 } from '@/lib/r2'
+import sharp from 'sharp'
 
 const prisma = new PrismaClient()
 
@@ -47,6 +48,7 @@ export async function POST(
     // 解析表单数据
     const formData = await request.formData()
     const file = formData.get('file') as File
+    const shouldResize = formData.get('shouldResize') === 'true' // 是否需要缩放
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 })
@@ -71,8 +73,38 @@ export async function POST(
     }
 
     // 读取文件内容
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    let arrayBuffer = await file.arrayBuffer()
+    let buffer = Buffer.from(arrayBuffer)
+
+    // 检查是否需要缩放（文件超过1MB且用户选择了缩放）
+    const ONE_MB = 1 * 1024 * 1024
+    let resizeInfo = ''
+
+    if (shouldResize && file.size > ONE_MB) {
+      console.log(`[图片缩放] 原始大小: ${(file.size / 1024 / 1024).toFixed(2)}MB，开始缩放...`)
+
+      try {
+        // 使用sharp进行图片缩放
+        const resizedBuffer = await sharp(buffer)
+          .resize(800, 600, {
+            fit: 'inside', // 保持宽高比，不超过指定尺寸
+            withoutEnlargement: true, // 如果图片比目标尺寸小，不放大
+          })
+          .toBuffer() as Buffer
+
+        const originalSize = buffer.length
+        const newSize = resizedBuffer.length
+        const savedPercentage = ((originalSize - newSize) / originalSize * 100).toFixed(1)
+
+        buffer = Buffer.from(resizedBuffer)
+        resizeInfo = `图片已从 ${(originalSize / 1024 / 1024).toFixed(2)}MB 缩小到 ${(newSize / 1024 / 1024).toFixed(2)}MB，节省了 ${savedPercentage}% 的空间`
+
+        console.log(`[图片缩放] ${resizeInfo}`)
+      } catch (resizeError: any) {
+        console.error('[图片缩放] 缩放失败，使用原图:', resizeError)
+        resizeInfo = '缩放失败，使用原图'
+      }
+    }
 
     try {
       // 上传到R2，使用原路径（直接覆盖原文件）
@@ -103,7 +135,8 @@ export async function POST(
       return NextResponse.json({
         success: true,
         data: updatedImage,
-        message: 'Image replaced successfully, content updated without changing URL',
+        message: resizeInfo || 'Image replaced successfully, content updated without changing URL',
+        resizeInfo: resizeInfo || null,
       })
     } catch (uploadError: any) {
       console.error('[图片替换] 上传到R2失败:', uploadError)

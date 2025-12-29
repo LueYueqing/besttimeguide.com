@@ -48,6 +48,7 @@ export default function ArticleImagesClient() {
   const [replacing, setReplacing] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [shouldResize, setShouldResize] = useState(false)
   const pasteAreaRef = useRef<HTMLDivElement>(null)
 
   // 处理粘贴事件
@@ -99,6 +100,13 @@ export default function ArticleImagesClient() {
 
     // 创建新的 File 对象
     const file = new File([pastedFile], fileName, { type: pastedFile.type })
+
+    // 如果文件超过1MB，默认选中缩放选项
+    if (file.size > 1 * 1024 * 1024) {
+      setShouldResize(true)
+    } else {
+      setShouldResize(false)
+    }
 
     setFile(file)
     setPreviewUrl(URL.createObjectURL(file))
@@ -152,6 +160,7 @@ export default function ArticleImagesClient() {
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('shouldResize', shouldResize.toString())
 
       const response = await fetch(`/api/article-images/${selectedImage.id}/replace`, {
         method: 'POST',
@@ -161,10 +170,15 @@ export default function ArticleImagesClient() {
       const data = await response.json()
 
       if (data.success) {
-        toast.success('图片替换成功' + (data.articleUpdated ? '，文章内容已同步更新' : ''))
+        let successMessage = '图片替换成功'
+        if (data.resizeInfo) {
+          successMessage += `，${data.resizeInfo}`
+        }
+        toast.success(successMessage)
         setShowReplaceModal(false)
         setFile(null)
         setPreviewUrl(null)
+        setShouldResize(false)
         setSelectedImage(null)
         fetchImages()
       } else {
@@ -194,6 +208,13 @@ export default function ArticleImagesClient() {
     if (selectedFile.size > maxSize) {
       toast.error('图片大小不能超过 10MB')
       return
+    }
+
+    // 如果文件超过1MB，默认选中缩放选项
+    if (selectedFile.size > 1 * 1024 * 1024) {
+      setShouldResize(true)
+    } else {
+      setShouldResize(false)
     }
 
     setFile(selectedFile)
@@ -563,10 +584,34 @@ export default function ArticleImagesClient() {
                           <span>{file?.name}</span>
                           <span>{formatSize(file?.size || 0)}</span>
                         </div>
+                        
+                        {/* 图片缩放选项 */}
+                        {file && file.size > 1 * 1024 * 1024 && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={shouldResize}
+                                onChange={(e) => setShouldResize(e.target.checked)}
+                                className="mt-1 w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                              />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-amber-800">
+                                  自动缩放图片以减小文件大小
+                                </p>
+                                <p className="text-xs text-amber-700 mt-1">
+                                  图片将被调整至最大 800x600 像素，适合大多数文章显示需求。这可以显著减少文件大小和加载时间。
+                                </p>
+                              </div>
+                            </label>
+                          </div>
+                        )}
+                        
                         <button
                           onClick={() => {
                             setFile(null)
                             setPreviewUrl(null)
+                            setShouldResize(false)
                           }}
                           className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
                         >

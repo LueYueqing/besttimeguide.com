@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/components/Toast'
 import DashboardLayout from '../components/DashboardLayout'
@@ -48,6 +48,62 @@ export default function ArticleImagesClient() {
   const [replacing, setReplacing] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const pasteAreaRef = useRef<HTMLDivElement>(null)
+
+  // 处理粘贴事件
+  useEffect(() => {
+    if (!showReplaceModal) return
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault()
+          const file = item.getAsFile()
+          if (file) {
+            handleFileFromPaste(file)
+          }
+          break
+        }
+      }
+    }
+
+    document.addEventListener('paste', handlePaste)
+    return () => {
+      document.removeEventListener('paste', handlePaste)
+    }
+  }, [showReplaceModal])
+
+  const handleFileFromPaste = (pastedFile: File) => {
+    // 验证文件类型
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(pastedFile.type)) {
+      toast.error('只支持 JPEG、PNG、GIF 和 WebP 格式的图片')
+      return
+    }
+
+    // 验证文件大小（最大10MB）
+    const maxSize = 10 * 1024 * 1024
+    if (pastedFile.size > maxSize) {
+      toast.error('图片大小不能超过 10MB')
+      return
+    }
+
+    // 生成文件名
+    const timestamp = new Date().getTime()
+    const extension = pastedFile.type.split('/')[1]
+    const fileName = `pasted-image-${timestamp}.${extension === 'jpeg' ? 'jpg' : extension}`
+
+    // 创建新的 File 对象
+    const file = new File([pastedFile], fileName, { type: pastedFile.type })
+
+    setFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+    toast.success('图片已从剪贴板粘贴')
+  }
 
   useEffect(() => {
     fetchImages()
@@ -519,8 +575,12 @@ export default function ArticleImagesClient() {
                       </div>
                     ) : (
                       <div
+                        ref={pasteAreaRef}
+                        tabIndex={0}
                         className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center hover:border-primary-500 transition-colors cursor-pointer"
                         onClick={() => document.getElementById('file-input')?.click()}
+                        onFocus={(e) => e.currentTarget.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2')}
+                        onBlur={(e) => e.currentTarget.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2')}
                       >
                         <input
                           id="file-input"
@@ -538,14 +598,22 @@ export default function ArticleImagesClient() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p className="mt-2 text-sm text-neutral-600">点击或拖拽图片到此处上传</p>
+                        <p className="mt-1 text-xs text-neutral-400">或直接按 Ctrl+V 粘贴图片</p>
                         <p className="mt-1 text-xs text-neutral-400">支持 JPEG、PNG、GIF、WebP 格式，最大 10MB</p>
                       </div>
                     )}
 
-                    <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-                      <p className="text-sm text-blue-800">
-                        <strong>提示：</strong>替换后，图片URL会保持不变（R2路径不变），但显示内容会更新为新的图片。文章内容中的图片会自动同步更新。
-                      </p>
+                    <div className="mt-4 space-y-2">
+                      <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                        <p className="text-sm text-blue-800">
+                          <strong>提示：</strong>替换后，图片URL会保持不变（R2路径不变），但显示内容会更新为新的图片。文章内容中的图片会自动同步更新。
+                        </p>
+                      </div>
+                      <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                        <p className="text-sm text-green-800">
+                          <strong>快捷方式：</strong>点击上传区域后，可以直接按 Ctrl+V（Windows）或 Cmd+V（Mac）粘贴剪贴板中的图片。
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

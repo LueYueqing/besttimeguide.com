@@ -23,28 +23,7 @@ Next.js 默认的浏览器支持范围较宽，包含了已停止维护的旧版
 
 ## 优化方案
 
-### 1. 添加 `.browserslistrc` 文件
-
-在项目根目录创建 `.browserslistrc` 文件：
-
-```
-# 支持最新的 2 个浏览器版本
-# 不包括已停止维护的浏览器
-# 这样可以减少不必要的 polyfill，提升性能
-
-last 2 versions
-> 0.5%
-not dead
-not IE 11
-not Edge < 79
-not Firefox < 68
-not Chrome < 80
-not Safari < 13
-not iOS < 13
-not Android < 80
-```
-
-### 2. 更新 `package.json`
+### 1. 更新 `package.json`
 
 在 `package.json` 中添加 `browserslist` 配置：
 
@@ -244,7 +223,7 @@ npx lighthouse https://besttimeguide.com --view
 
 ### 1. 定期更新 Browserslist
 
-根据全球浏览器市场份额变化，定期更新 `.browserslistrc`：
+根据全球浏览器市场份额变化，定期更新 `package.json` 中的 browserslist 配置：
 
 ```bash
 # 查看当前配置的覆盖率
@@ -303,7 +282,6 @@ if ('flat' in Array.prototype) {
 
 ## 相关文件
 
-- `.browserslistrc` - 浏览器支持配置
 - `next.config.ts` - Next.js 编译配置
 - `package.json` - 项目依赖和 browserslist 配置
 - `docs/03-SEO优化完整指南.md` - SEO 优化指南

@@ -350,11 +350,24 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           }
         }
 
+        // 检查是否至少成功上传了一张图片
         if (placeholders.length > 0 && successCount === 0) {
-          console.warn(`[图片补全] 文章 ${article.title} 未能匹配图片，将清理占位符`)
-          currentContent = currentContent.replace(/!\[[^\]]*\]\(IMAGE_PLACEHOLDER_[^)]+\)\)/g, '')
+          console.error(`[图片补全失败] 文章 ${article.title} 未能匹配任何图片，保留占位符，状态重置为 pending`)
+          // 保留占位符，不清理，以便下次重试
+          // 不发布文章，状态设为 pending，让后台任务下次继续处理
+          await prisma.article.update({
+            where: { id: article.id },
+            data: {
+              content: currentContent,  // 保留占位符的内容
+              aiRewriteStatus: 'pending',
+              aiRewriteAt: new Date()
+            }
+          })
+          console.log(`[AI 流水线] 文章 ${article.title} 因图片匹配失败已重置为 pending 状态`)
+          return { id: article.id, slug: article.slug, title: article.title }
         }
 
+        // 至少有一张图片成功上传，继续处理
         let coverImageUrl = article.coverImage
         const firstImageMatch = currentContent.match(/!\[([^\]]*)\]\(([^)]+)\)/)
         if (firstImageMatch && firstImageMatch[2]) {
@@ -384,7 +397,7 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
             publishedAt: await getNextPublishedAt()
           }
         })
-        console.log(`[AI 流水线] 全阶段完成: ${article.title}`)
+        console.log(`[AI 流水线] 全阶段完成: ${article.title} (成功上传 ${successCount}/${placeholders.length} 张图片)`)
 
         // 清除缓存，使新文章立即可访问
         try {

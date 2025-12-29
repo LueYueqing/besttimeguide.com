@@ -114,7 +114,24 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'Invalid article ID' }, { status: 400 })
     }
 
-    const body = await request.json()
+    const body = await request.json() as {
+      title?: string
+      slug?: string
+      description?: string | null
+      content?: string
+      categoryId?: string | number
+      metaTitle?: string | null
+      metaDescription?: string | null
+      keywords?: string | null
+      tags?: string[]
+      featured?: boolean
+      published?: boolean
+      publishedAt?: string | Date | null
+      sourceContent?: string | null
+      articleMode?: string
+      coverImage?: string | null
+    }
+    
     const {
       title,
       slug,
@@ -204,9 +221,17 @@ export async function PUT(
       tagsJson = JSON.stringify(autoTags)
     }
 
-    // 如果没有封面图，尝试从内容中提取第一张图片并生成缩略图
+    // 智能处理封面图：
+    // 1. 如果请求中提供了 coverImage，使用用户上传的（优先级最高）
+    // 2. 否则，如果数据库中有现有封面图，保持不变
+    // 3. 都没有时，才从内容中自动生成封面图
     let coverImageUrl = existing.coverImage
-    if (!coverImageUrl && content) {
+    
+    // 检查请求中是否提供了 coverImage
+    const hasUserProvidedCoverImage = body.coverImage !== undefined && body.coverImage !== null && body.coverImage !== ''
+    
+    if (!hasUserProvidedCoverImage && !existing.coverImage && content) {
+      // 用户没有上传缩略图，且数据库中也没有，才自动生成
       try {
         // 从 Markdown 内容中提取第一张图片 URL
         const imageRegex = /!\[.*?\]\((.*?)\)/g
@@ -237,9 +262,10 @@ export async function PUT(
               const fileName = `${articleSlug}-cover-375x200.jpg`
 
               // 上传到 R2
-              coverImageUrl = await uploadBufferToR2(resizedBuffer, fileName, 'image/jpeg')
+              const uploadResult = await uploadBufferToR2(resizedBuffer, fileName, 'image/jpeg')
+              coverImageUrl = uploadResult.r2Url
 
-              console.log(`[Article Update] Cover image uploaded: ${coverImageUrl}`)
+              console.log(`[Article Update] Cover image auto-generated: ${coverImageUrl}`)
             } catch (error) {
               console.error('[Article Update] Error generating cover image:', error)
               // 如果生成失败，继续使用原有的 coverImage（null）
@@ -250,6 +276,10 @@ export async function PUT(
         console.error('[Article Update] Error extracting image from content:', error)
         // 如果提取失败，继续使用原有的 coverImage
       }
+    } else if (hasUserProvidedCoverImage) {
+      // 用户提供了封面图，使用用户上传的
+      coverImageUrl = body.coverImage
+      console.log(`[Article Update] Using user-provided cover image: ${coverImageUrl}`)
     }
 
     // 更新文章
@@ -261,7 +291,7 @@ export async function PUT(
       updateData.content = content
       updateData.readingTime = readingTime
     }
-    if (categoryId !== undefined) updateData.categoryId = parseInt(categoryId, 10)
+    if (categoryId !== undefined) updateData.categoryId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId
     if (metaTitle !== undefined) updateData.metaTitle = metaTitle || null
     if (metaDescription !== undefined) updateData.metaDescription = metaDescription || null
     if (keywords !== undefined) updateData.keywords = keywords || null

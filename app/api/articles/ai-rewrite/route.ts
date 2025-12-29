@@ -397,7 +397,15 @@ async function processArticles(): Promise<{
             }
           })
           console.log(`[AI 流水线] 文章 ${article.title} 已清空内容并重置为 pending 状态（需要重新生成）`)
-          return { id: article.id, slug: article.slug, title: article.title }
+          return { 
+            id: article.id, 
+            slug: article.slug, 
+            title: article.title,
+            aiProvider: 'Image Search Failed',
+            model: 'N/A',
+            prompt: `图片搜索失败 (${placeholders.length} 个占位符, 0 张成功)，已清空内容并重置`,
+            response: '所有图片搜索都失败，将重新生成内容以获得不同的搜索关键词'
+          }
         }
 
         console.log(`[第三层防护成功] 文章 ${article.title} 成功匹配 ${successCount}/${placeholders.length} 张图片，继续发布流程`)
@@ -468,7 +476,15 @@ async function processArticles(): Promise<{
         })
         
         console.log(`[AI 流水线] 已重置文章 ${article.title} 以重新生成（包含图片占位符）`)
-        return { id: article.id, slug: article.slug, title: article.title }
+        return { 
+          id: article.id, 
+          slug: article.slug, 
+          title: article.title,
+          aiProvider: 'Content Reset',
+          model: 'N/A',
+          prompt: '检测到内容无图片占位符，已清空内容并重置为 pending 状态',
+          response: article.content.substring(0, 500) + (article.content.length > 500 ? '...' : '')
+        }
       }
     } catch (error: any) {
       console.error(`[AI 处理失败] 标题: ${article.title}, 错误:`, error.message)
@@ -476,7 +492,15 @@ async function processArticles(): Promise<{
         where: { id: article.id },
         data: { aiRewriteStatus: 'failed' }
       })
-      return { id: article.id, slug: article.slug, title: article.title }
+      return { 
+        id: article.id, 
+        slug: article.slug, 
+        title: article.title,
+        aiProvider: 'Error',
+        model: 'N/A',
+        prompt: '处理过程中发生错误',
+        response: `错误信息: ${error.message}`
+      }
     }
   }
   return null

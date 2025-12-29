@@ -47,7 +47,53 @@ Generate a comprehensive, high-quality article based on the following title and 
 - Category: {categoryName}
 - Target Audience: English-speaking users in the United States
 
-## Requirements
+## CRITICAL REQUIREMENTS - MUST READ
+
+### Image Placeholders (MANDATORY - DO NOT SKIP)
+You MUST include image placeholders in your article. This is a hard requirement.
+
+**EXACT FORMAT to use:**
+\`\`\`
+![Descriptive alt text](IMAGE_PLACEHOLDER_1(search keywords for the image))
+\`\`\`
+
+**Examples of correct image placeholders:**
+- ![Beautiful cherry blossoms in spring](IMAGE_PLACEHOLDER_1(cherry blossoms spring japan))
+- ![Traditional Japanese tea ceremony](IMAGE_PLACEHOLDER_2(japanese tea ceremony cultural))
+- ![Modern Tokyo cityscape at night](IMAGE_PLACEHOLDER_3(tokyo cityscape night neon))
+
+**Key rules:**
+1. Use the format: \`![alt text](IMAGE_PLACEHOLDER_N(keywords))\` where N starts at 1 and increments
+2. Include EXACTLY 3-5 image placeholders throughout the article
+3. Place the first image placeholder after the introduction
+4. Place remaining placeholders at the start of major sections
+5. Keywords should be 2-4 words describing the visual content
+6. Alt text should be descriptive and accessible
+7. DO NOT use actual image URLs - ONLY use the IMAGE_PLACEHOLDER format
+
+**Example of article structure with image placeholders:**
+
+\`\`\`
+# Best Time to Visit Tokyo
+
+Tokyo is a vibrant city... [introduction text]
+
+![Scenic view of Tokyo skyline](IMAGE_PLACEHOLDER_1(tokyo skyline view))
+
+## Best Seasons to Visit
+
+Spring (March-May) is spectacular...
+
+![Cherry blossoms in full bloom](IMAGE_PLACEHOLDER_2(cherry blossoms tokyo park))
+
+Summer offers... [content]
+
+## Top Attractions
+
+Here are the must-visit places...
+
+![Senso-ji temple in Asakusa](IMAGE_PLACEHOLDER_3(senso-ji temple asakusa historic))
+\`\`\`
 
 ### Content Quality
 1. Write in fluent, natural American English
@@ -61,22 +107,17 @@ Generate a comprehensive, high-quality article based on the following title and 
 3. Use bullet points and numbered lists for readability
 4. Add a "Conclusion" section at the end
 
-### Image Integration
-1. **Critically Important**: Insert image placeholders in the following format:
-   ![Alt Text describing the image](IMAGE_PLACEHOLDER_n(search keywords))
-   where 'n' is the image index (starting from 1) and 'keywords' are specific search terms for Pixabay/Pexels.
-2. Insert 3-5 images throughout the article at relevant positions.
-3. Keywords in placeholders should be descriptive and related to the specific section (e.g., "tokyo street at night", "traditional japanese breakfast").
+## Article Structure
+1. Introduction (with an image placeholder at the end)
+2. Section 1: Core information (with an image placeholder at the start)
+3. Section 2: Deep dive or practical tips (with an image placeholder at the start)
+4. Section 3: Additional context or related advice
+5. FAQ (3-5 common questions)
+6. Conclusion
 
-## Structure
-- Introduction (Engaging opening)
-- Section 1 (Core information)
-- Section 2 (Deep dive or practical tips)
-- Section 3 (Additional context or related advice)
-- FAQ (3-5 common questions)
-- Conclusion
+**FINAL REMINDER:** Your article MUST include 3-5 image placeholders in the format \`![alt text](IMAGE_PLACEHOLDER_N(keywords))\`. Articles without image placeholders will be rejected.
 
-Respond only with the Markdown content of the article.`
+Respond only with the Markdown content of the article. Ensure it includes the image placeholders.`
 
 function refineKeywords(keywords: string): string {
   if (!keywords) return ''
@@ -354,12 +395,20 @@ async function processArticles(): Promise<{ id: number; slug: string; title: str
           console.warn(`[AI 流水线] 清除缓存失败:`, error)
         }
       } else {
+        // 有内容但没有图片占位符 - 这意味着AI没有按预期生成占位符
+        console.warn(`[AI 流水线] 文章 ${article.title} 有内容但无图片占位符，需要重新生成`)
+        
+        // 清空内容并重置为pending，让AI重新生成（带有图片占位符）
         await prisma.article.update({
           where: { id: article.id },
-          data: { aiRewriteStatus: 'completed' }
+          data: {
+            content: '',
+            aiRewriteStatus: 'pending',
+            aiRewriteAt: new Date()
+          }
         })
-
-        // 返回处理的文章信息
+        
+        console.log(`[AI 流水线] 已重置文章 ${article.title} 以重新生成（包含图片占位符）`)
         return { id: article.id, slug: article.slug, title: article.title }
       }
     } catch (error: any) {

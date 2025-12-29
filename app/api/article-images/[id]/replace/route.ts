@@ -110,13 +110,26 @@ export async function POST(
       // 提取原文件名（用于上传时指定文件名）
       const fileName = existingImage.name
       
+      // 如果 r2Path 为 NULL 或空，从 r2Url 中提取路径
+      let r2Path = existingImage.r2Path
+      if (!r2Path && existingImage.r2Url) {
+        try {
+          const url = new URL(existingImage.r2Url)
+          // 移除开头的 / 和可能的域名
+          r2Path = url.pathname.replace(/^\//, '')
+          console.log(`[图片替换] 从 URL 提取 r2Path: ${r2Path}`)
+        } catch (error) {
+          console.error('[图片替换] 从 URL 提取 r2Path 失败:', error)
+        }
+      }
+      
       // 上传到R2，使用原路径（直接覆盖原文件）
       const result = await uploadBufferToR2(
         buffer,
         fileName,
         file.type,
         undefined,
-        existingImage.r2Path, // 使用原R2路径
+        r2Path, // 使用原R2路径（如果 r2Path 为空，则从 r2Url 提取）
         true // 标记为替换操作
       )
 

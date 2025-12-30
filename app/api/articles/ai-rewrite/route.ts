@@ -424,7 +424,9 @@ async function processArticles(): Promise<{
                 .resize(375, 200, { fit: 'cover', position: 'center' })
                 .jpeg({ quality: 85 })
                 .toBuffer()
-              coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+              const uploadResult = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+              // uploadBufferToR2 返回对象，需要提取 r2Url
+              coverImageUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.r2Url
             }
           } catch (err) {
             console.error('[AI 改写] 封面图处理失败:', err)

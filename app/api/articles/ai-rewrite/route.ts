@@ -361,8 +361,10 @@ async function processArticles(): Promise<{
           try {
             const imageUrl = await searchImage(placeholder.keywords, placeholder.altText, article.title)
             if (imageUrl) {
-              const r2Url = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
-              if (r2Url) {
+              const r2Result = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
+              if (r2Result) {
+                // r2Result 可能是字符串 URL 或 UploadImageResult 对象
+                const r2Url = typeof r2Result === 'string' ? r2Result : r2Result.r2Url
                 return { success: true, fullMatch: placeholder.fullMatch, altText: placeholder.altText, r2Url }
               }
             }

@@ -422,9 +422,9 @@ async function processArticles(): Promise<{
               const buffer = Buffer.from(await response.arrayBuffer())
               const coverBuffer = await sharp(buffer)
                 .resize(375, 200, { fit: 'cover', position: 'center' })
-                .jpeg({ quality: 85 })
+                .webp({ quality: 80 }) // 改为 WebP 格式，质量80
                 .toBuffer()
-              const uploadResult = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+              const uploadResult = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.webp`, 'image/webp')
               // uploadBufferToR2 返回对象，需要提取 r2Url
               coverImageUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.r2Url
             }

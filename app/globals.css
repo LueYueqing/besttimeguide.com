@@ -300,6 +300,36 @@
     margin-bottom: 0.5rem;
   }
 
+  /* 修复 Markdown 有序列表中 li 内的 p 标签导致序号换行的问题 */
+  .prose ol li > p:first-child,
+  .prose ul li > p:first-child {
+    display: inline;
+    margin-bottom: 0;
+  }
+  
+  .prose ol li > p,
+  .prose ul li > p {
+    margin-bottom: 0.5rem;
+  }
+
+  /* 修复 Q&A 问答格式 */
+  /* 让段落内的第一个 strong 元素（Q:）独占一行 */
+  .prose p > strong:first-child {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* 第二个及后续的 strong 元素（A:）保持行内显示 */
+  .prose p > strong:not(:first-child) {
+    display: inline;
+  }
+  
+  /* 对于列表项内的 strong 元素（序号场景），全部保持行内显示 */
+  .prose li > p > strong {
+    display: inline;
+    margin-bottom: 0;
+  }
+
   /* wikiHow 侧边栏 */
   .wikihow-sidebar {
     display: flex;

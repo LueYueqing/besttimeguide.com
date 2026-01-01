@@ -101,7 +101,7 @@ async function main() {
   console.log('创建示例文章...')
 
   // 示例文章1: Best Time to Visit Japan
-  const japanContent = `# Best Time to Visit Japan (2025 Complete Guide)
+  const japanContent = `# Best Time to Visit Japan (2026 Complete Guide)
 
 ## Quick Answer Box
 - **Best Months**: March-May, September-November
@@ -193,13 +193,13 @@ A: It depends on your nationality. Many countries have visa-free access for shor
     where: { slug: 'best-time-to-visit-japan' },
     update: {},
     create: {
-      title: 'Best Time to Visit Japan (2025 Complete Guide)',
+      title: 'Best Time to Visit Japan (2026 Complete Guide)',
       slug: 'best-time-to-visit-japan',
       description: 'Discover the best time to visit Japan for cherry blossoms, autumn leaves, and cultural experiences. Complete month-by-month guide with weather, crowds, and prices.',
       content: japanContent,
       categoryId: travelCategory.id,
       authorId: adminUser.id,
-      metaTitle: 'Best Time to Visit Japan 2025 | Complete Travel Guide',
+      metaTitle: 'Best Time to Visit Japan 2026 | Complete Travel Guide',
       metaDescription: 'Plan your perfect trip to Japan with our comprehensive guide. Learn about the best months to visit, weather patterns, cherry blossom season, and more.',
       keywords: 'best time to visit japan, japan travel guide, cherry blossom season, japan weather',
       tags: JSON.stringify(['travel', 'japan', 'cherry-blossom', 'asia']),
@@ -211,7 +211,7 @@ A: It depends on your nationality. Many countries have visa-free access for shor
   })
 
   // 示例文章2: Best Time to Post on Instagram
-  const instagramContent = `# Best Time to Post on Instagram (2025 Guide)
+  const instagramContent = `# Best Time to Post on Instagram (2026 Guide)
 
 ## Quick Answer Box
 - **Best Time**: 11am-1pm, 7pm-9pm
@@ -319,13 +319,13 @@ A: Weekend engagement is typically lower, but can still be effective for certain
     where: { slug: 'best-time-to-post-on-instagram' },
     update: {},
     create: {
-      title: 'Best Time to Post on Instagram (2025 Guide)',
+      title: 'Best Time to Post on Instagram (2026 Guide)',
       slug: 'best-time-to-post-on-instagram',
       description: 'Learn the best times to post on Instagram for maximum engagement. Complete guide with day-by-day and time-of-day recommendations.',
       content: instagramContent,
       categoryId: socialMediaCategory.id,
       authorId: adminUser.id,
-      metaTitle: 'Best Time to Post on Instagram 2025 | Engagement Guide',
+      metaTitle: 'Best Time to Post on Instagram 2026 | Engagement Guide',
       metaDescription: 'Maximize your Instagram engagement with our data-driven guide on the best times to post. Includes day-by-day and time-of-day recommendations.',
       keywords: 'best time to post on instagram, instagram engagement, social media strategy',
       tags: JSON.stringify(['social-media', 'instagram', 'marketing', 'engagement']),
@@ -438,4 +438,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
-

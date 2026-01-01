@@ -418,9 +418,28 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
       const data = await response.json()
 
+      if (data.success) {
+        toast.success(data.message || `成功创建 ${data.created} 篇文章${data.failed > 0 ? `，失败 ${data.failed} 篇` : ''}`)
+        
+        // 如果有失败的文章，显示错误详情
+        if (data.failed > 0 && data.errors) {
+          console.error('Failed articles:', data.errors)
+        }
+
+        // 关闭模态框并清空表单
+        setShowQuickCreateModal(false)
+        setQuickCreateTitles('')
+        setQuickCreateCategory('')
+        setQuickCreateMode('manual')
+
+        // 刷新文章列表
+        fetchArticles()
+      } else {
+        toast.error('创建失败：' + (data.error || '未知错误'))
+      }
     } catch (error) {
       console.error('Error creating articles:', error)
-      toast.error('创建失败')
+      toast.error('创建失败：网络错误或服务器异常')
     } finally {
       setQuickCreateLoading(false)
     }

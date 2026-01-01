@@ -547,7 +547,7 @@ cd my-project
 
 ---
 
-**更新日期**: 2025-01-16
+**更新日期**: 2026-01-01
 **版本**: v2.2
 **基于项目**: youzikuaibao.com.cn + whitescreen.show + checkyourcps.com + 7-8个前期项目
 **适用范围**: 工具型网站、SaaS产品、内容型网站、游戏工具平台

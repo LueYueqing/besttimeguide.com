@@ -327,7 +327,7 @@ function generatePDFHTML(article: any): string {
       ${contentHTML}
     </div>
     
-    ${tags && tags.length > 0 ? `
+    ${Array.isArray(tags) && tags.length > 0 ? `
       <div class="tags">
         ${tags.map((tag: string) => `<span class="tag">${tag}</span>`).join('')}
       </div>

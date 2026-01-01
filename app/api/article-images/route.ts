@@ -123,8 +123,16 @@ export async function GET(request: NextRequest) {
       }, {})
 
       // 过滤出重复的组（超过1张图片的组）
+      // 并排除同一文章内的重复（只有不同文章中的相同图片才显示）
       const duplicateGroups = Object.entries(groups)
-        .filter(([_, imgs]) => imgs.length > 1)
+        .filter(([_, imgs]) => {
+          // 必须有超过1张图片
+          if (imgs.length <= 1) return false
+          
+          // 检查是否来自不同文章
+          const uniqueArticles = new Set(imgs.map(img => img.articleId))
+          return uniqueArticles.size > 1
+        })
         .sort((a, b) => parseInt(b[0]) - parseInt(a[0])) // 按文件大小降序
 
       return NextResponse.json({

@@ -243,7 +243,12 @@ export default function ArticleImagesClient() {
         setPreviewUrl(null)
         setShouldResize(false)
         setSelectedImage(null)
-        fetchImages()
+        // 根据当前视图模式刷新数据
+        if (viewMode === 'default') {
+          fetchImages()
+        } else {
+          fetchImageGroups()
+        }
       } else {
         toast.error('图片替换失败：' + data.error)
       }

@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc' // asc, desc
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const getAll = searchParams.get('all') === 'true' // 获取所有图片（用于分组）
     
     // 文件大小筛选
     const minSizeStr = searchParams.get('minSize') || ''
@@ -98,8 +99,8 @@ export async function GET(request: NextRequest) {
     const images = await prisma.articleImage.findMany({
       where,
       orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: getAll ? undefined : (page - 1) * limit,
+      take: getAll ? undefined : limit,
       include: {
         article: {
           select: {
@@ -110,6 +111,33 @@ export async function GET(request: NextRequest) {
         },
       },
     })
+
+    // 如果获取所有图片，按文件大小分组
+    if (getAll) {
+      const groups = images.reduce((acc: Record<number, typeof images>, img) => {
+        if (!acc[img.size]) {
+          acc[img.size] = []
+        }
+        acc[img.size].push(img)
+        return acc
+      }, {})
+
+      // 过滤出重复的组（超过1张图片的组）
+      const duplicateGroups = Object.entries(groups)
+        .filter(([_, imgs]) => imgs.length > 1)
+        .sort((a, b) => parseInt(b[0]) - parseInt(a[0])) // 按文件大小降序
+
+      return NextResponse.json({
+        success: true,
+        data: duplicateGroups,
+        pagination: {
+          page: 1,
+          limit: images.length,
+          total: images.length,
+          totalPages: 1,
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,

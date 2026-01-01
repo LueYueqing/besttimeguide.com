@@ -29,6 +29,11 @@ interface ArticleImage {
   article: Article
 }
 
+interface ImageGroup {
+  size: number
+  images: ArticleImage[]
+}
+
 export default function ArticleImagesClient() {
   const toast = useToast()
   const [images, setImages] = useState<ArticleImage[]>([])
@@ -45,6 +50,9 @@ export default function ArticleImagesClient() {
     total: 0,
     totalPages: 0,
   })
+  const [viewMode, setViewMode] = useState<'default' | 'group'>('default')
+  const [imageGroups, setImageGroups] = useState<ImageGroup[]>([])
+  const [groupLoading, setGroupLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<ArticleImage | null>(null)
   const [showReplaceModal, setShowReplaceModal] = useState(false)
   const [replacing, setReplacing] = useState(false)
@@ -116,8 +124,12 @@ export default function ArticleImagesClient() {
   }
 
   useEffect(() => {
-    fetchImages()
-  }, [keyword, sortBy, sortOrder, currentPage, minSize, maxSize])
+    if (viewMode === 'default') {
+      fetchImages()
+    } else {
+      fetchImageGroups()
+    }
+  }, [keyword, sortBy, sortOrder, currentPage, minSize, maxSize, viewMode])
 
   const fetchImages = async () => {
     try {
@@ -143,6 +155,34 @@ export default function ArticleImagesClient() {
       toast.error('加载图片失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchImageGroups = async () => {
+    try {
+      setGroupLoading(true)
+      const params = new URLSearchParams()
+      if (keyword) params.append('keyword', keyword)
+      if (minSize) params.append('minSize', minSize)
+      if (maxSize) params.append('maxSize', maxSize)
+      params.append('all', 'true')
+
+      const response = await fetch(`/api/article-images?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success) {
+        const groups: ImageGroup[] = data.data.map(([size, imgs]: [string, typeof images]) => ({
+          size: parseInt(size),
+          images: imgs as ArticleImage[],
+        }))
+        setImageGroups(groups)
+        setPagination(data.pagination)
+      }
+    } catch (error) {
+      console.error('Error fetching image groups:', error)
+      toast.error('加载分组失败')
+    } finally {
+      setGroupLoading(false)
     }
   }
 
@@ -260,6 +300,8 @@ export default function ArticleImagesClient() {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
   }
+
+  const totalDuplicateImages = imageGroups.reduce((sum, group) => sum + group.images.length, 0)
 
   return (
     <DashboardLayout title="文章图片管理" isFullWidth={true}>
@@ -386,16 +428,57 @@ export default function ArticleImagesClient() {
             <option value="article-asc">文章标题（A-Z）</option>
             <option value="article-desc">文章标题（Z-A）</option>
           </select>
+
+          {/* 视图切换 */}
+          <div className="flex items-center gap-2 bg-white border border-neutral-300 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('default')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'default'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >
+              默认视图
+            </button>
+            <button
+              onClick={() => setViewMode('group')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                viewMode === 'group'
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              分组视图
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Images Grid */}
-      {loading ? (
+      {/* 分组视图统计信息 */}
+      {viewMode === 'group' && !groupLoading && imageGroups.length > 0 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-sm text-amber-800">
+              发现 <strong>{imageGroups.length}</strong> 组重复图片，共 <strong>{totalDuplicateImages}</strong> 张图片
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Images Grid - 默认视图 */}
+      {viewMode === 'default' && loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           <p className="mt-4 text-neutral-600">加载中...</p>
         </div>
-      ) : images.length === 0 ? (
+      ) : viewMode === 'default' && images.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <p className="text-neutral-600 mb-4">
             {keyword ? '没有找到匹配的图片' : '暂无图片'}
@@ -541,8 +624,8 @@ export default function ArticleImagesClient() {
             </div>
           </div>
 
-          {/* 分页组件 */}
-          {pagination.totalPages > 1 && (
+          {/* 分页组件 - 默认视图 */}
+          {viewMode === 'default' && pagination.totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow px-6 py-4">
               <div className="text-sm text-neutral-600">
                 显示第 {(currentPage - 1) * pagination.limit + 1} -{' '}
@@ -608,6 +691,144 @@ export default function ArticleImagesClient() {
                   末页
                 </button>
               </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* 分组视图 */}
+      {viewMode === 'group' && (
+        <>
+          {groupLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <p className="mt-4 text-neutral-600">加载分组中...</p>
+            </div>
+          ) : imageGroups.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-12 text-center">
+              <svg className="w-16 h-16 mx-auto text-neutral-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-neutral-600 mb-4">
+                {keyword ? '没有找到重复的图片' : '没有发现重复的图片'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {imageGroups.map((group, groupIndex) => (
+                <div key={group.size} className="bg-white rounded-lg shadow overflow-hidden">
+                  {/* 组标题 */}
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-100 text-amber-700 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                        {groupIndex + 1}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                          <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {formatSize(group.size)}
+                        </h3>
+                        <p className="text-sm text-neutral-600">
+                          {group.images.length} 张重复图片
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // 选择第一张图片作为主图，批量替换其他图片
+                        const mainImage = group.images[0]
+                        toast.info(`请为每张图片手动替换，选择保留 ${mainImage.name} 作为主图`)
+                      }}
+                      className="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                    >
+                      查看详情
+                    </button>
+                  </div>
+
+                  {/* 组内图片列表 */}
+                  <div className="divide-y divide-neutral-100">
+                    {group.images.map((image, imageIndex) => (
+                      <div key={image.id} className={`px-6 py-4 hover:bg-neutral-50 transition-colors ${imageIndex === 0 ? 'bg-blue-50' : ''}`}>
+                        <div className="flex items-center gap-4">
+                          {/* 图片缩略图 */}
+                          <div className="w-24 h-16 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
+                            <img
+                              src={image.r2Url}
+                              alt={image.altText || image.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          {/* 图片信息 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {imageIndex === 0 && (
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                                  主图
+                                </span>
+                              )}
+                              <div className="text-sm font-medium text-neutral-900 truncate">
+                                {image.name}
+                              </div>
+                            </div>
+                            <Link
+                              href={`/dashboard/articles/${image.articleId}`}
+                              className="text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                            >
+                              {image.article.title}
+                            </Link>
+                            <div className="text-xs text-neutral-400 mt-1">
+                              {formatDate(image.createdAt)}
+                            </div>
+                          </div>
+
+                          {/* 操作按钮 */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedImage(image)
+                                setShowReplaceModal(true)
+                                setFile(null)
+                                setPreviewUrl(null)
+                              }}
+                              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="替换图片"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
+                            <a
+                              href={image.r2Url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                              title="查看原图"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </a>
+                            <Link
+                              href={`/${image.article.slug}`}
+                              target="_blank"
+                              className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="查看文章"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer'
 
 // PDF 样式
 const styles = StyleSheet.create({
@@ -116,6 +116,13 @@ const styles = StyleSheet.create({
     height: 50,
     alignSelf: 'center' as const,
     marginTop: 10,
+  },
+  pageNumber: {
+    position: 'absolute' as const,
+    bottom: 15,
+    right: 30,
+    fontSize: 8,
+    color: '#999999',
   },
 })
 
@@ -276,6 +283,9 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({ article, qrCodeData })
           <Text style={styles.footerText}>Category: {article.category?.name || 'General'}</Text>
           <Image src={qrCodeData} style={styles.qrCode} />
         </View>
+
+        {/* 页码 */}
+        <Text style={styles.pageNumber} render={({ pageNumber }) => `Page ${pageNumber}`} fixed />
       </Page>
     </Document>
   )

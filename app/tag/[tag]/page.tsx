@@ -5,30 +5,11 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { getPostsByTag, getAllPosts, BlogPost } from '@/lib/blog'
 
+export const dynamic = 'force-dynamic' // 强制动态渲染，不使用静态生成
 export const revalidate = false // 禁用自动刷新，只使用 on-demand revalidation
 
 interface TagPageProps {
   params: Promise<{ tag: string }>
-}
-
-export async function generateStaticParams() {
-  // 获取所有文章，提取所有标签
-  try {
-    const posts = await getAllPosts()
-    const allTags = new Set<string>()
-    posts.forEach((post) => {
-      post.tags.forEach((tag) => {
-        const tagSlug = tag.toLowerCase().replace(/\s+/g, '-')
-        allTags.add(tagSlug)
-      })
-    })
-    return Array.from(allTags).map((tag) => ({
-      tag,
-    }))
-  } catch (error) {
-    console.error('Error generating static params for tags:', error)
-    return []
-  }
 }
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {

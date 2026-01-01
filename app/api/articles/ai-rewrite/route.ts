@@ -5,6 +5,8 @@ import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
 import { revalidateTag } from 'next/cache'
+import { processTagsFromAI, TAG_CONFIG } from '@/lib/extract-tags'
+import { generateAutoTimeTags } from '@/lib/auto-time-tags'
 
 // Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
 export const maxDuration = 60
@@ -293,7 +295,12 @@ async function processArticles(): Promise<{
           data: { aiRewriteStatus: 'processing', aiRewriteAt: new Date() }
         })
 
-        const prompt = AI_GENERATE_PROMPT.replace('{title}', article.title).replace('{categoryName}', article.category.name)
+        // 优先使用分类的 aiPrompt，如果没有则使用默认提示词
+        const categoryPrompt = article.category.aiPrompt || AI_GENERATE_PROMPT
+        const prompt = categoryPrompt
+          .replace('{title}', article.title)
+          .replace('{categoryName}', article.category.name)
+          .replace('{sourceContent}', article.sourceContent || '')
         
         // 根据使用的 API 选择合适的模型
         const useDeepSeek = !!process.env.DEEPSEEK_API_KEY
@@ -310,19 +317,48 @@ async function processArticles(): Promise<{
         })
         
         console.log(`[AI 流水线] 使用 ${aiProvider} (${model}) 生成内容`)
+        console.log(`[AI 流水线] 使用分类提示词: ${article.category.name}`)
 
-        const generatedContent = completion.choices[0]?.message?.content || ''
-        if (!generatedContent) throw new Error('AI 生成内容为空')
+        const aiResponse = completion.choices[0]?.message?.content || ''
+        if (!aiResponse) throw new Error('AI 生成内容为空')
 
+        // 解析 AI 响应：分离 Markdown 内容和 JSON 标签
+        const tagsSeparator = '---TAGS---'
+        let markdownContent = aiResponse
+        let tagsJson = '[]'
+        
+        if (aiResponse.includes(tagsSeparator)) {
+          const parts = aiResponse.split(tagsSeparator)
+          markdownContent = parts[0].trim()
+          tagsJson = parts[1]?.trim() || '[]'
+          console.log(`[AI 流水线] 解析到 AI 实体标签: ${tagsJson}`)
+        } else {
+          console.warn(`[AI 流水线] 未检测到标签分隔符，将使用空标签`)
+        }
+
+        // 生成时间标签
+        const timeTags = generateAutoTimeTags(
+          article.title,
+          markdownContent,
+          article.category.name,
+          article.tags ? JSON.parse(article.tags) : []
+        )
+        
+        // 合并 AI 实体标签和时间标签
+        const finalTags = processTagsFromAI(tagsJson, timeTags)
+        console.log(`[AI 流水线] 最终标签（AI实体+时间标签）: ${JSON.stringify(finalTags)}`)
+        
         await prisma.article.update({
           where: { id: article.id },
           data: {
-            content: generatedContent,
+            content: markdownContent,
+            tags: JSON.stringify(finalTags),
             aiRewriteStatus: 'pending',
             aiRewriteAt: new Date()
           }
         })
         console.log(`[AI 流水线] 文本阶段完成: ${article.title}`)
+        console.log(`[AI 流水线] 时间标签: ${JSON.stringify(timeTags)}`)
         
         // 返回 AI 调用信息
         return { 
@@ -332,7 +368,7 @@ async function processArticles(): Promise<{
           aiProvider,
           model,
           prompt,
-          response: generatedContent
+          response: markdownContent.substring(0, 500) + (markdownContent.length > 500 ? '...' : '')
         }
       }
 
@@ -422,9 +458,11 @@ async function processArticles(): Promise<{
               const buffer = Buffer.from(await response.arrayBuffer())
               const coverBuffer = await sharp(buffer)
                 .resize(375, 200, { fit: 'cover', position: 'center' })
-                .jpeg({ quality: 85 })
+                .webp({ quality: 80 }) // 改为 WebP 格式，质量80
                 .toBuffer()
-              coverImageUrl = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.jpg`, 'image/jpeg')
+              const uploadResult = await uploadBufferToR2(coverBuffer, `${article.slug}-cover.webp`, 'image/webp')
+              // uploadBufferToR2 返回对象，需要提取 r2Url
+              coverImageUrl = typeof uploadResult === 'string' ? uploadResult : uploadResult.r2Url
             }
           } catch (err) {
             console.error('[AI 改写] 封面图处理失败:', err)
@@ -435,7 +473,7 @@ async function processArticles(): Promise<{
           where: { id: article.id },
           data: {
             content: currentContent,
-            coverImage: coverImageUrl,
+            coverImage: typeof coverImageUrl === 'string' ? coverImageUrl : null,
             aiRewriteStatus: 'completed',
             aiRewriteAt: new Date(),
             published: true,

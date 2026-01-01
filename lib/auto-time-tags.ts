@@ -34,11 +34,11 @@ const TIME_KEYWORDS = {
 
 // 分类到时间标签的默认映射
 const CATEGORY_TIME_TAGS: { [key: string]: string[] } = {
-  travel: ['season-spring', 'season-summer', 'season-autumn'], // 旅游适合春秋夏季
-  shopping: ['season-winter', 'month-november', 'month-december'], // 购物适合冬季和年末
-  health: ['season-spring', 'month-january'], // 健康适合春季和新年开始
-  'social-media': ['season-summer', 'season-winter'], // 社交媒体适合夏季和冬季
-  lifestyle: ['season-spring', 'season-autumn'], // 生活方式适合春秋
+  travel: ['spring', 'summer', 'autumn'], // 旅游适合春秋夏季
+  shopping: ['winter', 'november', 'december'], // 购物适合冬季和年末
+  health: ['spring', 'january'], // 健康适合春季和新年开始
+  'social-media': ['summer', 'winter'], // 社交媒体适合夏季和冬季
+  lifestyle: ['spring', 'autumn'], // 生活方式适合春秋
 }
 
 /**
@@ -53,7 +53,7 @@ function extractTimeTagsFromText(text: string): string[] {
     // 跳过非季节键
     if (['spring', 'summer', 'autumn', 'winter'].includes(season)) {
       if (keywords.some(keyword => lowerText.includes(keyword))) {
-        tags.add(`season-${season}`)
+        tags.add(season)
       }
     }
   }
@@ -64,7 +64,7 @@ function extractTimeTagsFromText(text: string): string[] {
   for (const month of months) {
     const keywords = (TIME_KEYWORDS as any)[month]
     if (keywords && keywords.some((keyword: string) => lowerText.includes(keyword))) {
-      tags.add(`month-${month}`)
+      tags.add(month)
     }
   }
 
@@ -109,18 +109,18 @@ function getCurrentTimeTags(): string[] {
   
   const tags: string[] = []
   
-  // 季节
-  if (month >= 3 && month <= 5) tags.push('season-spring')
-  else if (month >= 6 && month <= 8) tags.push('season-summer')
-  else if (month >= 9 && month <= 11) tags.push('season-autumn')
-  else tags.push('season-winter')
+  // 季节（去掉前缀）
+  if (month >= 3 && month <= 5) tags.push('spring')
+  else if (month >= 6 && month <= 8) tags.push('summer')
+  else if (month >= 9 && month <= 11) tags.push('autumn')
+  else tags.push('winter')
   
-  // 月份
+  // 月份（去掉前缀）
   const months = ['january', 'february', 'march', 'april', 'may', 'june',
                   'july', 'august', 'september', 'october', 'november', 'december']
-  tags.push(`month-${months[month - 1]}`)
+  tags.push(months[month - 1])
   
-  // 周数
+  // 周数（保留前缀以区分具体周数）
   tags.push(`week-${weekOfYear}`)
   
   return tags
@@ -162,9 +162,12 @@ export function generateAutoTimeTags(
   }
   
   // 4. 合并现有标签（移除旧的时间标签，保留新的）
+  const seasons = ['spring', 'summer', 'autumn', 'winter']
+  const months = ['january', 'february', 'march', 'april', 'may', 'june',
+                 'july', 'august', 'september', 'october', 'november', 'december']
   const nonTimeTags = existingTags.filter(tag => 
-    !tag.startsWith('season-') && 
-    !tag.startsWith('month-') && 
+    !seasons.includes(tag) && 
+    !months.includes(tag) && 
     !tag.startsWith('week-')
   )
   
@@ -184,10 +187,14 @@ export function updateTimeTags(
   content: string = '',
   categoryName: string = ''
 ): string[] {
+  const seasons = ['spring', 'summer', 'autumn', 'winter']
+  const months = ['january', 'february', 'march', 'april', 'may', 'june',
+                 'july', 'august', 'september', 'october', 'november', 'december']
+  
   // 保留所有非时间标签
   const nonTimeTags = existingTags.filter(tag => 
-    !tag.startsWith('season-') && 
-    !tag.startsWith('month-') && 
+    !seasons.includes(tag) && 
+    !months.includes(tag) && 
     !tag.startsWith('week-')
   )
   
@@ -202,21 +209,23 @@ export function updateTimeTags(
  */
 export function validateTimeTags(tags: string[]): { valid: boolean; errors: string[] } {
   const errors: string[] = []
+  const seasons = ['spring', 'summer', 'autumn', 'winter']
+  const months = ['january', 'february', 'march', 'april', 'may', 'june',
+                 'july', 'august', 'september', 'october', 'november', 'december']
   
   for (const tag of tags) {
-    if (tag.startsWith('season-')) {
-      const season = tag.replace('season-', '')
-      if (!['spring', 'summer', 'autumn', 'winter'].includes(season)) {
+    if (seasons.includes(tag)) {
+      // 季节标签（无前缀）
+      if (!seasons.includes(tag)) {
         errors.push(`Invalid season tag: ${tag}`)
       }
-    } else if (tag.startsWith('month-')) {
-      const month = tag.replace('month-', '')
-      const validMonths = ['january', 'february', 'march', 'april', 'may', 'june',
-                          'july', 'august', 'september', 'october', 'november', 'december']
-      if (!validMonths.includes(month)) {
+    } else if (months.includes(tag)) {
+      // 月份标签（无前缀）
+      if (!months.includes(tag)) {
         errors.push(`Invalid month tag: ${tag}`)
       }
     } else if (tag.startsWith('week-')) {
+      // 周数标签（保留前缀）
       const week = parseInt(tag.replace('week-', ''), 10)
       if (isNaN(week) || week < 1 || week > 52) {
         errors.push(`Invalid week tag: ${tag}`)
@@ -234,29 +243,43 @@ export function validateTimeTags(tags: string[]): { valid: boolean; errors: stri
  * 获取时间标签的描述
  */
 export function getTimeTagDescription(tag: string): string {
-  const descriptions: { [key: string]: string } = {
-    'season-spring': 'Best time in Spring (March-May)',
-    'season-summer': 'Best time in Summer (June-August)',
-    'season-autumn': 'Best time in Autumn (September-November)',
-    'season-winter': 'Best time in Winter (December-February)',
-    'month-january': 'Best time in January',
-    'month-february': 'Best time in February',
-    'month-march': 'Best time in March',
-    'month-april': 'Best time in April',
-    'month-may': 'Best time in May',
-    'month-june': 'Best time in June',
-    'month-july': 'Best time in July',
-    'month-august': 'Best time in August',
-    'month-september': 'Best time in September',
-    'month-october': 'Best time in October',
-    'month-november': 'Best time in November',
-    'month-december': 'Best time in December',
+  const seasonDescriptions: { [key: string]: string } = {
+    'spring': 'Best time in Spring (March-May)',
+    'summer': 'Best time in Summer (June-August)',
+    'autumn': 'Best time in Autumn (September-November)',
+    'winter': 'Best time in Winter (December-February)',
   }
   
+  const monthDescriptions: { [key: string]: string } = {
+    'january': 'Best time in January',
+    'february': 'Best time in February',
+    'march': 'Best time in March',
+    'april': 'Best time in April',
+    'may': 'Best time in May',
+    'june': 'Best time in June',
+    'july': 'Best time in July',
+    'august': 'Best time in August',
+    'september': 'Best time in September',
+    'october': 'Best time in October',
+    'november': 'Best time in November',
+    'december': 'Best time in December',
+  }
+  
+  // 季节描述
+  if (seasonDescriptions[tag]) {
+    return seasonDescriptions[tag]
+  }
+  
+  // 月份描述
+  if (monthDescriptions[tag]) {
+    return monthDescriptions[tag]
+  }
+  
+  // 周数描述
   if (tag.startsWith('week-')) {
     const week = tag.replace('week-', '')
     return `Best time in Week ${week}`
   }
   
-  return descriptions[tag] || tag
+  return tag
 }

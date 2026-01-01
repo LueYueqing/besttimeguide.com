@@ -28,6 +28,16 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
     }
 
+    // 增加下载次数
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        downloadCount: {
+          increment: 1,
+        },
+      },
+    })
+
     // 生成HTML内容
     const htmlContent = generatePDFHTML(article)
 

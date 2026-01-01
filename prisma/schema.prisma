@@ -239,8 +239,9 @@ model Article {
   tags String? @db.Text // JSON数组格式的标签
 
   // 阅读时间（分钟，自动计算）
-  readingTime Int? // 阅读时间（分钟）
-  viewCount   Int      @default(0) // 浏览量
+  readingTime  Int? // 阅读时间（分钟）
+  viewCount    Int      @default(0) // 浏览量
+  downloadCount Int     @default(0) // 下载次数
 
   // AI 内容生成相关
   sourceContent   String?   @db.Text // 参考范本/原文（用于 AI 生成正式内容）

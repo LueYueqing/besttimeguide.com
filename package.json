@@ -26,6 +26,7 @@
     "@auth/prisma-adapter": "^2.11.1",
     "@aws-sdk/client-s3": "^3.958.0",
     "@prisma/client": "^6.19.0",
+    "@types/pdfkit": "^0.17.4",
     "@vercel/blob": "^2.0.0",
     "@xmldom/xmldom": "^0.8.11",
     "cloudinary": "^2.8.0",
@@ -39,6 +40,7 @@
     "next-auth": "^5.0.0-beta.30",
     "nodemailer": "^6.9.15",
     "openai": "^6.15.0",
+    "pdfkit": "^0.17.2",
     "prisma": "^6.19.0",
     "puppeteer": "^24.34.0",
     "qrcode": "^1.5.3",
@@ -49,6 +51,7 @@
     "recharts": "^3.4.1",
     "remark-gfm": "^4.0.1",
     "stripe": "^20.0.0",
+    "svg-to-pdfkit": "^0.1.8",
     "turndown": "^7.2.2",
     "undici": "^7.16.0"
   },

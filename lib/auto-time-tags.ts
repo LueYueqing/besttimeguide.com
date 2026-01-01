@@ -130,7 +130,7 @@ function getCurrentTimeTags(): string[] {
  * 智能生成时间标签
  * @param title 文章标题
  * @param content 文章内容
- * @param categoryName 分类名称
+ * @param categoryName 分类名称（已废弃，保留参数兼容性）
  * @param existingTags 已有标签（可选）
  * @returns 生成的标签数组
  */
@@ -145,17 +145,11 @@ export function generateAutoTimeTags(
   // 收集所有可能的时间标签
   const tagCandidates: Set<string> = new Set()
   
-  // 1. 从标题和内容中提取
+  // 1. 从标题和内容中提取（只提取实际在文本中提到的季节/月份）
   const textTags = extractTimeTagsFromText(allText)
   textTags.forEach(tag => tagCandidates.add(tag))
   
-  // 2. 根据分类获取默认标签
-  if (categoryName) {
-    const categoryTags = getTimeTagsByCategory(categoryName)
-    categoryTags.forEach(tag => tagCandidates.add(tag))
-  }
-  
-  // 3. 如果没有找到任何时间标签，添加当前时间标签
+  // 2. 如果没有找到任何时间标签，添加当前时间标签
   if (tagCandidates.size === 0) {
     const currentTimeTags = getCurrentTimeTags()
     currentTimeTags.forEach(tag => tagCandidates.add(tag))

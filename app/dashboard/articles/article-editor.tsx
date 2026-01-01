@@ -49,6 +49,12 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
   const [aiGenerateLoading, setAiGenerateLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write')
   const [customPrompt, setCustomPrompt] = useState('') // 临时自定义提示词
+  const [similarityCheck, setSimilarityCheck] = useState<{
+    hasExactMatch: boolean
+    exactMatch?: { slug: string; title: string }
+    similarArticles: Array<{ slug: string; title: string; similarity: number }>
+    checking: boolean
+  }>({ hasExactMatch: false, similarArticles: [], checking: false })
 
   // 初始化 Turndown 服务（HTML 转 Markdown）
   const turndownServiceRef = useRef<TurndownService | null>(null)
@@ -163,8 +169,65 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
     }
   }, [formData.title, article])
 
+  // 检查slug相似度
+  const checkSimilarity = async (title: string, slug: string) => {
+    if (!title && !slug) {
+      setSimilarityCheck({ hasExactMatch: false, similarArticles: [], checking: false })
+      return
+    }
+
+    setSimilarityCheck(prev => ({ ...prev, checking: true }))
+
+    try {
+      const params = new URLSearchParams()
+      if (title) params.set('title', title)
+      if (slug) params.set('slug', slug)
+      if (article) params.set('excludeId', article.id.toString())
+
+      const response = await fetch(`/api/articles/check-similarity?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setSimilarityCheck({
+          hasExactMatch: data.hasExactMatch,
+          exactMatch: data.exactMatch,
+          similarArticles: data.similarArticles || [],
+          checking: false,
+        })
+      } else {
+        setSimilarityCheck({ hasExactMatch: false, similarArticles: [], checking: false })
+      }
+    } catch (error) {
+      console.error('Error checking similarity:', error)
+      setSimilarityCheck({ hasExactMatch: false, similarArticles: [], checking: false })
+    }
+  }
+
+  // 防抖检查相似度
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.title || formData.slug) {
+        checkSimilarity(formData.title, formData.slug)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [formData.title, formData.slug, article?.id])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 检查是否存在相似文章
+    if (similarityCheck.hasExactMatch || similarityCheck.similarArticles.length > 0) {
+      const message = similarityCheck.hasExactMatch
+        ? `此slug已存在：${similarityCheck.exactMatch?.title}（${similarityCheck.exactMatch?.slug}）`
+        : `存在相似的文章：${similarityCheck.similarArticles.map(s => s.title).join('、')}`
+      
+      if (!confirm(`${message}\n\n确定要保存吗？这可能导致SEO问题或内容重复。`)) {
+        return
+      }
+    }
+
     setLoading(true)
 
     try {
@@ -527,16 +590,55 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Slug <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                required
-                pattern="[a-z0-9-]+"
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="url-friendly-slug"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  required
+                  pattern="[a-z0-9-]+"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    similarityCheck.hasExactMatch ? 'border-red-300' : 
+                    similarityCheck.similarArticles.length > 0 ? 'border-yellow-300' : 
+                    'border-neutral-300'
+                  }`}
+                  placeholder="url-friendly-slug"
+                />
+                {similarityCheck.checking && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
               <p className="mt-1 text-xs text-neutral-500">只能包含小写字母、数字和连字符</p>
+              
+              {/* 相似度警告 */}
+              {similarityCheck.hasExactMatch && (
+                <div className="mt-2 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                  <p className="text-sm text-red-800 font-medium">
+                    ⚠️ 此slug已存在
+                  </p>
+                  <p className="text-xs text-red-700 mt-1">
+                    文章标题：<strong>{similarityCheck.exactMatch?.title}</strong><br />
+                    Slug：{similarityCheck.exactMatch?.slug}
+                  </p>
+                </div>
+              )}
+              
+              {similarityCheck.similarArticles.length > 0 && !similarityCheck.hasExactMatch && (
+                <div className="mt-2 p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    ⚠️ 存在相似的文章内容（超过80%相似度）
+                  </p>
+                  <ul className="text-xs text-yellow-700 mt-1 space-y-1">
+                    {similarityCheck.similarArticles.map((article, index) => (
+                      <li key={index}>
+                        <strong>{article.title}</strong> - {article.similarity}% 相似
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -906,4 +1008,3 @@ export default function ArticleEditor({ categories, article }: ArticleEditorProp
     </div>
   )
 }
-

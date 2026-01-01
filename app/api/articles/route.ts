@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 import { generateAutoTimeTags } from '@/lib/auto-time-tags'
+import { findSimilarSlugs } from '@/lib/slug-similarity'
 
 const prisma = new PrismaClient()
 
@@ -172,6 +173,28 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json({ success: false, error: 'Slug already exists' }, { status: 400 })
+    }
+
+    // 检查slug相似度
+    const allArticles = await prisma.article.findMany({
+      select: { slug: true, title: true },
+    })
+
+    const similarSlugs = findSimilarSlugs(articleSlug, allArticles, 0.8)
+
+    if (similarSlugs.length > 0) {
+      const similarArticles = similarSlugs.map(s => {
+        const article = allArticles.find(a => a.slug === s.slug)
+        return `"${article?.title || s.slug}" (${Math.round(s.similarity * 100)}% 相似)`
+      }).join(', ')
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `存在相似的文章内容：${similarArticles}。请修改标题以避免重复内容。` 
+        },
+        { status: 400 }
+      )
     }
 
     // 验证分类是否存在

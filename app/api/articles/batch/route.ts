@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
+import { findSimilarSlugs } from '@/lib/slug-similarity'
 
 const prisma = new PrismaClient()
 
@@ -69,6 +70,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Category not found' }, { status: 400 })
     }
 
+    // 获取所有现有文章用于相似度检查
+    const allArticles = await prisma.article.findMany({
+      select: { slug: true, title: true },
+    })
+
     // 获取虚拟用户 ID 列表
     const virtualUsers = await prisma.user.findMany({
       where: {
@@ -116,6 +122,34 @@ export async function POST(request: NextRequest) {
 
         if (existing) {
           errors.push({ index: i, title, error: `Article with slug "${slug}" already exists` })
+          continue
+        }
+
+        // 检查slug相似度
+        const similarSlugs = findSimilarSlugs(slug, allArticles, 0.8)
+        
+        // 也检查本次批量中其他已生成的slug
+        const similarInBatch = Array.from(usedSlugsInBatch)
+          .filter(s => s !== slug)
+          .filter(s => {
+            const similarity = require('@/lib/slug-similarity').checkSlugSimilarity(slug, s, 0.8)
+            return similarity > 0
+          })
+          .map(s => ({ slug: s, similarity: require('@/lib/slug-similarity').checkSlugSimilarity(slug, s, 0.8) }))
+
+        const allSimilarSlugs = [...similarSlugs, ...similarInBatch]
+
+        if (allSimilarSlugs.length > 0) {
+          const similarArticles = allSimilarSlugs.map(s => {
+            const article = allArticles.find(a => a.slug === s.slug)
+            return `"${article?.title || s.slug}" (${Math.round(s.similarity * 100)}% 相似)`
+          }).join(', ')
+          
+          errors.push({ 
+            index: i, 
+            title, 
+            error: `存在相似的文章内容：${similarArticles}。请修改标题以避免重复内容。` 
+          })
           continue
         }
 

@@ -112,7 +112,7 @@ export async function GET(
 
 // 生成PDF所需的HTML
 function generatePDFHTML(article: any): string {
-  const { title, description, content, category, author, publishedAt, readingTime, coverImage, featured, tags } = article
+  const { title, description, content, category, author, publishedAt, readingTime, coverImage, featured, tags, slug } = article
   
   const formatDate = (date: string | null) => {
     if (!date) return 'Date not available'
@@ -342,6 +342,9 @@ function generatePDFHTML(article: any): string {
     ` : ''}
     
     <div class="footer">
+      <p>Scan QR code to view this article online</p>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://besttimeguide.com/${slug}" alt="QR Code" class="qr-code" />
+      <p>https://besttimeguide.com/${slug}</p>
       <p>Generated from besttimeguide.com</p>
       <p>Category: ${category?.name || 'General'}</p>
     </div>

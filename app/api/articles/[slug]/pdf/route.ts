@@ -314,12 +314,10 @@ function generatePDFHTML(article: any): string {
     <div class="header">
       <h1 class="title">${title}</h1>
       <div class="meta">
-        By ${author?.name || 'Unknown'} • ${readingTime || 0} min read • ${formatDate(publishedAt)}
+        By ${author?.name || 'Unknown'}${readingTime && readingTime > 0 ? ` • ${readingTime} min read` : ''} • ${formatDate(publishedAt)}
       </div>
       ${featured ? '<div style="color: #0066cc; font-weight: bold; margin-top: 10px;">★ Featured Article</div>' : ''}
     </div>
-    
-    ${coverImage ? `<img class="cover-image" src="${coverImage}" alt="${title}" />` : ''}
     
     ${description ? `<div class="description">${description}</div>` : ''}
     

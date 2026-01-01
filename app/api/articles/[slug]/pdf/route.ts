@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import PDFDocument from 'pdfkit'
 import { marked } from 'marked'
+import jsPDF from 'jspdf'
 
 const prisma = new PrismaClient()
 
@@ -37,118 +37,101 @@ export async function GET(
     } as any)
 
     // 创建PDF文档
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: {
-        top: 50,
-        bottom: 50,
-        left: 50,
-        right: 50,
-      },
-      bufferPages: true,
+    const doc = new jsPDF({
+      unit: 'mm',
+      format: 'a4',
     })
 
-    // 创建buffer来存储PDF
-    const chunks: Buffer[] = []
-    doc.on('data', (chunk) => chunks.push(chunk))
-    doc.on('end', () => {
-      // PDF生成完成
-    })
+    const pageWidth = 210
+    const pageHeight = 297
+    const margin = 20
+    const contentWidth = pageWidth - margin * 2
 
-    // 设置字体
-    const fontRegular = 'Helvetica'
-    const fontBold = 'Helvetica-Bold'
+    let y = margin
+    const lineHeight = 6
+    const titleHeight = 10
+    const headerHeight = 8
 
     // 添加标题
-    doc.fontSize(24)
-      .font(fontBold)
-      .text(article.title, { align: 'center' })
-      .moveDown()
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    const titleLines = doc.splitTextToSize(article.title, contentWidth)
+    titleLines.forEach((line: string) => {
+      doc.text(line, margin, y)
+      y += titleHeight
+    })
+    y += 5
 
     // 添加元信息
-    doc.fontSize(10)
-      .font(fontRegular)
-      .fillColor('#666666')
-      .text(
-        `By ${article.author?.name || 'Unknown'}${
-          article.readingTime && article.readingTime > 0 ? ` • ${article.readingTime} min read` : ''
-        } • ${formatDate(article.publishedAt)}`,
-        { align: 'center' }
-      )
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(102, 102, 102)
+    const metaText = `By ${article.author?.name || 'Unknown'}${
+      article.readingTime && article.readingTime > 0 ? ` • ${article.readingTime} min read` : ''
+    } • ${formatDate(article.publishedAt)}`
+    doc.text(metaText, margin, y, { align: 'center', maxWidth: contentWidth })
+    y += 5
 
     if (article.featured) {
-      doc.fontSize(10)
-        .fillColor('#0066cc')
-        .font(fontBold)
-        .text('★ Featured Article', { align: 'center' })
+      doc.setTextColor(0, 102, 204)
+      doc.setFont('helvetica', 'bold')
+      doc.text('★ Featured Article', margin, y, { align: 'center', maxWidth: contentWidth })
+      y += 5
     }
 
-    doc.moveDown(2)
+    y += 10
 
-    // 添加描述
+    // 添加描述框
     if (article.description) {
-      doc.fontSize(12)
-        .font(fontRegular)
-        .fillColor('#333333')
-        .rect(50, doc.y, 515, 80)
-        .fill('#f0f7ff')
-        .fillColor('#333333')
-        .text(article.description, 60, doc.y + 10, {
-          width: 495,
-          align: 'justify',
-          lineGap: 2,
-        })
-        .moveDown(2)
+      doc.setFillColor(240, 247, 255)
+      doc.rect(margin, y, contentWidth, 30, 'F')
+      doc.setTextColor(51, 51, 51)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      const descLines = doc.splitTextToSize(article.description, contentWidth - 10)
+      descLines.forEach((line: string, index: number) => {
+        doc.text(line, margin + 5, y + 5 + index * lineHeight)
+      })
+      y += 35
     }
 
     // 解析并添加内容
     const contentHTML = await marked(article.content || '')
-    addContentToPDF(doc, contentHTML)
+    addContentToPDF(doc, contentHTML, y, margin, contentWidth, lineHeight)
 
     // 添加标签
     if (Array.isArray(article.tags) && article.tags.length > 0) {
-      doc.moveDown(2)
-        .fontSize(10)
-        .font(fontRegular)
-        .fillColor('#666666')
-        .text('Tags:', 50, doc.y, { width: 515 })
+      y = doc.internal.pageSize.getHeight() - 40
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(102, 102, 102)
+      doc.text('Tags:', margin, y)
+      y += 7
 
-      const tagY = doc.y + 5
-      let tagX = 50
+      let tagX = margin
+      const tagWidth = 30
+      const tagHeight = 6
 
       article.tags.forEach((tag) => {
-        if (tagX > 400) {
-          tagX = 50
-          doc.moveDown(1)
+        if (tagX + tagWidth > pageWidth - margin) {
+          tagX = margin
+          y += tagHeight + 3
         }
 
-        doc.rect(tagX, doc.y, 80, 20)
-          .fill('#f0f0f0')
-          .fillColor('#555555')
-          .text(tag, tagX + 5, doc.y + 5, {
-            width: 70,
-            align: 'center',
-          })
-
-        tagX += 90
+        doc.setFillColor(240, 240, 240)
+        doc.rect(tagX, y, tagWidth, tagHeight, 'F')
+        doc.setTextColor(85, 85, 85)
+        doc.setFontSize(8)
+        doc.text(tag, tagX + tagWidth / 2, y + tagHeight / 2 + 1, { align: 'center' })
+        tagX += tagWidth + 5
       })
     }
 
     // 添加页脚（二维码）
-    addFooter(doc, article.slug, article.category?.name || 'General')
+    addFooter(doc, slug, article.category?.name || 'General', pageWidth, margin)
 
-    // 完成PDF生成
-    doc.end()
-
-    // 等待PDF生成完成
-    await new Promise<void>((resolve) => {
-      doc.on('end', () => resolve())
-    })
-
-    // 合并chunks生成buffer
-    const pdfBuffer = Buffer.concat(chunks)
-
-    // 返回PDF文件
+    // 返回PDF
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'))
     const fileName = `${article.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
 
     return new NextResponse(pdfBuffer, {
@@ -174,54 +157,77 @@ function formatDate(date: string | Date | null): string {
 }
 
 // 添加内容到PDF
-function addContentToPDF(doc: PDFKit.PDFDocument, html: string) {
-  // 简单的HTML解析器，将HTML转换为PDF内容
+function addContentToPDF(
+  doc: jsPDF,
+  html: string,
+  startY: number,
+  margin: number,
+  contentWidth: number,
+  lineHeight: number
+) {
   const lines = html.split('\n')
-  const fontRegular = 'Helvetica'
-  const fontBold = 'Helvetica-Bold'
+  let y = startY
 
-  doc.fontSize(12)
-    .font(fontRegular)
-    .fillColor('#333333')
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(51, 51, 51)
 
   for (const line of lines) {
     const trimmedLine = line.trim()
     if (!trimmedLine) {
-      doc.moveDown(0.5)
+      y += lineHeight / 2
       continue
+    }
+
+    // 检查是否需要新页面
+    if (y > 250) {
+      doc.addPage()
+      y = margin
     }
 
     // 处理标题
     if (trimmedLine.startsWith('<h1>')) {
       const text = trimmedLine.replace(/<\/?h1>/g, '').trim()
-      doc.fontSize(20)
-        .font(fontBold)
-        .fillColor('#1a1a1a')
-        .text(text, { continued: false })
-        .moveDown(0.5)
-      doc.fontSize(12)
-        .font(fontRegular)
-        .fillColor('#333333')
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(26, 26, 26)
+      const h1Lines = doc.splitTextToSize(text, contentWidth)
+      h1Lines.forEach((h1Line: string) => {
+        doc.text(h1Line, margin, y)
+        y += lineHeight * 2
+      })
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(51, 51, 51)
+      y += lineHeight
     } else if (trimmedLine.startsWith('<h2>')) {
       const text = trimmedLine.replace(/<\/?h2>/g, '').trim()
-      doc.fontSize(16)
-        .font(fontBold)
-        .fillColor('#1a1a1a')
-        .text(text, { continued: false })
-        .moveDown(0.5)
-      doc.fontSize(12)
-        .font(fontRegular)
-        .fillColor('#333333')
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(26, 26, 26)
+      const h2Lines = doc.splitTextToSize(text, contentWidth)
+      h2Lines.forEach((h2Line: string) => {
+        doc.text(h2Line, margin, y)
+        y += lineHeight * 1.5
+      })
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(51, 51, 51)
+      y += lineHeight
     } else if (trimmedLine.startsWith('<h3>')) {
       const text = trimmedLine.replace(/<\/?h3>/g, '').trim()
-      doc.fontSize(14)
-        .font(fontBold)
-        .fillColor('#1a1a1a')
-        .text(text, { continued: false })
-        .moveDown(0.5)
-      doc.fontSize(12)
-        .font(fontRegular)
-        .fillColor('#333333')
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(26, 26, 26)
+      const h3Lines = doc.splitTextToSize(text, contentWidth)
+      h3Lines.forEach((h3Line: string) => {
+        doc.text(h3Line, margin, y)
+        y += lineHeight * 1.5
+      })
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(51, 51, 51)
+      y += lineHeight
     }
     // 处理段落
     else if (trimmedLine.startsWith('<p>')) {
@@ -235,16 +241,20 @@ function addContentToPDF(doc: PDFKit.PDFDocument, html: string) {
         .trim()
 
       if (text) {
-        doc.text(text, { align: 'justify', lineGap: 2 })
-        doc.moveDown(0.5)
+        const pLines = doc.splitTextToSize(text, contentWidth)
+        pLines.forEach((pLine: string) => {
+          if (y > 270) {
+            doc.addPage()
+            y = margin
+          }
+          doc.text(pLine, margin, y)
+          y += lineHeight
+        })
+        y += lineHeight / 2
       }
     }
     // 处理列表
-    else if (trimmedLine.startsWith('<ul>') || trimmedLine.startsWith('<ol>')) {
-      // 列表会在处理li时处理
-    } else if (trimmedLine.startsWith('</ul>') || trimmedLine.endsWith('</ol>')) {
-      doc.moveDown(0.5)
-    } else if (trimmedLine.startsWith('<li>')) {
+    else if (trimmedLine.startsWith('<li>')) {
       const text = trimmedLine
         .replace(/<\/?li>/g, '')
         .replace(/<strong>(.*?)<\/strong>/g, '$1')
@@ -254,78 +264,46 @@ function addContentToPDF(doc: PDFKit.PDFDocument, html: string) {
         .trim()
 
       if (text) {
-        doc.text(`• ${text}`, { continued: false })
-        doc.moveDown(0.3)
+        doc.text(`• ${text}`, margin + 5, y)
+        y += lineHeight
       }
     }
     // 处理引用
     else if (trimmedLine.startsWith('<blockquote>')) {
       const text = trimmedLine.replace(/<\/?blockquote>/g, '').trim()
-      doc.rect(60, doc.y, 495, 40)
-        .fill('#f9f9f9')
-        .fillColor('#333333')
-        .text(`"${text}"`, 70, doc.y + 5, {
-          width: 475,
-          align: 'justify',
-          lineGap: 2,
-        })
-        .moveDown(1)
-    }
-    // 处理图片
-    else if (trimmedLine.startsWith('<img')) {
-      const srcMatch = trimmedLine.match(/src="([^"]*)"/)
-      if (srcMatch && srcMatch[1]) {
-        try {
-          // 尝试加载图片
-          doc.image(srcMatch[1], {
-            fit: [500, 300],
-            align: 'center',
-          })
-          doc.moveDown(1)
-        } catch (error) {
-          // 如果图片加载失败，只显示文本
-          doc.moveDown(0.5)
-        }
-      }
+      doc.setFillColor(249, 249, 249)
+      doc.rect(margin + 5, y, contentWidth - 10, 15, 'F')
+      doc.setTextColor(51, 51, 51)
+      const quoteLines = doc.splitTextToSize(`"${text}"`, contentWidth - 20)
+      quoteLines.forEach((quoteLine: string, index: number) => {
+        doc.text(quoteLine, margin + 10, y + 5 + index * lineHeight)
+      })
+      y += 20
     }
   }
 }
 
 // 添加页脚
-function addFooter(doc: PDFKit.PDFDocument, slug: string, categoryName: string) {
-  const footerY = doc.page.height - 80
+function addFooter(doc: jsPDF, slug: string, categoryName: string, pageWidth: number, margin: number) {
+  const footerY = 280
 
   // 添加分隔线
-  doc.moveTo(50, footerY)
-    .lineTo(565, footerY)
-    .strokeColor('#dddddd')
-    .stroke()
+  doc.setDrawColor(221, 221, 221)
+  doc.line(margin, footerY, pageWidth - margin, footerY)
 
   // 添加提示文字
-  doc.fontSize(10)
-    .font('Helvetica')
-    .fillColor('#666666')
-    .text('Scan QR code to view this article online', 50, footerY + 10, {
-      width: 515,
-      align: 'center',
-    })
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(102, 102, 102)
+  doc.text('Scan QR code to view this article online', margin, footerY + 5, { align: 'center', maxWidth: pageWidth - margin * 2 })
 
   // 添加URL
   const url = `https://besttimeguide.com/${slug}`
-  doc.text(url, 50, footerY + 30, {
-    width: 515,
-    align: 'center',
-  })
+  doc.text(url, margin, footerY + 10, { align: 'center', maxWidth: pageWidth - margin * 2 })
 
   // 添加生成信息
-  doc.text('Generated from besttimeguide.com', 50, footerY + 45, {
-    width: 515,
-    align: 'center',
-  })
+  doc.text('Generated from besttimeguide.com', margin, footerY + 15, { align: 'center', maxWidth: pageWidth - margin * 2 })
 
   // 添加分类
-  doc.text(`Category: ${categoryName}`, 50, footerY + 60, {
-    width: 515,
-    align: 'center',
-  })
+  doc.text(`Category: ${categoryName}`, margin, footerY + 20, { align: 'center', maxWidth: pageWidth - margin * 2 })
 }

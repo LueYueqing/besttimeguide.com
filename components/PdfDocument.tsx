@@ -150,8 +150,15 @@ function parseMarkdownToElements(markdown: string): React.ReactNode[] {
     else if (trimmed.startsWith('![')) {
       const imgMatch = trimmed.match(/!\[.*?\]\((.*?)\)/)
       if (imgMatch && imgMatch[1]) {
+        // 将相对路径转换为完整的绝对 URL
+        let imageUrl = imgMatch[1]
+        if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+          // 使用环境变量配置的域名，如果没有则使用默认域名
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://besttimeguide.com'
+          imageUrl = imageUrl.startsWith('/') ? `${baseUrl}${imageUrl}` : `${baseUrl}/${imageUrl}`
+        }
         elements.push(
-          <Image key={elements.length} src={imgMatch[1]} style={styles.image} />
+          <Image key={elements.length} src={imageUrl} style={styles.image} />
         )
       }
     }

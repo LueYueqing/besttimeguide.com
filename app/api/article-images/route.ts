@@ -32,6 +32,30 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc' // asc, desc
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    
+    // 文件大小筛选
+    const minSizeStr = searchParams.get('minSize') || ''
+    const maxSizeStr = searchParams.get('maxSize') || ''
+    
+    // 解析文件大小（支持B/KB/MB单位）
+    function parseSize(sizeStr: string): number | null {
+      if (!sizeStr) return null
+      const match = sizeStr.match(/^(\d+(?:\.\d+)?)\s*(B|KB|MB)?$/i)
+      if (!match) return null
+      
+      const value = parseFloat(match[1])
+      const unit = (match[2] || 'B').toUpperCase()
+      
+      switch (unit) {
+        case 'B': return value
+        case 'KB': return value * 1024
+        case 'MB': return value * 1024 * 1024
+        default: return value
+      }
+    }
+    
+    const minSize = parseSize(minSizeStr)
+    const maxSize = parseSize(maxSizeStr)
 
     // 构建查询条件
     const where: any = {}
@@ -46,6 +70,17 @@ export async function GET(request: NextRequest) {
 
     if (articleId) {
       where.articleId = articleId
+    }
+
+    // 添加文件大小筛选
+    if (minSize !== null || maxSize !== null) {
+      where.size = {}
+      if (minSize !== null) {
+        where.size.gte = minSize
+      }
+      if (maxSize !== null) {
+        where.size.lte = maxSize
+      }
     }
 
     // 构建排序

@@ -37,6 +37,8 @@ export default function ArticleImagesClient() {
   const [sortBy, setSortBy] = useState<'createdAt' | 'size' | 'order' | 'article'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
+  const [minSize, setMinSize] = useState('')
+  const [maxSize, setMaxSize] = useState('')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -115,13 +117,15 @@ export default function ArticleImagesClient() {
 
   useEffect(() => {
     fetchImages()
-  }, [keyword, sortBy, sortOrder, currentPage])
+  }, [keyword, sortBy, sortOrder, currentPage, minSize, maxSize])
 
   const fetchImages = async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
       if (keyword) params.append('keyword', keyword)
+      if (minSize) params.append('minSize', minSize)
+      if (maxSize) params.append('maxSize', maxSize)
       params.append('sortBy', sortBy)
       params.append('sortOrder', sortOrder)
       params.append('page', currentPage.toString())
@@ -150,6 +154,25 @@ export default function ArticleImagesClient() {
       setSortOrder('desc')
     }
     setCurrentPage(1)
+  }
+
+  const handleSizeFilterChange = () => {
+    setCurrentPage(1)
+  }
+
+  const parseSizeInput = (value: string): number => {
+    if (!value) return 0
+    const num = parseFloat(value)
+    if (isNaN(num)) return 0
+    
+    // 检查单位
+    const lowerValue = value.toLowerCase()
+    if (lowerValue.includes('mb') || lowerValue.includes('m')) {
+      return num * 1024 * 1024
+    } else if (lowerValue.includes('kb') || lowerValue.includes('k')) {
+      return num * 1024
+    }
+    return num // 默认为字节
   }
 
   const handleReplace = async (e: React.FormEvent) => {
@@ -245,9 +268,9 @@ export default function ArticleImagesClient() {
         <h1 className="text-3xl font-bold text-neutral-900 mb-4">文章图片管理</h1>
 
         {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
           {/* 搜索框 */}
-          <div className="flex-1 sm:max-w-md">
+          <div className="flex-1 lg:max-w-md w-full">
             <div className="relative">
               <input
                 type="text"
@@ -284,6 +307,64 @@ export default function ArticleImagesClient() {
                   </svg>
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* 文件大小搜索 */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-600 whitespace-nowrap">文件大小:</span>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  type="number"
+                  value={minSize}
+                  onChange={(e) => {
+                    setMinSize(e.target.value)
+                    handleSizeFilterChange()
+                  }}
+                  placeholder="0"
+                  className="w-24 px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <select
+                  value={minSize.includes('MB') || minSize.includes('mb') ? 'MB' : minSize.includes('KB') || minSize.includes('kb') ? 'KB' : 'B'}
+                  onChange={(e) => {
+                    const num = parseFloat(minSize) || 0
+                    setMinSize(`${num}${e.target.value}`)
+                    handleSizeFilterChange()
+                  }}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs text-neutral-500 bg-transparent border-none cursor-pointer"
+                >
+                  <option value="B">B</option>
+                  <option value="KB">KB</option>
+                  <option value="MB">MB</option>
+                </select>
+              </div>
+              <span className="text-neutral-400">-</span>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={maxSize}
+                  onChange={(e) => {
+                    setMaxSize(e.target.value)
+                    handleSizeFilterChange()
+                  }}
+                  placeholder="∞"
+                  className="w-24 px-3 py-2 bg-white border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <select
+                  value={maxSize.includes('MB') || maxSize.includes('mb') ? 'MB' : maxSize.includes('KB') || maxSize.includes('kb') ? 'KB' : 'B'}
+                  onChange={(e) => {
+                    const num = parseFloat(maxSize) || 0
+                    setMaxSize(`${num}${e.target.value}`)
+                    handleSizeFilterChange()
+                  }}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 px-2 py-0.5 text-xs text-neutral-500 bg-transparent border-none cursor-pointer"
+                >
+                  <option value="B">B</option>
+                  <option value="KB">KB</option>
+                  <option value="MB">MB</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -469,6 +550,14 @@ export default function ArticleImagesClient() {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="第一页"
+                >
+                  首页
+                </button>
+                <button
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -509,6 +598,14 @@ export default function ArticleImagesClient() {
                   className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   下一页
+                </button>
+                <button
+                  onClick={() => setCurrentPage(pagination.totalPages)}
+                  disabled={currentPage === pagination.totalPages}
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="最后一页"
+                >
+                  末页
                 </button>
               </div>
             </div>

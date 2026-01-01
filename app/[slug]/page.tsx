@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ArticleViewTracker from '../../components/ArticleViewTracker'
 import EditArticleButton from '../../components/EditArticleButton'
+import DownloadPDFButton from '../../components/DownloadPDFButton'
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
@@ -393,6 +394,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     )}
                   </div>
                 </div>
+
+                {/* 下载PDF按钮 */}
+                <DownloadPDFButton slug={slug} title={post.title} />
 
                 {/* 分享按钮 */}
                 <ShareButtons

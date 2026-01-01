@@ -31,6 +31,7 @@
     "cloudinary": "^2.8.0",
     "dotenv": "^16.4.5",
     "gray-matter": "^4.0.3",
+    "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "jspdf": "^3.0.4",
     "next": "^15.0.0",

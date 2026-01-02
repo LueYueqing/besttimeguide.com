@@ -1,6 +1,5 @@
-import { PrismaClient, Plan } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { Plan } from '@prisma/client'
+import { prisma } from './prisma'
 
 /**
  * 检查用户是否有权限访问 Analytics
@@ -68,10 +67,13 @@ export async function hasAnalyticsAccess(userId: string | number): Promise<boole
 /**
  * 获取用户的有效计划（优先使用订阅，否则使用用户计划）
  */
-export async function getUserEffectivePlan(userId: string): Promise<Plan> {
+export async function getUserEffectivePlan(userId: string | number): Promise<Plan> {
   try {
+    const userIdNum = typeof userId === 'string' ? parseInt(userId, 10) : userId
+    if (isNaN(userIdNum)) return Plan.FREE
+    
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userIdNum },
       include: {
         subscriptions: {
           where: {
@@ -102,4 +104,3 @@ export async function getUserEffectivePlan(userId: string): Promise<Plan> {
     return Plan.FREE
   }
 }
-

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './prisma'
 import { unstable_cache } from 'next/cache'
-
-const prisma = new PrismaClient()
 
 export interface TimeBasedPost {
   id: number

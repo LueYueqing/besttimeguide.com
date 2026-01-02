@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import sharp from 'sharp'
 import { downloadImage, uploadBufferToR2 } from '@/lib/r2'
 import { submitToIndexNow } from '@/lib/indexnow'
 import { generateAutoTimeTags } from '@/lib/auto-time-tags'
-
-const prisma = new PrismaClient()
 
 // 检查是否为管理员
 async function checkAdmin() {

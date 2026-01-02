@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
-
-const prisma = new PrismaClient()
 
 // 生成 API key
 function generateApiKey(): { fullKey: string; hash: string; prefix: string } {

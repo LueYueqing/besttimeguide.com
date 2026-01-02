@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from './prisma'
 import { processReferralReward } from './referral'
 
 // Helper to prevent database queries from hanging indefinitely
@@ -55,7 +55,6 @@ if (process.env.NEXTAUTH_URL) {
   console.warn('[Auth][Config] NEXTAUTH_URL is not set; callbacks may fail in production.')
 }
 
-const prisma = new PrismaClient()
 
 const safeSerialize = (value: unknown): unknown => {
   if (!value) return value

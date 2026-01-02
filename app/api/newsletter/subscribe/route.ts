@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { randomBytes } from 'crypto'
-
-const prisma = new PrismaClient()
 
 // 生成验证令牌
 function generateVerificationToken(): string {

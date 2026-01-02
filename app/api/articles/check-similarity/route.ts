@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { findSimilarSlugs } from '@/lib/slug-similarity'
-
-const prisma = new PrismaClient()
 
 // 检查是否为管理员
 async function checkAdmin() {

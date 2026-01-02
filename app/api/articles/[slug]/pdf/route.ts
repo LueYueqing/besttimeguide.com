@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
-
-const prisma = new PrismaClient()
 
 // 生成二维码
 async function generateQRCode(url: string): Promise<string> {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { PrismaClient, Plan, SubscriptionStatus } from '@prisma/client'
+import { Plan, SubscriptionStatus } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || ''
 
@@ -21,7 +22,6 @@ const stripe = stripeSecretKey && stripeSecretKey.startsWith('sk_')
     })
   : null
 
-const prisma = new PrismaClient()
 
 const PRICE_TO_PLAN_MAP: Record<string, Plan> = {}
 
@@ -378,4 +378,3 @@ export async function POST(request: NextRequest) {
 }
 
 export const runtime = 'nodejs'
-

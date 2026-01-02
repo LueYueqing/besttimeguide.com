@@ -1,5 +1,4 @@
-require('dotenv').config();
-const { submitBatchToIndexNow } = require('../lib/indexnow');
+require('dotenv').config({ path: '.env.local' });
 
 /**
  * 提交sitemap到IndexNow
@@ -7,10 +6,49 @@ const { submitBatchToIndexNow } = require('../lib/indexnow');
  * 支持的搜索引擎：Bing、Google、Yandex等
  */
 
+const INDEXNOW_ENDPOINT = 'https://www.bing.com/indexnow';
+
+async function submitBatchToIndexNow(urls) {
+  try {
+    const key = process.env.INDEXNOW_KEY;
+    
+    if (!key) {
+      console.error('[IndexNow] INDEXNOW_KEY not configured');
+      return { success: false, error: 'INDEXNOW_KEY not configured' };
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://besttimeguide.com';
+    
+    const response = await fetch(INDEXNOW_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        host: new URL(siteUrl).hostname,
+        key: key,
+        urlList: urls,
+      }),
+    });
+
+    if (response.ok) {
+      console.log(`[IndexNow] Successfully submitted ${urls.length} URLs`);
+      return { success: true };
+    } else {
+      const errorText = await response.text();
+      console.error(`[IndexNow] Failed to submit batch:`, errorText);
+      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+    }
+  } catch (error) {
+    console.error('[IndexNow] Error submitting batch:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 async function main() {
   console.log('🚀 Starting sitemap submission to IndexNow...\n');
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://besttimeguide.com';
   const indexNowKey = process.env.INDEXNOW_KEY;
 
   if (!indexNowKey) {

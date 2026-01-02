@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { uploadBufferToR2 } from '@/lib/r2'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import sharp from 'sharp'
-
-const prisma = new PrismaClient()
 
 // WebP 转换配置
 const ENABLE_WEBP_CONVERSION = process.env.ENABLE_WEBP_CONVERSION !== 'false'

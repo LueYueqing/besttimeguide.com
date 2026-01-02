@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
-
-const prisma = new PrismaClient()
 
 /**
  * 关联邀请人（从 cookie 中读取 ref 参数并关联到当前用户）

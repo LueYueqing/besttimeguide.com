@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
 import { uploadBufferToR2, uploadImageToR2 } from '@/lib/r2'
 import sharp from 'sharp'
@@ -10,8 +10,6 @@ import { generateAutoTimeTags } from '@/lib/auto-time-tags'
 
 // Vercel 运行时间设置：设置为 60 秒（Hobby 版最大值）
 export const maxDuration = 60
-
-const prisma = new PrismaClient()
 
 // 初始化 AI 客户端
 // 优先使用 DeepSeek（默认），如果没有 DEEPSEEK_API_KEY 才使用 OpenAI

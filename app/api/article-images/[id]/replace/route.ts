@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { uploadBufferToR2, purgeCDNCache } from '@/lib/r2'
 import sharp from 'sharp'
-
-const prisma = new PrismaClient()
 
 // 检查是否为管理员
 async function checkAdmin() {

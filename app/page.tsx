@@ -3,13 +3,8 @@ import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { AiTriggerWrapper } from '@/components/AiTriggerWrapper'
-import { getPostsByCategory } from '@/lib/blog'
-import { 
-  getBestPostsForCurrentSeason, 
-  getBestPostsForCurrentMonth, 
-  getBestPostsForCurrentWeek,
-  getCurrentTimeInfo 
-} from '@/lib/time-based-posts'
+import { getHomePageData } from '@/lib/home'
+import { getCurrentTimeInfo } from '@/lib/time-based-posts'
 
 export const metadata: Metadata = {
   title: 'BestTimeGuide - Find the Best Time for Everything',
@@ -73,15 +68,16 @@ const browseCategories = [
 ]
 
 export default async function HomePage() {
-  // 从数据库获取各分类的文章
-  const [travelPosts, socialMediaPosts, healthPosts, seasonPosts, monthPosts, weekPosts] = await Promise.all([
-    getPostsByCategory('travel').then((posts) => posts.slice(0, 4)),
-    getPostsByCategory('social-media').then((posts) => posts.slice(0, 4)),
-    getPostsByCategory('health').then((posts) => posts.slice(0, 4)),
-    getBestPostsForCurrentSeason(4),
-    getBestPostsForCurrentMonth(4),
-    getBestPostsForCurrentWeek(4),
-  ])
+  // 从缓存获取首页数据（1小时缓存）
+  const homeData = await getHomePageData()
+  const {
+    travelPosts,
+    socialMediaPosts,
+    healthPosts,
+    seasonPosts,
+    monthPosts,
+    weekPosts,
+  } = homeData
   
   // 获取当前时间信息
   const timeInfo = getCurrentTimeInfo()

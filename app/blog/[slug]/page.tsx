@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
-import { getPostBySlug, getAllPosts } from '@/lib/blog'
+import { getPostBySlug, getRelatedPosts } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -12,6 +12,7 @@ interface BlogPostPageProps {
 }
 
 export async function generateStaticParams() {
+  const { getAllPosts } = await import('@/lib/blog')
   const posts = await getAllPosts()
   return posts.map((post) => ({
     slug: post.slug,
@@ -63,11 +64,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound()
   }
 
-  const allPosts = await getAllPosts()
-  const relatedPosts = allPosts
-    .filter((p) => p.slug !== slug && (p.category === post.category || p.tags.some((tag) => post.tags.includes(tag))))
-    .slice(0, 3)
-
+  // 使用新的函数获取相关文章（通过关联表）
+  const relatedPosts = await getRelatedPosts(post.id, 6)
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-neutral-100">
       <Navigation />
@@ -195,4 +194,3 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     </div>
   )
 }
-

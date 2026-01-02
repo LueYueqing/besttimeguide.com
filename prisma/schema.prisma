@@ -251,14 +251,14 @@ model Article {
   coverImage      String?   // 封面图 URL (375x250)
 
   // 时间戳
-
-  // 时间戳
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // 关联反馈
+  // 关联
   feedbacks ArticleFeedback[]
-  images ArticleImage[] // 文章图片
+  images ArticleImage[]
+  relatedArticles ArticleRelation[] @relation("SourceArticle")
+  relatedByArticles ArticleRelation[] @relation("RelatedArticle")
 
   @@index([slug])
   @@index([categoryId])
@@ -267,6 +267,46 @@ model Article {
   @@index([publishedAt])
   @@index([featured])
   @@map("articles")
+}
+
+// 文章关联表
+model ArticleRelation {
+  id                Int      @id @default(autoincrement())
+  
+  // 关联文章
+  articleId         Int
+  article           Article   @relation("SourceArticle", fields: [articleId], references: [id], onDelete: Cascade)
+  
+  // 被关联文章
+  relatedArticleId  Int
+  relatedArticle    Article   @relation("RelatedArticle", fields: [relatedArticleId], references: [id], onDelete: Cascade)
+  
+  // 关联类型
+  type              RelationType // category（同分类）| tag（同标签）
+  
+  // 关联权重（用于排序）
+  weight            Int       @default(0)
+  
+  // 匹配的标签（如果是同标签关联）
+  matchedTags       String?   @db.Text // JSON数组，存储匹配的标签
+  
+  // 时间戳
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // 唯一约束：避免重复关联
+  @@unique([articleId, relatedArticleId, type])
+  @@index([articleId])
+  @@index([relatedArticleId])
+  @@index([type])
+  @@index([weight])
+  @@map("article_relations")
+}
+
+// 关联类型枚举
+enum RelationType {
+  CATEGORY // 同分类
+  TAG      // 同标签
 }
 
 // Newsletter 订阅表

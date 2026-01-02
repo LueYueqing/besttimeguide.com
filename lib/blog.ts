@@ -357,14 +357,34 @@ export async function getRelatedPosts(
     // 3. 如果关联不足，生成新的关联关系
     console.log(`[getRelatedPosts] Only ${existingRelations.length} relations, generating new ones for article ${articleId}`)
     
-    // 异步生成关联关系（不阻塞当前请求）
-    generateRelationsAsync(articleId).catch(error => {
-      console.error(`[getRelatedPosts] Failed to generate relations for article ${articleId}:`, error)
+    // 同步生成关联关系（确保可靠性）
+    await generateRelationsAsync(articleId)
+    
+    // 4. 重新查询关联关系
+    const newRelations = await prisma.articleRelation.findMany({
+      where: {
+        articleId,
+        relatedArticle: {
+          published: true,
+          publishedAt: { lte: new Date() },
+        },
+      },
+      include: {
+        relatedArticle: {
+          include: {
+            category: true,
+            author: true,
+          },
+        },
+      },
+      orderBy: {
+        weight: 'desc', // 按权重排序
+      },
+      take: limit,
     })
-
-    // 4. 返回已有的关联（即使不足）
-    console.log(`[getRelatedPosts] Returning ${existingRelations.length} existing relations for article ${articleId}`)
-    return existingRelations.map(r => ({
+    
+    console.log(`[getRelatedPosts] Returning ${newRelations.length} relations for article ${articleId}`)
+    return newRelations.map(r => ({
       id: r.relatedArticle.id,
       slug: r.relatedArticle.slug,
       title: r.relatedArticle.title,
@@ -393,15 +413,12 @@ export async function getRelatedPosts(
 async function generateRelationsAsync(articleId: number) {
   console.log(`[generateRelationsAsync] Starting async generation for article ${articleId}`)
   
-  // 使用 setTimeout 让它在后台执行，不阻塞当前请求
-  setTimeout(async () => {
-    try {
-      // 动态导入生成函数
-      const { generateRelationsForArticle } = await import('../scripts/generate-article-relations')
-      await generateRelationsForArticle(articleId)
-      console.log(`[generateRelationsAsync] Relations generated for article ${articleId}`)
-    } catch (error) {
-      console.error(`[generateRelationsAsync] Error generating relations for article ${articleId}:`, error)
-    }
-  }, 0)
+  try {
+    // 动态导入生成函数
+    const { generateRelationsForArticle } = await import('../scripts/generate-article-relations')
+    await generateRelationsForArticle(articleId)
+    console.log(`[generateRelationsAsync] Relations generated for article ${articleId}`)
+  } catch (error) {
+    console.error(`[generateRelationsAsync] Error generating relations for article ${articleId}:`, error)
+  }
 }

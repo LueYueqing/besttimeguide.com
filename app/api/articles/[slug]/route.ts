@@ -527,6 +527,16 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
     }
 
+    // 删除文章的所有关联记录（该文章作为源文章的关联）
+    await prisma.articleRelation.deleteMany({
+      where: { articleId },
+    })
+
+    // 删除其他文章指向该文章的关联记录（该文章作为被关联文章的记录）
+    await prisma.articleRelation.deleteMany({
+      where: { relatedArticleId: articleId },
+    })
+
     // 删除文章
     await prisma.article.delete({
       where: { id: articleId },

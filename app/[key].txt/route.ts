@@ -14,18 +14,22 @@ export async function GET(
 
   // 如果未配置密钥，返回404
   if (!indexNowKey) {
-    return NextResponse.json(
-      { error: 'IndexNow key not configured' },
-      { status: 404 }
-    )
+    return new NextResponse('IndexNow key not configured', {
+      status: 404,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    })
   }
 
   // 验证请求的密钥是否匹配
   if (key !== indexNowKey) {
-    return NextResponse.json(
-      { error: 'Key not found' },
-      { status: 404 }
-    )
+    return new NextResponse('Key not found', {
+      status: 404,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    })
   }
 
   // 返回纯文本格式的密钥

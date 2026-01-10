@@ -200,6 +200,9 @@ model Category {
   children    Category[] @relation("CategoryHierarchy")
   order       Int        @default(0) // 排序顺序
 
+  // AI 提示词
+  aiPrompt    String?    @db.Text // AI 文章生成提示词模板（支持 {title}, {categoryName}, {sourceContent} 变量）
+
   // 关联文章
   articles Article[]
 

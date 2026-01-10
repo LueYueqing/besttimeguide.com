@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
 import sharp from 'sharp'
 import { downloadImage, uploadBufferToR2 } from '@/lib/r2'
 import { submitToIndexNow } from '@/lib/indexnow'
 import { generateAutoTimeTags } from '@/lib/auto-time-tags'
+
+const prisma = new PrismaClient()
 
 // 检查是否为管理员
 async function checkAdmin() {
@@ -186,7 +188,7 @@ export async function PUT(
     if (tags !== undefined || title !== undefined || content !== undefined || categoryId !== undefined) {
       const currentTitle = title || existing.title
       const currentContent = content || existing.content || ''
-      const currentCategoryId = categoryId !== undefined ? parseInt(categoryId, 10) : existing.categoryId
+      const currentCategoryId = categoryId !== undefined ? (typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId) : existing.categoryId
       
       // 获取分类名称
       const currentCategory = await prisma.category.findUnique({
@@ -289,7 +291,7 @@ export async function PUT(
       updateData.content = content
       updateData.readingTime = readingTime
     }
-    if (categoryId !== undefined) updateData.categoryId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId
+    if (categoryId !== undefined) updateData.categoryId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId as number
     if (metaTitle !== undefined) updateData.metaTitle = metaTitle || null
     if (metaDescription !== undefined) updateData.metaDescription = metaDescription || null
     if (keywords !== undefined) updateData.keywords = keywords || null
@@ -304,8 +306,15 @@ export async function PUT(
     if (published !== undefined) {
       updateData.published = published
       // 如果从未发布变为发布，设置发布时间
-      if (published && !existing.published && !publishedAt) {
-        updateData.publishedAt = new Date()
+      if (published && !existing.published) {
+        if (publishedAt) {
+          updateData.publishedAt = new Date(publishedAt)
+        } else {
+          updateData.publishedAt = new Date()
+        }
+      } else if (!published) {
+        // 如果取消发布，清除发布时间
+        updateData.publishedAt = null
       } else if (publishedAt) {
         updateData.publishedAt = new Date(publishedAt)
       }
@@ -527,20 +536,29 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 })
     }
 
-    // 删除文章的所有关联记录（该文章作为源文章的关联）
-    await prisma.articleRelation.deleteMany({
+    // 先删除相关的文章反馈
+    await prisma.articleFeedback.deleteMany({
       where: { articleId },
     })
 
-    // 删除其他文章指向该文章的关联记录（该文章作为被关联文章的记录）
-    await prisma.articleRelation.deleteMany({
-      where: { relatedArticleId: articleId },
+    // 再删除相关的文章图片
+    await prisma.articleImage.deleteMany({
+      where: { articleId },
     })
 
-    // 删除文章
+    // 最后删除文章
     await prisma.article.delete({
       where: { id: articleId },
     })
+
+    // 清除文章缓存
+    try {
+      revalidateTag(`article-${article.slug}` as string)
+      revalidatePath(`/${article.slug}`, 'page')
+      revalidateTag('all-posts')
+    } catch (error) {
+      console.error('[Article Delete] Error clearing cache:', error)
+    }
 
     return NextResponse.json({ success: true, message: 'Article deleted successfully' })
   } catch (error) {

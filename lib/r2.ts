@@ -184,7 +184,7 @@ export async function uploadImageToR2(
       if (R2_PUBLIC_URL) {
         const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
         if (imageUrl.startsWith(baseUrl)) {
-          console.log(`[R2] Image ${index + 1} is already using CDN: ${imageUrl}`)
+          // console.log(`[R2] Image ${index + 1} is already using CDN: ${imageUrl}`)
           return imageUrl
         }
       }
@@ -197,19 +197,19 @@ export async function uploadImageToR2(
         const r2Path = r2PathMatch[2]
         const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '')
         const cdnUrl = `${baseUrl}/${r2Path}`
-        console.log(`[R2] Image ${index + 1} converted from R2 URL to CDN: ${imageUrl} -> ${cdnUrl}`)
+        // console.log(`[R2] Image ${index + 1} converted from R2 URL to CDN: ${imageUrl} -> ${cdnUrl}`)
         return cdnUrl
       }
 
       // 如果无法转换，返回原 URL
-      console.log(`[R2] Image ${index + 1} is already in R2 but cannot convert to CDN: ${imageUrl}`)
+      // console.log(`[R2] Image ${index + 1} is already in R2 but cannot convert to CDN: ${imageUrl}`)
       return imageUrl
     }
 
     const { client, bucketName } = getR2Client()
 
     // 下载图片
-    console.log(`[R2] Downloading image ${index + 1}: ${imageUrl}`)
+    // console.log(`[R2] Downloading image ${index + 1}: ${imageUrl}`)
     const imageBuffer = await downloadImage(imageUrl)
 
     // 获取图片信息（尺寸和文件大小）
@@ -227,10 +227,10 @@ export async function uploadImageToR2(
         format: metadata.format,
       }
       hasDimensions = true
-      console.log(`[R2] Image ${index + 1} info: ${imageInfo.width}x${imageInfo.height}, ${(imageInfo.size / 1024).toFixed(2)} KB, format: ${imageInfo.format}`)
+      // console.log(`[R2] Image ${index + 1} info: ${imageInfo.width}x${imageInfo.height}, ${(imageInfo.size / 1024).toFixed(2)} KB, format: ${imageInfo.format}`)
     } catch (error) {
       // 如果 sharp 无法处理（可能是 SVG 或其他格式），只记录文件大小
-      console.log(`[R2] Image ${index + 1} size: ${(imageInfo.size / 1024).toFixed(2)} KB (could not read dimensions)`)
+      // console.log(`[R2] Image ${index + 1} size: ${(imageInfo.size / 1024).toFixed(2)} KB (could not read dimensions)`)
     }
 
     // 检查图片是否小于阈值，如果是则跳过处理
@@ -253,7 +253,7 @@ export async function uploadImageToR2(
 
     // 如果图片太小，跳过上传，返回原URL
     if (shouldSkip) {
-      console.log(`[R2] Image ${index + 1} skipped: ${skipReason}. Keeping original URL.`)
+      // console.log(`[R2] Image ${index + 1} skipped: ${skipReason}. Keeping original URL.`)
       return imageUrl
     }
 
@@ -261,14 +261,14 @@ export async function uploadImageToR2(
     let imageProcessed = false
 
     // 检查是否需要缩放
-    const needsResize = hasDimensions && imageInfo.width && imageInfo.height && 
-                      (imageInfo.width > MAX_IMAGE_WIDTH || imageInfo.height > MAX_IMAGE_HEIGHT)
-    
+    const needsResize = hasDimensions && imageInfo.width && imageInfo.height &&
+      (imageInfo.width > MAX_IMAGE_WIDTH || imageInfo.height > MAX_IMAGE_HEIGHT)
+
     // 检查是否需要转换为 WebP
-    const needsWebPConversion = ENABLE_WEBP_CONVERSION && 
-                               imageInfo.format && 
-                               imageInfo.format !== 'webp' && 
-                               imageInfo.format !== 'svg'
+    const needsWebPConversion = ENABLE_WEBP_CONVERSION &&
+      imageInfo.format &&
+      imageInfo.format !== 'webp' &&
+      imageInfo.format !== 'svg'
 
     // 决定是否强制使用 WebP 文件名（确保是 boolean 类型）
     const forceWebp: boolean = Boolean(needsWebPConversion)
@@ -286,7 +286,7 @@ export async function uploadImageToR2(
 
         // 应用缩放
         if (needsResize) {
-          console.log(`[R2] Image ${index + 1} is too large (${imageInfo.width}x${imageInfo.height}), resizing to fit ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}...`)
+          // console.log(`[R2] Image ${index + 1} is too large (${imageInfo.width}x${imageInfo.height}), resizing to fit ${MAX_IMAGE_WIDTH}x${MAX_IMAGE_HEIGHT}...`)
           sharpInstance = sharpInstance.resize(MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT, {
             withoutEnlargement: true,
             fit: 'inside'
@@ -296,8 +296,8 @@ export async function uploadImageToR2(
 
         // 应用 WebP 转换
         if (needsWebPConversion) {
-          console.log(`[R2] Converting image ${index + 1} from ${imageInfo.format} to WebP...`)
-          sharpInstance = sharpInstance.webp({ 
+          // console.log(`[R2] Converting image ${index + 1} from ${imageInfo.format} to WebP...`)
+          sharpInstance = sharpInstance.webp({
             quality: WEBP_QUALITY,
             effort: 4 // 压缩力度 0-6，4 为平衡性能和质量
           })
@@ -314,11 +314,11 @@ export async function uploadImageToR2(
         // 执行处理
         if (imageProcessed) {
           finalBuffer = await sharpInstance.toBuffer()
-          console.log(`[R2] Image ${index + 1} processed successfully. New size: ${(finalBuffer.length / 1024).toFixed(2)} KB, format: ${contentType}`)
-          
+          // console.log(`[R2] Image ${index + 1} processed successfully. New size: ${(finalBuffer.length / 1024).toFixed(2)} KB, format: ${contentType}`)
+
           // 计算压缩率
           const compressionRatio = ((imageBuffer.length - finalBuffer.length) / imageBuffer.length * 100).toFixed(1)
-          console.log(`[R2] Compression ratio: ${compressionRatio}%`)
+          // console.log(`[R2] Compression ratio: ${compressionRatio}%`)
         }
       } catch (processError) {
         console.error(`[R2] Failed to process image ${index + 1}, uploading original:`, processError)
@@ -345,19 +345,19 @@ export async function uploadBufferToR2(
   isReplacement: boolean = false // 是否是替换操作
 ): Promise<UploadImageResult> {
   const { client, bucketName } = getR2Client()
-  
+
   // 调试：检查 r2Path 参数
-  if (isReplacement) {
-    console.log(`[R2] Replacement mode - r2Path parameter: ${r2Path || 'undefined'}`)
-    console.log(`[R2] Replacement mode - fileName: ${fileName}`)
-  }
-  
+  // if (isReplacement) {
+  //   console.log(`[R2] Replacement mode - r2Path parameter: ${r2Path || 'undefined'}`)
+  //   console.log(`[R2] Replacement mode - fileName: ${fileName}`)
+  // }
+
   const finalR2Path = r2Path || generateR2Path(fileName)
 
-  console.log(`[R2] Uploading buffer to: ${finalR2Path}`)
-  if (isReplacement) {
-    console.log(`[R2] Replacement mode - finalR2Path: ${finalR2Path}`)
-  }
+  // console.log(`[R2] Uploading buffer to: ${finalR2Path}`)
+  // if (isReplacement) {
+  //   console.log(`[R2] Replacement mode - finalR2Path: ${finalR2Path}`)
+  // }
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: finalR2Path,
@@ -378,7 +378,7 @@ export async function uploadBufferToR2(
     publicUrl = `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com/${finalR2Path}`
   }
 
-  console.log(`[R2] Buffer uploaded successfully: ${publicUrl} (replacement: ${isReplacement})`)
+  // console.log(`[R2] Buffer uploaded successfully: ${publicUrl} (replacement: ${isReplacement})`)
 
   // 获取图片尺寸信息
   let width: number | undefined
@@ -427,7 +427,7 @@ export async function purgeCDNCache(urls: string[]): Promise<boolean> {
       return url
     })
 
-    console.log('[R2] Purging CDN cache for:', purgeUrls)
+    // console.log('[R2] Purging CDN cache for:', purgeUrls)
 
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
@@ -444,9 +444,9 @@ export async function purgeCDNCache(urls: string[]): Promise<boolean> {
     )
 
     const result = await response.json()
-    
+
     if (result.success) {
-      console.log('[R2] CDN cache purged successfully')
+      // console.log('[R2] CDN cache purged successfully')
       return true
     } else {
       console.error('[R2] Failed to purge CDN cache:', result.errors)
@@ -528,7 +528,7 @@ export async function uploadImagesToR2(
   }
 
   if (skippedCount > 0) {
-    console.log(`[R2] Skipped ${skippedCount} already uploaded images, uploaded ${uploadedCount} new images`)
+    // console.log(`[R2] Skipped ${skippedCount} already uploaded images, uploaded ${uploadedCount} new images`)
   }
 
   return urlMap

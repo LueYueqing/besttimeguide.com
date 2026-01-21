@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const session = await auth()
-    
+
     if (!session?.user?.email) {
       console.error('[API][UserProfile] No session or email found', {
         hasSession: !!session,
@@ -18,9 +18,9 @@ export async function GET() {
       )
     }
 
-    console.log('[API][UserProfile] Fetching user profile', {
-      email: session.user.email,
-    })
+    // console.log('[API][UserProfile] Fetching user profile', {
+    // email: session.user.email,
+    // })
 
     // 从数据库获取用户完整信息
     let user
@@ -65,7 +65,7 @@ export async function GET() {
     try {
       // 确保 user.id 是数字类型
       const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-      
+
       if (!isNaN(userId)) {
         [totalReferrals, successfulReferrals] = await Promise.all([
           prisma.user.count({
@@ -101,7 +101,7 @@ export async function GET() {
 
     // 确保返回的 user.id 是数字类型
     const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-    
+
     return NextResponse.json({
       success: true,
       user: {
@@ -131,29 +131,29 @@ export async function GET() {
       stack: error?.stack,
       name: error?.name,
     })
-    
+
     const errorMessage = error instanceof Error ? error.message : String(error)
     const errorStack = error instanceof Error ? error.stack : undefined
     const errorCode = error?.code
-    
+
     // 在开发环境返回详细错误信息
     const isDevelopment = process.env.NODE_ENV === 'development'
-    
+
     // 检查是否是数据库连接错误
     if (errorCode && ['P1001', 'P1002', 'P1003'].includes(errorCode)) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Database connection error. Please try again later.',
           ...(isDevelopment ? { details: errorMessage, code: errorCode } : {})
         },
         { status: 503 } // Service Unavailable
       )
     }
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: isDevelopment ? `Internal server error: ${errorMessage}` : 'Internal server error',
         ...(isDevelopment && errorStack ? { stack: errorStack } : {}),
         ...(isDevelopment && errorCode ? { code: errorCode } : {})

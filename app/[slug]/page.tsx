@@ -5,7 +5,7 @@ import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 import ShareButtons from '../../components/ShareButtons'
 import ArticleFeedback from '../../components/ArticleFeedback'
-import { getPostBySlug, getAllPosts, type BlogPost } from '@/lib/blog'
+import { getPostBySlug, getAllPosts, getRelatedPosts, type BlogPost } from '@/lib/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ArticleViewTracker from '../../components/ArticleViewTracker'
@@ -134,10 +134,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   const post = postResult
 
-  const allPosts = await getAllPosts()
-  const relatedPosts = allPosts
-    .filter((p) => p.slug !== slug && (p.category === post.category || p.tags.some((tag) => post.tags.includes(tag))))
-    .slice(0, 6)
+  /* 
+   * 获取相关文章
+   * 使用 getRelatedPosts 替代原来的内存筛选
+   * 这个函数会：
+   * 1. 优先从数据库 ArticleRelation 表获取（高性能）
+   * 2. 如果没有关联数据，会自动触发计算并存入数据库（按权重：同分类 > 同标签）
+   */
+  const relatedPosts = await getRelatedPosts(post.id)
 
   // 处理内容：移除第一个与文章标题相同的 h1 标题，避免重复显示
   let processedContent = post.content

@@ -27,7 +27,7 @@ export default function SignInPage() {
     try {
       setIsLoading(true)
       setError('')
-      
+
       // Use redirect: true to let browser handle the OAuth flow directly
       // This avoids server-side fetch issues when VPN is required
       await signIn('google', {
@@ -46,16 +46,16 @@ export default function SignInPage() {
     try {
       setIsDevLoading(true)
       setError('')
-      
-      console.log('[Dev Login] Attempting to sign in with:', { email: devEmail })
-      
+
+      // console.log('[Dev Login] Attempting to sign in with:', { email: devEmail })
+
       const result = await signIn('dev-credentials', {
         email: devEmail,
         password: devPassword,
         redirect: false,
       })
 
-      console.log('[Dev Login] Sign in result:', result)
+      // console.log('[Dev Login] Sign in result:', result)
 
       if (result?.error) {
         setError(`Login failed: ${result.error}. Use dev@example.com / dev123`)
@@ -93,7 +93,7 @@ export default function SignInPage() {
             Sign in with your Google account
           </p>
         </div>
-        
+
         <div className="mt-8 space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
@@ -147,7 +147,7 @@ export default function SignInPage() {
               </p>
             </div>
           )}
-          
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300"></div>
@@ -158,7 +158,7 @@ export default function SignInPage() {
               </span>
             </div>
           </div>
-          
+
           <div>
             <button
               onClick={handleGoogleSignIn}
@@ -195,7 +195,7 @@ export default function SignInPage() {
               )}
             </button>
           </div>
-          
+
           <div className="text-center">
             <p className="text-sm text-neutral-600">
               By signing in, you agree to our{' '}

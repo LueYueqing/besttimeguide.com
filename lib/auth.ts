@@ -35,19 +35,19 @@ const missingEnvVars = Object.entries(REQUIRED_ENV_VARS)
 if (missingEnvVars.length > 0) {
   console.error('[Auth][Config] Missing environment variables:', missingEnvVars.join(', '))
 } else {
-  console.log(
-    '[Auth][Config] Environment variables detected:',
-    Object.entries(REQUIRED_ENV_VARS)
-      .map(([key, value]) => `${key}=${maskSecret(value)}`)
-      .join(' | ')
-  )
+  // console.log(
+  //   '[Auth][Config] Environment variables detected:',
+  //   Object.entries(REQUIRED_ENV_VARS)
+  //     .map(([key, value]) => `${key}=${maskSecret(value)}`)
+  //     .join(' | ')
+  // )
 }
 
 if (process.env.NEXTAUTH_URL) {
   try {
     // Validate NEXTAUTH_URL format to surface misconfiguration early
     const url = new URL(process.env.NEXTAUTH_URL)
-    console.log('[Auth][Config] NEXTAUTH_URL set to:', url.origin)
+    // console.log('[Auth][Config] NEXTAUTH_URL set to:', url.origin)
   } catch (error) {
     console.error('[Auth][Config] Invalid NEXTAUTH_URL value:', process.env.NEXTAUTH_URL, error)
   }
@@ -89,67 +89,12 @@ const safeSerialize = (value: unknown): unknown => {
   return value
 }
 
-// Instrument Prisma adapter to surface detailed errors
-const createInstrumentedAdapter = () => {
-  const baseAdapter = PrismaAdapter(prisma) as any
-  const methodsToInstrument = [
-    'getUser',
-    'getUserByEmail',
-    'getUserByAccount',
-    'createUser',
-    'updateUser',
-    'linkAccount',
-    'createSession',
-    'getSessionAndUser',
-    'updateSession',
-    'deleteSession',
-  ] as const
+// Instrument Prisma adapter removed for clean code
 
-  methodsToInstrument.forEach((methodName) => {
-    const original = baseAdapter[methodName]
-    if (typeof original === 'function') {
-      baseAdapter[methodName] = async (...args: unknown[]) => {
-        console.log(`[Auth][Adapter][${methodName}] start`, JSON.stringify(args, (_key, val) => (typeof val === 'bigint' ? val.toString() : val)))
-        try {
-          let result = await original(...args)
-
-          // 如果是 createUser，检查是否有邀请人（从 cookie 中读取）
-          if (methodName === 'createUser' && result?.id) {
-            try {
-              // 注意：这里无法直接访问 request，需要在 events.createUser 中处理
-              // 但我们可以在这里记录，实际处理在 events.createUser 中
-              console.log(`[Auth][Adapter][createUser] User created: ${result.id}`)
-            } catch (error) {
-              console.error(`[Auth][Adapter][createUser] Error processing referral:`, error)
-            }
-          }
-
-          console.log(`[Auth][Adapter][${methodName}] success`, JSON.stringify(result, (_key, val) => (typeof val === 'bigint' ? val.toString() : val)))
-          return result
-        } catch (error) {
-          console.error(`[Auth][Adapter][${methodName}] error`, JSON.stringify(safeSerialize(error), null, 2))
-          throw error
-        }
-      }
-    }
-  })
-
-  return baseAdapter
-}
 
 export const authOptions: any = {
-  adapter: createInstrumentedAdapter(),
-  logger: {
-    error(code: string, metadata?: unknown) {
-      console.error('[Auth][Logger][error]', code, JSON.stringify(safeSerialize(metadata), null, 2))
-    },
-    warn(code: string, metadata?: unknown) {
-      console.warn('[Auth][Logger][warn]', code, JSON.stringify(safeSerialize(metadata), null, 2))
-    },
-    debug(code: string, metadata?: unknown) {
-      console.debug('[Auth][Logger][debug]', code, JSON.stringify(safeSerialize(metadata), null, 2))
-    },
-  },
+  adapter: PrismaAdapter(prisma),
+  // logger removed to reduce noise
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -238,11 +183,7 @@ export const authOptions: any = {
   callbacks: {
     async session({ session, token }: { session: any; token?: any }) {
       if (session?.user && token) {
-        console.log('[Auth][Callback][session] start', {
-          hasUser: !!session.user,
-          tokenSub: token.sub,
-          tokenId: token.id,
-        })
+
         // Get user ID from token
         const userIdRaw = token.sub || token.id
         // 转换为数字（因为数据库中的 id 现在是 Int）
@@ -279,10 +220,7 @@ export const authOptions: any = {
               userId = typeof dbUser.id === 'string' ? parseInt(dbUser.id, 10) : dbUser.id
               if (!isNaN(userId)) {
                 (session.user as any).id = userId
-                console.log('[Auth][Callback][session] User ID resolved from email', {
-                  email: session.user.email,
-                  userId: userId,
-                })
+
               }
             }
           } catch (error: any) {
@@ -298,11 +236,7 @@ export const authOptions: any = {
         // Fetch complete user information from database
         if (userId && !isNaN(userId) && userId > 0) {
           try {
-            console.log('[Auth][Callback][session] Fetching user from database', {
-              userId,
-              userIdType: typeof userId,
-              email: session.user?.email,
-            })
+
 
             const dbUser = await withTimeout(prisma.user.findUnique({
               where: { id: userId },
@@ -382,11 +316,7 @@ export const authOptions: any = {
                       (session.user as any).subscription = safeSubscription;
                       (session.user as any).image = safeImage;
 
-                      console.log('[Auth][Callback][session] User found by email and hydrated', {
-                        originalUserId: userId,
-                        correctUserId: correctUserId,
-                        plan: safePlan,
-                      })
+
                       return session
                     }
                   }
@@ -432,12 +362,7 @@ export const authOptions: any = {
               (session.user as any).subscription = safeSubscription;
               (session.user as any).image = safeImage;
 
-              console.log('[Auth][Callback][session] user hydrated', {
-                userId,
-                plan: safePlan,
-                hasActiveSubscription: !!safeSubscription,
-                imageFromDb: Boolean(dbUser.image || (dbUser as any).avatar),
-              })
+
             }
           } catch (error: any) {
             // 检查是否是数据库连接错误
@@ -481,12 +406,7 @@ export const authOptions: any = {
       return session
     },
     async jwt({ token, user, account }: { token: any; user?: any; account?: any }) {
-      console.log('[Auth][Callback][jwt] start', {
-        hasUser: !!user,
-        hasAccount: !!account,
-        tokenSub: token.sub,
-        tokenId: token.id,
-      })
+
       // Add user ID to token on first login
       if (user) {
         // 确保 user.id 是数字类型（因为数据库中的 id 现在是 Int）
@@ -494,11 +414,7 @@ export const authOptions: any = {
         if (!isNaN(userId)) {
           token.id = userId
           token.sub = userId
-          console.log('[Auth][Callback][jwt] user assigned', {
-            userId: userId,
-            originalType: typeof user.id,
-            originalValue: user.id,
-          })
+
         } else {
           console.error('[Auth][Callback][jwt] Invalid user ID', {
             userId: user.id,
@@ -509,12 +425,7 @@ export const authOptions: any = {
       return token
     },
     async signIn({ user, account, profile, isNewUser }: { user: any; account?: any; profile?: any; isNewUser?: boolean }) {
-      console.log('[Auth][Callback][signIn] start', {
-        provider: account?.provider,
-        userId: user?.id,
-        email: user?.email,
-        isNewUser,
-      })
+
 
       if (user?.email) {
         try {
@@ -544,10 +455,7 @@ export const authOptions: any = {
               await processReferralReward(dbUser.id)
             }
 
-            console.log('[Auth][Callback][signIn] login info updated', {
-              email: user.email,
-              hasReferrer: !!dbUser.referredBy,
-            })
+
           }
         } catch (error) {
           console.error('[Auth][Callback][signIn] Error updating login info', {
@@ -560,17 +468,7 @@ export const authOptions: any = {
       return true
     },
   },
-  events: {
-    async error(message: any) {
-      console.error('[Auth][Event][error]', message)
-    },
-    async signIn(message: any) {
-      console.log('[Auth][Event][signIn]', message)
-    },
-    async session(message: any) {
-      console.log('[Auth][Event][session]', message)
-    },
-  },
+
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',
@@ -586,6 +484,6 @@ export const authOptions: any = {
 // Export compatible with NextAuth v5
 const handler = NextAuth(authOptions)
 
-console.log('[Auth][Init] NextAuth handler initialized successfully')
+// console.log('[Auth][Init] NextAuth handler initialized successfully')
 
 export const { handlers, auth, signIn, signOut } = handler

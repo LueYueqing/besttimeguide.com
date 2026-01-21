@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
-import ArticlesClient from './articles-client'
+import ArticlesClient from './ArticlesClient'
 
 const prisma = new PrismaClient()
 
@@ -19,7 +19,7 @@ export default async function ArticlesPage() {
   }
 
   const userId = typeof session.user.id === 'string' ? parseInt(session.user.id, 10) : session.user.id
-  if (isNaN(userId)) {
+  if (!userId || isNaN(userId)) {
     redirect('/auth/signin?callbackUrl=/dashboard/articles')
   }
 

@@ -52,22 +52,22 @@ export async function POST(request: NextRequest) {
                     try {
                         // 获取原始图片信息
                         const metadata = await sharp(buffer).metadata()
-                        
+
                         if (metadata.format && metadata.format !== 'webp' && metadata.format !== 'svg') {
-                            console.log(`[Upload] Converting cover image from ${metadata.format} to WebP...`)
-                            
+                            // console.log(`[Upload] Converting cover image from ${metadata.format} to WebP...`)
+
                             // 转换为 WebP
-                            const webpBuffer = Buffer.from(await sharpInstance.webp({ 
+                            const webpBuffer = Buffer.from(await sharpInstance.webp({
                                 quality: WEBP_QUALITY,
                                 effort: 4
                             }).toBuffer())
-                            
+
                             buffer = webpBuffer
                             finalContentType = 'image/webp'
-                            
+
                             // 计算压缩率
                             const compressionRatio = ((buffer.length - webpBuffer.length) / buffer.length * 100).toFixed(1)
-                            console.log(`[Upload] WebP conversion complete. Compression ratio: ${compressionRatio}%`)
+                            // console.log(`[Upload] WebP conversion complete. Compression ratio: ${compressionRatio}%`)
                         } else {
                             buffer = Buffer.from(await sharpInstance.toBuffer())
                         }
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
                 } else {
                     buffer = Buffer.from(await sharpInstance.toBuffer())
                 }
-                
+
                 // 更新 content type（如果转换为 WebP）
                 if (finalContentType === 'image/webp') {
                     // 在 fileName 中添加 .webp 扩展名
@@ -92,18 +92,18 @@ export async function POST(request: NextRequest) {
             if (ENABLE_WEBP_CONVERSION && contentType.startsWith('image/') && contentType !== 'image/svg+xml') {
                 try {
                     const metadata = await sharp(buffer).metadata()
-                    
+
                     if (metadata.format && metadata.format !== 'webp' && metadata.format !== 'svg') {
-                        console.log(`[Upload] Converting cover image from ${metadata.format} to WebP...`)
-                        
-                        const webpBuffer = Buffer.from(await sharp(buffer).webp({ 
+                        // console.log(`[Upload] Converting cover image from ${metadata.format} to WebP...`)
+
+                        const webpBuffer = Buffer.from(await sharp(buffer).webp({
                             quality: WEBP_QUALITY,
                             effort: 4
                         }).toBuffer())
-                        
+
                         const compressionRatio = ((buffer.length - webpBuffer.length) / buffer.length * 100).toFixed(1)
-                        console.log(`[Upload] WebP conversion complete. Compression ratio: ${compressionRatio}%`)
-                        
+                        // console.log(`[Upload] WebP conversion complete. Compression ratio: ${compressionRatio}%`)
+
                         buffer = webpBuffer
                     }
                 } catch (processError) {
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         // Generate a safe unique filename
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-')
         let fileName = `upload-${Date.now()}-${sanitizedName}`
-        
+
         // 如果是 WebP，确保文件扩展名是 .webp
         if (ENABLE_WEBP_CONVERSION && contentType.startsWith('image/') && contentType !== 'image/svg+xml') {
             const extMatch = fileName.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
@@ -125,12 +125,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 使用正确的 content type（如果转换为 WebP）
-        const finalContentType = ENABLE_WEBP_CONVERSION && 
-                                 contentType.startsWith('image/') && 
-                                 contentType !== 'image/svg+xml' && 
-                                 fileName.endsWith('.webp') 
-                                 ? 'image/webp' 
-                                 : contentType
+        const finalContentType = ENABLE_WEBP_CONVERSION &&
+            contentType.startsWith('image/') &&
+            contentType !== 'image/svg+xml' &&
+            fileName.endsWith('.webp')
+            ? 'image/webp'
+            : contentType
 
         const result = await uploadBufferToR2(buffer, fileName, finalContentType)
         const url = typeof result === 'string' ? result : result.r2Url

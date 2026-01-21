@@ -175,12 +175,12 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
           // 不等待响应，立即返回，让任务在后台运行
         }).catch((error) => {
           // 静默处理错误，不影响用户体验
-          console.log('[AI Rewrite] Background task triggered (may fail silently):', error)
+          console.error('[AI Rewrite] Background task triggered (may fail silently):', error)
         })
-        console.log('[AI Rewrite] Background task triggered')
+        // console.log('[AI Rewrite] Background task triggered')
       } catch (error) {
         // 静默处理错误
-        console.log('[AI Rewrite] Error triggering background task:', error)
+        console.error('[AI Rewrite] Error triggering background task:', error)
       }
     }
 
@@ -255,7 +255,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
   const handleResetCooldown = async (id: number, currentStatus: string | null, isPublished: boolean) => {
     let confirmMessage = '确定要重新生成这篇文章的 AI 内容吗？这将把文章状态重置为"待处理"，AI 将在几分钟内重新生成内容、搜索图片并尝试自动发布。'
-    
+
     // 如果是处理中状态，显示更强烈的警告
     if (currentStatus === 'processing') {
       confirmMessage = '⚠️ 警告：文章当前处于"处理中"状态。\n\n强制重置将清空已生成的内容，将文章恢复为草稿状态并重新开始 AI 生成流程。\n\n此操作不可撤销，确定要继续吗？'
@@ -421,7 +421,7 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
 
       if (data.success) {
         toast.success(data.message || `成功创建 ${data.created} 篇文章${data.failed > 0 ? `，失败 ${data.failed} 篇` : ''}`)
-        
+
         // 如果有失败的文章，显示错误详情
         if (data.failed > 0 && data.errors) {
           console.error('Failed articles:', data.errors)
@@ -776,11 +776,10 @@ export default function ArticlesClient({ categories }: ArticlesClientProps) {
                             </span>
                             <button
                               onClick={() => handleResetCooldown(article.id, article.aiRewriteStatus, article.published)}
-                              className={`p-1 rounded transition-colors ${
-                                article.aiRewriteStatus === 'processing'
+                              className={`p-1 rounded transition-colors ${article.aiRewriteStatus === 'processing'
                                   ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50'
                                   : 'text-primary-600 hover:text-primary-700 hover:bg-primary-50'
-                              }`}
+                                }`}
                               title={article.aiRewriteStatus === 'processing' ? '强制重置（清空内容）' : '重新触发 AI 生成/改写流程'}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

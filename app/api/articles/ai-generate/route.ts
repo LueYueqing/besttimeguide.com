@@ -97,7 +97,7 @@ async function searchImageFromPixabay(keywords: string): Promise<string | null> 
   }
   try {
     const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keywords)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=3`
-    console.log(`[Pixabay 请求] URL: ${url}`)
+    // console.log(`[Pixabay 请求] URL: ${url}`)
     const response = await fetch(url)
     if (!response.ok) {
       console.warn(`[Pixabay 错误] 状态码: ${response.status}`)
@@ -121,7 +121,7 @@ async function searchImageFromPexels(keywords: string): Promise<string | null> {
   }
   try {
     const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape`
-    console.log(`[Pexels 请求] URL: ${url}`)
+    // console.log(`[Pexels 请求] URL: ${url}`)
     const response = await fetch(url, { headers: { 'Authorization': apiKey } })
     if (!response.ok) {
       console.warn(`[Pexels 错误] 状态码: ${response.status}`)
@@ -144,7 +144,7 @@ async function searchImageFromUnsplash(keywords: string): Promise<string | null>
   }
   try {
     const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&page=1&per_page=1&orientation=landscape`
-    console.log(`[Unsplash 请求] URL: ${url}`)
+    // console.log(`[Unsplash 请求] URL: ${url}`)
     const response = await fetch(url, { headers: { 'Authorization': `Client-ID ${accessKey}` } })
     if (!response.ok) {
       console.warn(`[Unsplash 错误] 状态码: ${response.status}`)
@@ -212,7 +212,7 @@ async function searchImage(keywords: string, altText: string, articleTitle: stri
   for (const query of searchSequences) {
     const trimmed = query.trim()
     if (!trimmed || trimmed.length < 3) continue
-    console.log(`[图片搜索] 尝试关键词: "${trimmed}"`)
+    // console.log(`[图片搜索] 尝试关键词: "${trimmed}"`)
 
     // 按顺序尝试: Pixabay -> Pexels -> Unsplash
     const pixUrl = await searchImageFromPixabay(trimmed)
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
 
       // --- 阶段 1: 文本生成 ---
       if (!hasContent) {
-        console.log(`[AI 生成 - 阶段 1/2] 正在生成文本: ${article.title}`)
+        // console.log(`[AI 生成 - 阶段 1/2] 正在生成文本: ${article.title}`)
         const basePrompt = customPrompt || AI_GENERATE_PROMPT
         const prompt = basePrompt.replace('{title}', article.title).replace('{categoryName}', article.category.name)
 
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
 
       // --- 阶段 2: 图片补全 ---
       if (hasPlaceholders) {
-        console.log(`[AI 生成 - 阶段 2/2] 正在补全图片: ${article.title}`)
+        // console.log(`[AI 生成 - 阶段 2/2] 正在补全图片: ${article.title}`)
 
         let currentContent = article.content || ''
         const imagePlaceholderRegex = /!\[([^\]]*)\]\(IMAGE_PLACEHOLDER_(\d+)\(([^)]+)\)\)/g
@@ -308,7 +308,7 @@ export async function POST(request: NextRequest) {
           })
         }
 
-        console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
+        // console.log(`[内容解析] 发现图片占位孔数: ${placeholders.length}`)
 
         // 并行处理所有图片
         const imagePromises = placeholders.map(async (placeholder) => {
@@ -318,10 +318,10 @@ export async function POST(request: NextRequest) {
               const result = await uploadImageToR2(imageUrl, placeholder.altText, placeholder.index - 1, article.slug)
               if (result) {
                 const r2Url = typeof result === 'string' ? result : result.r2Url
-                return { 
-                  success: true, 
-                  fullMatch: placeholder.fullMatch, 
-                  altText: placeholder.altText, 
+                return {
+                  success: true,
+                  fullMatch: placeholder.fullMatch,
+                  altText: placeholder.altText,
                   r2Url,
                   result: typeof result === 'string' ? null : result
                 }
@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
             data: imagesToSave,
             skipDuplicates: true
           })
-          console.log(`[图片信息] 已保存 ${imagesToSave.length} 张图片信息到数据库`)
+          // console.log(`[图片信息] 已保存 ${imagesToSave.length} 张图片信息到数据库`)
         }
 
         // 清理占位符
@@ -400,30 +400,30 @@ export async function POST(request: NextRequest) {
             if (response.ok) {
               const buffer = Buffer.from(await response.arrayBuffer())
               let sharpInstance = sharp(buffer).resize(375, 200, { fit: 'cover', position: 'center' })
-              
+
               // 应用 WebP 转换（如果启用）
               let finalBuffer: Buffer
               let finalContentType = 'image/jpeg'
               let fileExtension = 'jpg'
-              
+
               if (ENABLE_WEBP_CONVERSION) {
                 try {
                   const metadata = await sharp(buffer).metadata()
-                  
+
                   if (metadata.format && metadata.format !== 'webp' && metadata.format !== 'svg') {
-                    console.log(`[AI 生成] Converting cover image from ${metadata.format} to WebP...`)
-                    
-                    const webpBuffer = Buffer.from(await sharpInstance.webp({ 
+                    // console.log(`[AI 生成] Converting cover image from ${metadata.format} to WebP...`)
+
+                    const webpBuffer = Buffer.from(await sharpInstance.webp({
                       quality: WEBP_QUALITY,
                       effort: 4
                     }).toBuffer())
-                    
+
                     finalBuffer = webpBuffer
                     finalContentType = 'image/webp'
                     fileExtension = 'webp'
-                    
+
                     const compressionRatio = ((buffer.length - webpBuffer.length) / buffer.length * 100).toFixed(1)
-                    console.log(`[AI 生成] Cover WebP conversion complete. Compression ratio: ${compressionRatio}%`)
+                    // console.log(`[AI 生成] Cover WebP conversion complete. Compression ratio: ${compressionRatio}%`)
                   } else {
                     finalBuffer = Buffer.from(await sharpInstance.jpeg({ quality: 85 }).toBuffer())
                   }
@@ -434,7 +434,7 @@ export async function POST(request: NextRequest) {
               } else {
                 finalBuffer = Buffer.from(await sharpInstance.jpeg({ quality: 85 }).toBuffer())
               }
-              
+
               const uploadResult = await uploadBufferToR2(finalBuffer, `${article.slug}-cover.${fileExtension}`, finalContentType)
               coverImageUrl = uploadResult.r2Url
             }
@@ -448,7 +448,7 @@ export async function POST(request: NextRequest) {
           where: { id: articleId },
           include: { category: true },
         })
-        
+
         // 自动生成时间标签
         const autoTags = generateAutoTimeTags(
           articleForTags?.title || '',

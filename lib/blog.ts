@@ -89,11 +89,11 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 // 根据slug获取单篇文章
 export async function getPostBySlug(slug: string): Promise<BlogPost | null | { error: 'DATABASE_ERROR' }> {
   try {
-    console.log(`[getPostBySlug] Fetching article: ${slug}`)
+
 
     const getCachedArticle = unstable_cache(
       async () => {
-        console.log(`[getPostBySlug] Cache MISS for: ${slug}`)
+
         return await prisma.article.findUnique({
           where: { slug },
           include: {
@@ -110,17 +110,17 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null | { e
 
     const article = await getCachedArticle()
 
-    console.log(`[getPostBySlug] Article found: ${!!article}, published: ${article?.published}`)
+
 
     if (!article || !article.published) {
-      console.log(`[getPostBySlug] Article not accessible: ${slug}`)
+
       return null
     }
 
     // 只在文章未发布时检查发布时间是否在未来（用于定时发布）
     // 已发布的文章不应该因为 publishedAt 在未来而被隐藏
     if (article.publishedAt && new Date(article.publishedAt) > new Date()) {
-      console.log(`[getPostBySlug] Article published but publishedAt is in the future: ${slug}, this should not happen`)
+
       // 注意：这里不返回 null，允许访问
     }
 
@@ -308,7 +308,7 @@ export async function getRelatedPosts(
   limit: number = 6
 ): Promise<BlogPost[]> {
   try {
-    console.log(`[getRelatedPosts] Fetching relations for article ${articleId}`)
+
 
     // 1. 先查询已有的关联关系
     const existingRelations = await prisma.articleRelation.findMany({
@@ -335,7 +335,7 @@ export async function getRelatedPosts(
 
     // 2. 如果关联数量足够，直接返回
     if (existingRelations.length >= limit) {
-      console.log(`[getRelatedPosts] Found ${existingRelations.length} existing relations for article ${articleId}`)
+
       return existingRelations.map(r => ({
         id: r.relatedArticle.id,
         slug: r.relatedArticle.slug,
@@ -355,11 +355,11 @@ export async function getRelatedPosts(
     }
 
     // 3. 如果关联不足，生成新的关联关系
-    console.log(`[getRelatedPosts] Only ${existingRelations.length} relations, generating new ones for article ${articleId}`)
-    
+
+
     // 同步生成关联关系（确保可靠性）
     await generateRelationsAsync(articleId)
-    
+
     // 4. 重新查询关联关系
     const newRelations = await prisma.articleRelation.findMany({
       where: {
@@ -382,8 +382,8 @@ export async function getRelatedPosts(
       },
       take: limit,
     })
-    
-    console.log(`[getRelatedPosts] Returning ${newRelations.length} relations for article ${articleId}`)
+
+
     return newRelations.map(r => ({
       id: r.relatedArticle.id,
       slug: r.relatedArticle.slug,
@@ -411,13 +411,13 @@ export async function getRelatedPosts(
  * 调用 generate-article-relations.ts 脚本
  */
 async function generateRelationsAsync(articleId: number) {
-  console.log(`[generateRelationsAsync] Starting async generation for article ${articleId}`)
-  
+
+
   try {
     // 动态导入生成函数
     const { generateRelationsForArticle } = await import('../scripts/generate-article-relations')
     await generateRelationsForArticle(articleId)
-    console.log(`[generateRelationsAsync] Relations generated for article ${articleId}`)
+
   } catch (error) {
     console.error(`[generateRelationsAsync] Error generating relations for article ${articleId}:`, error)
   }

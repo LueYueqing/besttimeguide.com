@@ -3,7 +3,7 @@ import Navigation from '../../components/Navigation'
 import Footer from '../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'About Us | besttimeguide.com',
+  title: 'About Us',
   description: 'Learn about besttimeguide.com - the most trusted timing guide site on the internet. We help you find the best time for everything with data-driven insights.',
   keywords: 'about besttimeguide.com, best time guides, timing advice, when to do things',
   alternates: {

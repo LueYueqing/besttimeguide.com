@@ -4,9 +4,10 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Tutorials - Step-by-Step Guides | Your App Name',
-  description: 'Learn how to use our platform with comprehensive tutorials and step-by-step guides.',
-  keywords: 'tutorials, guides, how to, step by step, getting started',
+  title: 'Tutorials',
+  description:
+    'Step-by-step BestTimeGuide tutorials that show how to use timing guides for travel, social media, shopping, and daily decisions.',
+  keywords: 'tutorials, timing guides, how to, step by step, getting started',
   alternates: {
     canonical: '/tutorials',
   },

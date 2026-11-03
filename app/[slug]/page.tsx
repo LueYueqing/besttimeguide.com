@@ -52,15 +52,23 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
   // 此时 postResult 一定是 BlogPost（已经过滤了错误情况）
   const post = postResult as BlogPost
+  const description =
+    (post.description || '')
+      .replace(/\s+/g, ' ')
+      .trim() ||
+    post.content.replace(/[#>*`\[\]()_-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 155) ||
+    'Find the best time with BestTimeGuide expert timing guides.'
+  const title =
+    post.title.length > 50 ? `${post.title.slice(0, 49).trimEnd()}…` : post.title
 
   return {
-    title: `${post.title} | besttimeguide.com`,
-    description: post.description,
+    title,
+    description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}...` : description,
     keywords: post.tags.join(', '),
     authors: [{ name: post.author }],
     openGraph: {
       title: post.title,
-      description: post.description,
+      description,
       type: 'article',
       publishedTime: post.date,
       authors: [post.author],

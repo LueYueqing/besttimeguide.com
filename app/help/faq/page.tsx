@@ -4,7 +4,7 @@ import Footer from '@/components/Footer'
 import { Section, Container } from '@/components/Layout'
 
 export const metadata: Metadata = {
-  title: 'FAQ - Frequently Asked Questions | besttimeguide.com',
+  title: 'FAQ',
   description: 'Get answers to common questions about besttimeguide.com timing guides, how to use our guides, and find the best time for everything.',
   keywords: 'FAQ, questions, timing guides, best time help, support, besttimeguide.com help',
 }

@@ -7,8 +7,11 @@ import { getHomePageData } from '@/lib/home'
 import { getCurrentTimeInfo } from '@/lib/time-based-posts'
 
 export const metadata: Metadata = {
-  title: 'BestTimeGuide - Find the Best Time for Everything',
-  description: 'Discover the best time to visit places, post on social media, take supplements, buy products, and more. Expert guides with data-driven insights.',
+  title: {
+    absolute: 'BestTimeGuide - Find the Best Time for Everything',
+  },
+  description:
+    'Discover the best time to visit places, post on social media, take supplements, buy products, and more. Expert guides with data-driven insights.',
   keywords: [
     'best time to visit',
     'best time to post on instagram',
@@ -17,13 +20,14 @@ export const metadata: Metadata = {
     'when is the best time',
     'travel guide',
     'social media timing',
-    'health supplements timing'
+    'health supplements timing',
   ],
   openGraph: {
     title: 'BestTimeGuide - Find the Best Time for Everything',
-    description: 'Expert guides on the best time to visit places, post on social media, take supplements, and more.',
+    description:
+      'Expert guides on the best time to visit places, post on social media, take supplements, and more.',
     type: 'website',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://besttimeguide.com',
     images: [
       {
         url: '/og-image.png',

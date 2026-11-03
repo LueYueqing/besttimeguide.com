@@ -3,7 +3,7 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | besttimeguide.com',
+  title: 'Privacy Policy',
   description: 'Learn how besttimeguide.com protects your privacy and handles your data. Read our comprehensive privacy policy for timing guide services.',
   keywords: 'privacy policy, data protection, GDPR, privacy, besttimeguide.com',
 }

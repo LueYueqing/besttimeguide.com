@@ -4,7 +4,8 @@ import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
   title: 'API Documentation',
-  description: 'Complete RESTful API documentation. Integrate our platform into your applications with our powerful API.',
+  description:
+    'BestTimeGuide API docs for integrating timing-guide data and related endpoints into your applications.',
   keywords: 'QR code API, QR generator API, RESTful API, QR code integration, API documentation, bulk QR generation API',
   alternates: {
     canonical: '/docs/api',

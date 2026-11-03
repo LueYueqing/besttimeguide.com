@@ -3,7 +3,7 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Cookies Policy | besttimeguide.com',
+  title: 'Cookies Policy',
   description: 'Learn about how besttimeguide.com uses cookies and similar technologies to enhance your experience and protect your privacy.',
   keywords: 'cookies policy, cookies, tracking, privacy, besttimeguide.com',
   alternates: {

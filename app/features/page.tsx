@@ -4,15 +4,17 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Features - Your App Name',
-  description: 'Discover the powerful features of our platform. Professional tools, enterprise-grade security, and more.',
-  keywords: 'features, platform features, professional tools, enterprise features',
+  title: 'Features',
+  description:
+    'Explore BestTimeGuide features: data-driven timing guides, travel and social posting insights, and tools that help you act at the right moment.',
+  keywords: 'best time features, timing guides, travel timing, social media timing',
   alternates: {
     canonical: '/features',
   },
   openGraph: {
-    title: 'Features - Your App Name',
-    description: 'Discover the powerful features of our platform.',
+    title: 'Features',
+    description:
+      'Explore BestTimeGuide features for travel, social posting, health timing, and more.',
     type: 'website',
   },
 }

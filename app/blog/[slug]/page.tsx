@@ -29,14 +29,23 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     }
   }
 
+  const description =
+    (post.description || '')
+      .replace(/\s+/g, ' ')
+      .trim() ||
+    post.content.replace(/[#>*`\[\]()_-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 155) ||
+    'Read BestTimeGuide timing tips and expert guides.'
+  const title =
+    post.title.length > 50 ? `${post.title.slice(0, 49).trimEnd()}…` : post.title
+
   return {
-    title: `${post.title} | besttimeguide.com Blog`,
-    description: post.description,
+    title,
+    description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}...` : description,
     keywords: post.tags.join(', '),
     authors: [{ name: post.author }],
     openGraph: {
       title: post.title,
-      description: post.description,
+      description,
       type: 'article',
       publishedTime: post.date,
       authors: [post.author],

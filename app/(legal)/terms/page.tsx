@@ -3,7 +3,7 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | besttimeguide.com',
+  title: 'Terms of Service',
   description: 'Read the terms of service and user agreement for besttimeguide.com timing guides. Understand your rights and responsibilities when using our service.',
   keywords: 'terms of service, user agreement, terms and conditions, besttimeguide.com',
 }

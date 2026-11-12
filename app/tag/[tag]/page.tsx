@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
-import { getPostsByTag, getAllPosts, BlogPost } from '@/lib/blog'
+import { getPostsByTag, BlogPost } from '@/lib/blog'
 
 export const dynamic = 'force-dynamic' // 强制动态渲染，不使用静态生成
 export const revalidate = false // 禁用自动刷新，只使用 on-demand revalidation
@@ -47,18 +47,10 @@ export default async function TagPage({ params }: TagPageProps) {
   
   let posts: BlogPost[] = []
   try {
-    // 使用 getPostsByTag 函数，它已经实现了正确的标签匹配逻辑
-    // 首先尝试使用原始标签名（可能包含空格）
-    posts = await getPostsByTag(tagName)
-    
-    // 如果没找到，尝试使用 slug 格式的标签
-    if (posts.length === 0) {
-      // 获取所有文章，然后过滤出包含该标签的文章
-      const allPosts = await getAllPosts()
-      posts = allPosts.filter((post) => {
-        const postTagSlugs = post.tags.map((t) => t.toLowerCase().replace(/\s+/g, '-'))
-        return postTagSlugs.includes(tag)
-      })
+    // Match by URL slug (e.g. cherry-blossom) — tags in DB are usually lowercase slugs
+    posts = await getPostsByTag(tag)
+    if (posts.length === 0 && tagName !== tag) {
+      posts = await getPostsByTag(tagName)
     }
   } catch (error: any) {
     console.error(`Error fetching posts for tag ${tag}:`, error)

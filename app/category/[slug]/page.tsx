@@ -177,7 +177,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     }
     
     // 最新文章：按发布时间排序，取前12篇
-    recentPosts = posts.slice(0, 12)
+    // List every published article so pages are not orphans in site audits
+    recentPosts = posts
   } catch (error: any) {
     console.error(`Error fetching posts for category ${slug}:`, error)
     const isDatabaseError = error?.code && ['P1001', 'P1002', 'P1003'].includes(error.code)

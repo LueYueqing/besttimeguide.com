@@ -45,6 +45,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${baseUrl}/trending`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/category/travel`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/category/social-media`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/category/health`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/category/shopping`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/category/lifestyle`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/docs/api`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
@@ -91,8 +127,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 动态页面：从数据库获取文章
   let articlePages: MetadataRoute.Sitemap = []
   try {
-    // 从数据库获取最近100条已发布的文章
-    // 限制数量以优化性能和sitemap文件大小
+    // 从数据库获取全部已发布文章，避免可索引页遗漏
     const { getAllPosts } = await import('@/lib/blog')
     const posts = await getAllPosts()
     articlePages = posts.map((post) => ({

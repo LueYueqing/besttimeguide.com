@@ -35,7 +35,17 @@ function parseTags(tags: string | null | undefined): string[] {
   }
 }
 
-// 获取所有已发布的文章（限制最近100条，用于sitemap）
+/** Normalize a tag or URL slug for case/space/hyphen-insensitive matching */
+function normalizeTagKey(tag: string): string {
+  return tag.toLowerCase().trim().replace(/[\s_]+/g, '-')
+}
+
+function articleHasTag(articleTags: string[], requestedTag: string): boolean {
+  const wanted = normalizeTagKey(requestedTag)
+  return articleTags.some((t) => normalizeTagKey(t) === wanted)
+}
+
+// 获取所有已发布的文章（供 sitemap / 列表使用）
 export async function getAllPosts(): Promise<BlogPost[]> {
   try {
     // 使用 unstable_cache 包装查询，添加 cache tag 便于精确清除缓存
@@ -53,7 +63,6 @@ export async function getAllPosts(): Promise<BlogPost[]> {
           orderBy: {
             publishedAt: 'desc',
           },
-          take: 100, // 只获取最近100条，用于sitemap优化
         })
 
         return articles.map((article) => ({
@@ -199,16 +208,28 @@ export async function getPostsByCategory(categorySlug: string): Promise<BlogPost
   }
 }
 
-// 根据标签获取文章
+// 根据标签获取文章（支持 slug / Title Case / 原始标签名）
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   try {
+    const tagKey = normalizeTagKey(tag)
+    // DB contains is case-sensitive; try several variants then filter precisely
+    const containsCandidates = Array.from(
+      new Set([
+        tag,
+        tagKey,
+        tagKey.replace(/-/g, ' '),
+        tag.replace(/-/g, ' '),
+        tag.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      ].filter(Boolean))
+    )
+
     const articles = await prisma.article.findMany({
       where: {
         published: true,
         publishedAt: { lte: new Date() },
-        tags: {
-          contains: tag,
-        },
+        OR: containsCandidates.map((candidate) => ({
+          tags: { contains: candidate },
+        })),
       },
       include: {
         category: true,
@@ -220,7 +241,7 @@ export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
     })
 
     return articles
-      .filter((article) => parseTags(article.tags).includes(tag))
+      .filter((article) => articleHasTag(parseTags(article.tags), tagKey))
       .map((article) => ({
         id: article.id,
         slug: article.slug,

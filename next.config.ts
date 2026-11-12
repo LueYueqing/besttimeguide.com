@@ -6,6 +6,27 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      // Legacy / alternate slugs → primary keyword URLs
+      {
+        source: '/best-time-to-go-to-thailand',
+        destination: '/best-time-to-visit-thailand',
+        permanent: true,
+      },
+      {
+        source: '/best-times-to-post-on-tiktok',
+        destination: '/best-time-to-post-on-tiktok',
+        permanent: true,
+      },
+      // Template leftover from QR-code product
+      {
+        source: '/url-qr-code-generator',
+        destination: '/help',
+        permanent: true,
+      },
+    ]
+  },
   // 优化 SWC 编译器配置，减少不必要的 polyfill
   swcMinify: true,
   compiler: {
